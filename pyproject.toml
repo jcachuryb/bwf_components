@@ -9,8 +9,6 @@ dependencies = [
     "django>=5.1",
     "decouple>=0.0.7",
     "dj-database-url",
-    "psycopg2",
-    "whitenoise",
 ]
 description = "A Django app to create flexible, reusable Business Workflows."
 readme = "README.rst"
