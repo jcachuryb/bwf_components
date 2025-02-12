@@ -3,4 +3,4 @@ from django.apps import AppConfig
 
 class ComponentsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'bwf_components.component'
+    name = 'bwf_components.components'

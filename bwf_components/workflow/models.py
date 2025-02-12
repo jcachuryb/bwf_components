@@ -1,10 +1,10 @@
 import uuid
 
-from django.db import models, transaction
+from django.db import models
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 
-from components.models import ComponentDefinition
+from bwf_components.components.models import WorkflowComponent
 
 
 upload_storage = FileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT)
@@ -54,31 +54,11 @@ class WorkflowInput(models.Model):
     workflow = models.ForeignKey(to="Workflow", on_delete=models.CASCADE, related_name="input")
 
 
-class WorflowComponent(models.Model):
-    name = models.CharField(max_length=100)
-    component = models.ForeignKey(to=ComponentDefinition, on_delete=models.CASCADE, related_name="instances")
-    options = models.JSONField() # predefined
-    # input: related
-    # output: related
-    version_number = models.IntegerField(default=1)
-    
-    def add_action_to_flow(self, action, previous_action=None):
-        with transaction.atomic():
-            new_step_action = WorkflowStepAction.objects.create(action=self)
-            if previous_action:
-                next_action = previous_action.next_action
-                previous_action.next_action = new_step_action
-                previous_action.save()
-                if next_action:
-                    new_step_action.next_action = next_action
-                    new_step_action.save()
-
-
             
 class WorkflowStepAction(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
-    action = models.ForeignKey(to=WorflowComponent, on_delete=models.CASCADE, related_name="steps")
-    next_action = models.ForeignKey(to=WorflowComponent, on_delete=models.CASCADE, related_name="next_steps")
+    action = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="steps")
+    next_action = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="next_steps")
    
 
 class Workflow(models.Model):
@@ -91,7 +71,7 @@ class Workflow(models.Model):
     # if we make this DB only
     version_number = models.IntegerField(default=1)
     
-    entrypoint = models.ForeignKey(WorflowComponent, on_delete=models.CASCADE, related_name="workflows")
+    entrypoint = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, related_name="workflows")
     # input: related field
 
 
