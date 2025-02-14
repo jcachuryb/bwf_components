@@ -1,4 +1,4 @@
-from django.db import models, transaction
+from django.db import models
 
 VARIABLE_TYPES = [
     ("STRING", "string"),
@@ -40,20 +40,14 @@ class WorkflowComponent(models.Model):
     options = models.JSONField() # predefined
     # input: related
     # output: related
+    # action_flow: related
     version_number = models.IntegerField(default=1)
-    
-    def add_action_to_flow(self, action, previous_action=None):
-        from bwf_components.workflow.models import WorkflowStepAction
-        with transaction.atomic():
-            new_step_action = WorkflowStepAction.objects.create(action=self)
-            if previous_action:
-                next_action = previous_action.next_action
-                previous_action.next_action = new_step_action
-                previous_action.save()
-                if next_action:
-                    new_step_action.next_action = next_action
-                    new_step_action.save()
 
+    def get_input_values(self, context_inputs={}):
+        inputs = self.input.all().select_related("dependencies").defer("parent")
+        values = {} 
+        for input in inputs:
+            values[input.key] = {"key": input.key, "value": input.get_value(context_inputs), "label": input.name}
 
 
 class VariableValue(models.Model):
@@ -66,12 +60,26 @@ class VariableValue(models.Model):
 
 class ComponentInput(models.Model):
     name = models.CharField(max_length=100)
+    key = models.CharField(max_length=100)
     expression = models.TextField(default='')
     json_value = models.JSONField() # {key, label, type, value}
-    dependencies = models.ManyToManyField(VariableValue)
+    index = models.SmallIntegerField(default=0)
     parent = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="input")
     required = models.BooleanField(default=False)
-    is_custom = models.BooleanField(default=False)
+    is_custom = models.BooleanField(default=False) # In case you can add custom inputs to components
+
+    def get_value(self, context_inputs={}):
+        if self.expression:
+            return eval(self.expression, context_inputs)
+        if self.json_value:
+            expression = self.json_value.get("expression", None)
+            value = self.json_value.get("value", None)
+            if value:
+                return value
+            if expression:
+                return eval(expression, context_inputs)
+        return None
+            
 
 
 class ComponentOutput(models.Model):
@@ -91,6 +99,7 @@ class ComponentDefinition(models.Model):
     version_number = models.IntegerField(default=1)
     version_name = models.CharField(max_length=15, default="0.0")
     editable = models.BooleanField(default=True)
+    children_components = models.BooleanField(default=False)
     # input : One to Many
 
 

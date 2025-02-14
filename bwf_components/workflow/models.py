@@ -1,4 +1,6 @@
 import uuid
+import json
+import collections.abc
 
 from django.db import models
 from django.conf import settings
@@ -9,32 +11,30 @@ from bwf_components.components.models import WorkflowComponent
 
 upload_storage = FileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT)
 
-WORKFLOW_STATUS = [
-    ("PENDING", "initial"),
-    ("RUNNING", "running"),
-    ("COMPLETED", "completed"),
-    ("ERROR", "error")
-]
-
-ACTION_STATUS = [
-    ("PENDING", "initial"),
-    ("RUNNING", "running"),
-    ("COMPLETED", "completed"),
-    ("ERROR", "error")
-]
+class WorkflowStatusEnum(models.TextChoices):
+    PENDING = "PENDING", "initial"
+    RUNNING = "RUNNING", "running"
+    COMPLETED = "COMPLETED", "completed"
+    ERROR = "ERROR",  "error"
 
 
-WORKFLOW_INPUT_TYPES = [
-    ("STRING", "string"),
-    ("NUMBER", "number"),
-    ("ARRAY", "array"),
-    ("OBJECT", "object"),
-    ("BOOLEAN", "boolean"),
-    ("SELECT", "select"),
-    ("MULTI_SELECT", "multi_select"),
-    ("FILE", "file"),
-    ("ANY", "any"),
-]
+class ComponentStepStatusEnum(models.TextChoices):
+    PENDING = "PENDING", "initial"
+    RUNNING = "RUNNING", "running"
+    COMPLETED = "COMPLETED", "completed"
+    ERROR = "ERROR", "error"
+
+class WorkflowInputTypesEnum(models.TextChoices):
+    STRING = "STRING", "string"
+    NUMBER = "NUMBER", "number"
+    ARRAY = "ARRAY", "array"
+    OBJECT = "OBJECT", "object"
+    BOOLEAN = "BOOLEAN", "boolean"
+    SELECT = "SELECT", "select"
+    MULTI_SELECT = "MULTI_SELECT", "multi_select"
+    FILE = "FILE", "file"
+    ANY = "ANY", "any"
+
 
 def get_unique_id():
     return str(uuid.uuid4())
@@ -48,18 +48,28 @@ class WorkflowInput(models.Model):
     label = models.CharField(max_length=100)
     key = models.CharField(max_length=100)
     description = models.CharField(max_length=1000)
-    data_type = models.CharField(max_length=50, default="STRING", choices=WORKFLOW_INPUT_TYPES)
+    data_type = models.CharField(max_length=50, default=WorkflowInputTypesEnum.STRING, choices=WorkflowInputTypesEnum.choices)
     default_value = models.JSONField() # type, value
     value = models.JSONField() # {type, value, options? }
     workflow = models.ForeignKey(to="Workflow", on_delete=models.CASCADE, related_name="input")
 
 
-            
-class WorkflowStepAction(models.Model):
+    
+class WorkflowCluster(models.Model):
+    is_sequential = models.BooleanField(default=True)
+    is_exclusive = models.BooleanField(default=False)
+    is_fixed = models.BooleanField(default=False)
+    label = models.CharField(default="Component Flow")
+    parent = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, related_name="action_flow")
+    # components: related
+
+
+class ClusterComponent(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
-    action = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="steps")
-    next_action = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="next_steps")
-   
+    index = models.SmallIntegerField(default=0)
+    component = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="step")
+    cluster = models.ForeignKey(WorkflowCluster, on_delete=models.CASCADE, related_name="components")
+
 
 class Workflow(models.Model):
     name = models.CharField(max_length=200)
@@ -79,20 +89,62 @@ class WorkFlowInstance(models.Model):
     workflow = models.ForeignKey(to=Workflow, on_delete=models.CASCADE, related_name="instances")
     created_at = models.DateTimeField(auto_now_add=True)
     variables = models.JSONField()
-    status = models.CharField(max_length=50, choices=WORKFLOW_STATUS, default='PENDING')
-
+    status = models.CharField(max_length=50, choices=ComponentStepStatusEnum.choices, default=ComponentStepStatusEnum.PENDING)
     # Current task
     # start task
 
 
 
-class WorkflowActionInstance(models.Model):
+class WorkflowComponentInstance(models.Model):
     workflow = models.ForeignKey(WorkFlowInstance, on_delete=models.CASCADE, related_name="child_actions")
-    action = models.ForeignKey(WorkflowStepAction, on_delete=models.CASCADE)
-    parent_action = models.ForeignKey(WorkflowStepAction, on_delete=models.CASCADE, 
+    component = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE)
+    parent_action = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, 
                                     null=True, blank=True, related_name="child_actions")
     output = models.JSONField()
     input = models.JSONField()
 
-    status = models.CharField(max_length=50, choices=WORKFLOW_STATUS, default='PENDING')
+    status = models.CharField(max_length=50, choices=WorkflowStatusEnum.choices, default=WorkflowStatusEnum.PENDING)
 
+
+class WorkflowInstanceFactory:
+
+    @staticmethod
+    def create_workflow(workflow, input_params={}):
+
+        instance = WorkFlowInstance.objects.create(workflow=workflow)
+        # collect variables
+        input_values = workflow.input.all()
+        context = {}
+        for input in input_values:
+            context['input'][input.key] = WorkflowInstanceFactory.__get_input_value(input, input_params.get(input.key))
+        instance.variables = json.dump(context)
+        instance.save()
+        return instance
+
+    @staticmethod
+    def __get_input_value(input_value: WorkflowInput, param_value=None):
+        input_type = input_value.data_type
+        json_default = json.load(input_value.default_value)
+        json_value = json.load(input_value.default_value)
+
+        if param_value is None:
+            return json_default['value']
+        else:
+            if input_type in [WorkflowInputTypesEnum.SELECT, WorkflowInputTypesEnum.MULTI_SELECT]:
+                values = []
+                param_value = param_value if isinstance(param_value, collections.abc.Sequence) else [param_value]
+                options = json_value.value['options']
+                for option in options:
+                    if option['key'] in param_value:
+                        values.append(option['key'])
+                
+                return values
+            else:
+                if input_type == WorkflowInputTypesEnum.NUMBER:
+                    return int(param_value)
+                elif input_type == WorkflowInputTypesEnum.BOOLEAN:
+                    return bool(param_value)
+                else:
+                    return param_value
+
+        
