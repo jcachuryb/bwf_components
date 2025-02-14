@@ -19,7 +19,7 @@ from django.urls import path, include
 from django import conf
 from django import urls
 from . import views
-from workflow import views as WorkflowViews
+from .workflow import views as WorkflowViews
 
 
 admin.site.site_header = conf.settings.PROJECT_TITLE
@@ -28,6 +28,8 @@ admin.site.site_title = conf.settings.PROJECT_TITLE
 
 
 urlpatterns = [
-    urls.path('bwf', views.HomeView.as_view(), name='home'),
-    urls.path('bwf/workflow', WorkflowViews.Workflow),
+    path('admin/', admin.site.urls),
+    # urls.path('bwf', views.HomeView.as_view(), name='home'),
+    urls.path('workflow', WorkflowViews.Workflow),
+
 ]

@@ -8,10 +8,12 @@ class SendStaticEmailAction(BaseComponentAction):
 
     def execute(self):
         inputs = self.collect_inputs()
-        from_email = inputs.get("from_email")
-        to = inputs.get("to")
-        subject = inputs.get("subject")
-        body = inputs.get("body")
+        component_input = inputs['input']
+        
+        from_email = component_input.get("from_email")
+        to = component_input.get("to")
+        subject = component_input.get("subject")
+        body = component_input.get("body")
         email_sender.send_static_email(from_email, to, subject, body)
 
 

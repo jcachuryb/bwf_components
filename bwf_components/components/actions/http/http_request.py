@@ -14,10 +14,11 @@ class HTTPRequestAction(BaseComponentAction):
 
     def execute(self):
         inputs = self.collect_inputs()
-        url = inputs.get("url")
-        method = inputs.get("method")
-        headers = inputs.get("headers")
-        body = json.load(inputs.get("body"))
+        component_input = inputs['input']
+        url = component_input.get("url")
+        method = component_input.get("method")
+        headers = component_input.get("headers")
+        body = json.load(component_input.get("body"))
         response = requests.request(method, url, headers=headers, data=body)
 
         self.set_output({"response", {

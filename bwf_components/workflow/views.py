@@ -5,11 +5,9 @@ from rest_framework.permissions import IsAuthenticated
 
 
 from django.shortcuts import render
-from .models import WorkflowAction, Workflow
+from .models import  Workflow
 # Create your views here.
 
 
 class WorkflowViewset(ModelViewSet):
     queryset = Workflow.objects.all()
-    
-    

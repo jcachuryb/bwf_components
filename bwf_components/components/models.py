@@ -1,12 +1,5 @@
 from django.db import models
 
-VARIABLE_TYPES = [
-    ("STRING", "string"),
-    ("NUMBER", "number"),
-    ("ARRAY", "array"),
-    ("OBJECT", "object"),
-    ("BOOLEAN", "boolean"),
-]
 
 OUTPUT_TYPES = [
     ("STRING", "string"),
@@ -14,15 +7,6 @@ OUTPUT_TYPES = [
     ("ARRAY", "array"),
     ("OBJECT", "object"),
     ("BOOLEAN", "boolean"),
-]
-
-
-CONTEXT_TYPES = [
-    ("GLOBAL", "Global"),
-    ("LOCAL", "Local"),
-    ("INPUT", "Input"),
-    ("SECRET", "Secret"),
-    ("OUTPUT", "Output"),
 ]
 
 FAILURE_HANDLE_TYPES = [
@@ -33,7 +17,6 @@ FAILURE_HANDLE_TYPES = [
 ]
 
 
-
 class WorkflowComponent(models.Model):
     name = models.CharField(max_length=100)
     component = models.ForeignKey(to="ComponentDefinition", on_delete=models.CASCADE, related_name="instances")
@@ -41,6 +24,7 @@ class WorkflowComponent(models.Model):
     # input: related
     # output: related
     # action_flow: related
+    parent_workflow = models.ForeignKey(to="workflow.Workflow", on_delete=models.CASCADE, related_name="components")
     version_number = models.IntegerField(default=1)
 
     def get_input_values(self, context_inputs={}):
@@ -49,13 +33,8 @@ class WorkflowComponent(models.Model):
         for input in inputs:
             values[input.key] = {"key": input.key, "value": input.get_value(context_inputs), "label": input.name}
 
-
-class VariableValue(models.Model):
-    label = models.CharField(max_length=100)
-    key = models.CharField(max_length=100)
-    data_type = models.CharField(max_length=50, default="STRING", choices=VARIABLE_TYPES)
-    value = models.TextField()
-    context_name = models.CharField(max_length=10, default="LOCAL", choices=CONTEXT_TYPES)
+    def __str__(self):
+        return f"{self.name} - {self.component.name} - {self.version_number}"
 
 
 class ComponentInput(models.Model):
@@ -100,7 +79,9 @@ class ComponentDefinition(models.Model):
     version_name = models.CharField(max_length=15, default="0.0")
     editable = models.BooleanField(default=True)
     children_components = models.BooleanField(default=False)
-    # input : One to Many
+    
+    def __str__(self):
+        return f"{self.name} - {self.path_to_execute}"
 
 
 class OnComponentFail(models.Model):

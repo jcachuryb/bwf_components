@@ -19,8 +19,10 @@ class ConditionalFlowAction(BaseComponentAction):
 
     def execute(self):
         inputs = self.collect_inputs()
+        component_input = inputs['input']
+
         flows = self.component.action_flow.components.all()
-        condition_set = inputs.get("condition", [])
+        condition_set = component_input.get("condition", [])
         # evaluate condition
         result = True
         for condition in condition_set:

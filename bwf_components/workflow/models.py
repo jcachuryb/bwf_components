@@ -35,6 +35,19 @@ class WorkflowInputTypesEnum(models.TextChoices):
     FILE = "FILE", "file"
     ANY = "ANY", "any"
 
+class VariableTypesEnum(models.TextChoices):
+    STRING = "STRING", "string"
+    NUMBER = "NUMBER", "number"
+    ARRAY = "ARRAY", "array"
+    OBJECT = "OBJECT", "object"
+    BOOLEAN = "BOOLEAN", "boolean"
+
+class ContextTypesEnum(models.TextChoices):
+    GLOBAL = "GLOBAL", "Global"
+    LOCAL = "LOCAL", "Local"
+    INPUT = "INPUT", "Input"
+    SECRET = "SECRET", "Secret"
+
 
 def get_unique_id():
     return str(uuid.uuid4())
@@ -43,6 +56,16 @@ def upload_to_path(instance, filename):
     return f"workflows/{instance.id}/{instance.current_active_version}"
 
 # TODO: Context Class
+
+
+class VariableValue(models.Model):
+    label = models.CharField(max_length=100)
+    key = models.CharField(max_length=100)
+    data_type = models.CharField(max_length=50, default=VariableTypesEnum.STRING, choices=VariableTypesEnum.choices)
+    value = models.TextField()
+    context_name = models.CharField(max_length=10, default=ContextTypesEnum.LOCAL, choices=ContextTypesEnum.choices)
+    workflow = models.ForeignKey(to="Workflow", on_delete=models.CASCADE, related_name="variables")
+
 
 class WorkflowInput(models.Model):
     label = models.CharField(max_length=100)
@@ -56,11 +79,13 @@ class WorkflowInput(models.Model):
 
     
 class WorkflowCluster(models.Model):
+    label = models.CharField(default="Component Flow")
+    parent_component = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, 
+                               related_name="action_flow", null=True, blank=True)
+    components = models.ManyToManyField(WorkflowComponent, through="ClusterComponent", related_name="clusters")
     is_sequential = models.BooleanField(default=True)
     is_exclusive = models.BooleanField(default=False)
     is_fixed = models.BooleanField(default=False)
-    label = models.CharField(default="Component Flow")
-    parent = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, related_name="action_flow")
     # components: related
 
 
@@ -68,20 +93,21 @@ class ClusterComponent(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     index = models.SmallIntegerField(default=0)
     component = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="step")
-    cluster = models.ForeignKey(WorkflowCluster, on_delete=models.CASCADE, related_name="components")
+    cluster = models.ForeignKey(WorkflowCluster, on_delete=models.CASCADE, related_name="child_components")
 
 
 class Workflow(models.Model):
     name = models.CharField(max_length=200)
-    description = models.CharField(max_length=1000)
+    description = models.CharField(max_length=1000, null=True, blank=True)
     current_active_version = models.CharField(max_length=15, default="0.0")
-    workflow_file = models.FileField(max_length=1000, upload_to=upload_to_path)
+    workflow_file = models.FileField(max_length=1000, upload_to=upload_to_path, null=True, blank=True, storage=upload_storage)
     created_at = models.DateTimeField(auto_now_add=True)
 
     # if we make this DB only
     version_number = models.IntegerField(default=1)
-    
-    entrypoint = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, related_name="workflows")
+    cluster = models.ForeignKey(WorkflowCluster, on_delete=models.CASCADE, related_name="workflows")
+    # entrypoint = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, related_name="workflows")
+
     # input: related field
 
 
@@ -95,7 +121,7 @@ class WorkFlowInstance(models.Model):
 
 
 
-class WorkflowComponentInstance(models.Model):
+class ComponentInstance(models.Model):
     workflow = models.ForeignKey(WorkFlowInstance, on_delete=models.CASCADE, related_name="child_actions")
     component = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE)
     parent_action = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, 

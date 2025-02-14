@@ -38,8 +38,10 @@ class BaseComponentAction:
 
     def collect_inputs(self):
         input = self.workflow_instance.variables
-        context = self.context['variables'] | {
-            "input": input,
-        }
         calculated_fields = self.component.get_input_values(context)
-        return calculated_fields
+        context = self.context['variables'] | {
+            "global": input['global'],
+            "local": input['local'],
+            "input": calculated_fields,
+        }
+        return context
