@@ -1,0 +1,84 @@
+{% extends 'govapp/base.html' %} 
+
+{% block content %}
+<div class="container-sm">
+    <h1>{{workflow.name}}</h1>
+    <p>
+      Customize this workflow
+    </p>
+    <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
+        <div class="list-group">
+        {% for input in inputs %}
+          <a href="#" class="list-group-item list-group-item-action d-flex gap-3 py-3" aria-current="true">
+            <div class="d-flex gap-2 w-100 justify-content-between">
+              <div>
+                <p class="mb-0">{{input.label}}</p>
+                <p class="mb-0">{{input.key}}</p>
+                <p class="mb-0 opacity-75">{{input.default_value  }}</p>
+              </div>
+              <small class="opacity-50 text-nowrap">now</small>
+            </div>
+          </a>
+        {% endfor %}
+        </div>
+      </div>
+    <div class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center">
+        {% for component in main_cluster.components.all  %}
+        <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">{{component.name}} </h5>
+              <p class="card-text">{{component.description}}</p>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">An item</li>
+              <li class="list-group-item">A second item</li>
+              <li class="list-group-item">A third item</li>
+            </ul>
+            <div class="card-body">
+              <a href="#" class="card-link">Card link</a>
+              <a href="#" class="card-link">Another link</a>
+            </div>
+          </div>  
+        {% endfor %}
+    </div>
+    
+  </div>
+
+  <script>
+    $(() => {
+      console.log("Document ready");
+      const urlDiv = document.getElementById("url-field");
+
+      const addBtn = document.querySelector("button.btn-outline-primary");
+      const removeBtn = document.querySelector("button.btn-outline-danger");
+
+      addBtn.addEventListener("click", function () {
+        const urlDiv = document.getElementById("url-field");
+        const nodeId = `url-${new Date().getTime()}`;
+
+        const node = urlDiv.cloneNode(true);
+        $(node).attr("id", nodeId);
+        $(node).find("input").val("");
+        $(node).find("button").attr("data-id", nodeId);
+        urlDiv.parentNode.append(node);
+        $(node)
+          .find("button")
+          .click(function () {
+            const id = $(this).attr("data-id");
+            $(`#${id}`).remove();
+          });
+      });
+
+      $(urlDiv)
+        .find("button")
+        .on("click", function () {
+          const urlInput = document.querySelector("input[name='layer_url']");
+          urlInput.value = "";
+        });
+        $('button[type="submit"]').on('submit', (e)=> {
+          $(this).attr('disabled', 'disabled');
+
+        })
+    });
+  </script>
+{% endblock %}

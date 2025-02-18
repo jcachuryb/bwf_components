@@ -1,0 +1,70 @@
+{% extends 'govapp/base.html' %} 
+
+
+{% block content %}
+<div class="container-sm">
+    <h1>BWF Components</h1>
+    <p>
+      Customize your business workflows here.
+    </p>
+    <a href="#" class="btn btn-primary">
+        <i class="bi bi-plus"></i>
+        New Workflow
+    </a>
+    
+    {% for workflow in workflows %}
+
+    <div class="card mt-3">
+        <div class="card-header">
+          <a href="workflow/{{workflow.id}}/" class="btn btn-link">
+            <h5>{{ workflow.name }}</h5>
+        </a>
+
+        </div>
+        <div class="card-body">
+            <p>{{ workflow.description }}</p>
+            
+        </div>
+    </div>
+    {% endfor %}
+    
+  </div>
+
+  <script>
+    $(() => {
+      console.log("Document ready");
+      const urlDiv = document.getElementById("url-field");
+
+      const addBtn = document.querySelector("button.btn-outline-primary");
+      const removeBtn = document.querySelector("button.btn-outline-danger");
+
+      addBtn.addEventListener("click", function () {
+        const urlDiv = document.getElementById("url-field");
+        const nodeId = `url-${new Date().getTime()}`;
+
+        const node = urlDiv.cloneNode(true);
+        $(node).attr("id", nodeId);
+        $(node).find("input").val("");
+        $(node).find("button").attr("data-id", nodeId);
+        urlDiv.parentNode.append(node);
+        $(node)
+          .find("button")
+          .click(function () {
+            const id = $(this).attr("data-id");
+            $(`#${id}`).remove();
+          });
+      });
+
+      $(urlDiv)
+        .find("button")
+        .on("click", function () {
+          const urlInput = document.querySelector("input[name='layer_url']");
+          urlInput.value = "";
+        });
+        $('button[type="submit"]').on('submit', (e)=> {
+          $(this).attr('disabled', 'disabled');
+
+        })
+    });
+  </script>
+{% endblock %}
