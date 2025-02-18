@@ -19,17 +19,23 @@ from django.urls import path, include
 from django import conf
 from django import urls
 from . import views
-from .workflow import views as WorkflowViews
-
+from .workflow import views as workflow_viewsets
+from .components import views as component_viewsets
+from rest_framework import routers
 
 admin.site.site_header = conf.settings.PROJECT_TITLE
 admin.site.index_title = conf.settings.PROJECT_TITLE
 admin.site.site_title = conf.settings.PROJECT_TITLE
 
+router = routers.SimpleRouter()
+router.register(r'api/workflow', workflow_viewsets.WorkflowViewset)
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    # urls.path('bwf', views.HomeView.as_view(), name='home'),
-    urls.path('workflow', WorkflowViews.Workflow),
+urlpatterns = router.urls
+
+urlpatterns += [
+    path('bwf_admin/', admin.site.urls),
+    path('dashboard', views.HomeView.as_view(), name='home'),
+    path('workflow/<int:workflow_id>/', views.WorkflowView.as_view(), name='workflow'),
+    path('api/definitions/', component_viewsets.ComponentDefinitionViewset.as_view()),
 
 ]

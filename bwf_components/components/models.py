@@ -1,3 +1,5 @@
+import importlib
+
 from django.db import models
 
 
@@ -19,7 +21,7 @@ FAILURE_HANDLE_TYPES = [
 
 class WorkflowComponent(models.Model):
     name = models.CharField(max_length=100)
-    component = models.ForeignKey(to="ComponentDefinition", on_delete=models.CASCADE, related_name="instances")
+    definition = models.ForeignKey(to="ComponentDefinition", on_delete=models.CASCADE, related_name="instances")
     options = models.JSONField() # predefined
     # input: related
     # output: related
@@ -28,13 +30,22 @@ class WorkflowComponent(models.Model):
     version_number = models.IntegerField(default=1)
 
     def get_input_values(self, context_inputs={}):
-        inputs = self.input.all().select_related("dependencies").defer("parent")
+        inputs = self.input.all()
         values = {} 
         for input in inputs:
             values[input.key] = {"key": input.key, "value": input.get_value(context_inputs), "label": input.name}
+        return values
+
+    def get_component_class(self):
+        path_array = self.definition.path_to_execute.rsplit(".", 1)
+
+        module = importlib.import_module(path_array[0])
+        class_ = getattr(module, path_array[1])
+        # instance = class_()
+        return class_
 
     def __str__(self):
-        return f"{self.name} - {self.component.name} - {self.version_number}"
+        return f"{self.name} - {self.definition.name} - {self.version_number}"
 
 
 class ComponentInput(models.Model):
@@ -49,14 +60,14 @@ class ComponentInput(models.Model):
 
     def get_value(self, context_inputs={}):
         if self.expression:
-            return eval(self.expression, context_inputs)
+            return eval(self.expression, None, {"context": context_inputs})
         if self.json_value:
             expression = self.json_value.get("expression", None)
             value = self.json_value.get("value", None)
             if value:
                 return value
             if expression:
-                return eval(expression, context_inputs)
+                return eval(expression, None, {"context": context_inputs})
         return None
             
 
@@ -74,7 +85,7 @@ class ComponentDefinition(models.Model):
     path_to_execute = models.CharField(max_length=1000, null=True, blank=True) # class name or class path 
     script = models.TextField(default='print("Workflow action")')
     base_input = models.JSONField()  # TODO: Define the structure of these fields. {key, label, value, type, index}
-    base_output = models.JSONField()
+    base_output = models.JSONField(null=True, blank=True)
     version_number = models.IntegerField(default=1)
     version_name = models.CharField(max_length=15, default="0.0")
     editable = models.BooleanField(default=True)

@@ -1,5 +1,5 @@
 from bwf_components.components.models import WorkflowComponent
-from bwf_components.workflow.models import WorkFlowInstance
+from bwf_components.workflow.models import WorkFlowInstance, ComponentInstance
 
 """ 
 component: WorkflowComponent
@@ -17,10 +17,11 @@ context: Dict
 
 class BaseComponentAction:
     
-    def __init__(self, component:WorkflowComponent, workflow_instance: WorkFlowInstance, context={}):
-        self.component = component
+    def __init__(self, component_instance:ComponentInstance, workflow_instance: WorkFlowInstance, context={}):
+        self.component = component_instance
+        self.base_component = component_instance.component
         self.workflow_instance = workflow_instance
-        self.context = context
+        self.context = context | component_instance.input
 
         # output
 

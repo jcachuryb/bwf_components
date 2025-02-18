@@ -14,9 +14,18 @@ class ComponentInputSerializer(serializers.ModelSerializer):
         model = ComponentInput
         fields = '__all__'
 
+class CreateComponentDefinitionSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255)
+    path_to_execute = serializers.CharField(max_length=1000, required=False)
+    script = serializers.CharField(required=False)
+    base_input = serializers.JSONField()
+    base_output = serializers.JSONField()
+
+    version_number = serializers.IntegerField(default=1)
+    version_name = serializers.CharField(max_length=15, default="0.0")
 
 
 class ListComponentDefinitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComponentDefinition
-        fields = '__all__'
+        fields = ('id', 'name', 'base_input', 'base_output', 'version_number', 'version_name')

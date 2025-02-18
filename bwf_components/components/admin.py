@@ -7,7 +7,7 @@ from .models import (ComponentDefinition, WorkflowComponent, ComponentInput, Com
 class ComponentInputInline(admin.TabularInline):
     model = ComponentInput
     extra = 0
-    fields = ('name', 'key', 'expression','index',)
+    fields = ('name', 'key', 'expression','index','json_value', 'required',)
     ordering = ('-id',)
     # readonly_fields = ('name', 'key', 'expression',)
 
@@ -31,7 +31,7 @@ class ComponentDefinitionAdmin(admin.ModelAdmin):
 class WorkflowComponentAdmin(admin.ModelAdmin):
     list_display = [
         'name',
-        'component',
+        'definition',
         'version_number',
     ]
 

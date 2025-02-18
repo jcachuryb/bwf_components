@@ -49,8 +49,8 @@ class ConditionalFlowAction(BaseComponentAction):
         expression_a = condition.get("expression_a")
         expression_b = condition.get("expression_b")
 
-        value_a  = eval(expression_a, inputs)
-        value_b  = eval(expression_b, inputs)
+        value_a  = eval(expression_a, None, inputs)
+        value_b  = eval(expression_b, None, inputs)
         return eval(f"{value_a} {operator} {value_b}")
 
 
