@@ -1,8 +1,8 @@
 import requests
 import json
 
-from actions.base_action import BaseComponentAction
-from action_utils.emails import email_sender
+from bwf_components.components.actions.base_action import BaseComponentAction
+from bwf_components.components.action_utils.emails import email_sender
 
 
 '''
@@ -18,7 +18,7 @@ class ConditionalFlowAction(BaseComponentAction):
 
 
     def execute(self):
-        inputs = self.collect_inputs()
+        inputs = self.collect_context_data()
         component_input = inputs['input']
 
         flows = self.component.action_flow.components.all()
@@ -36,9 +36,9 @@ class ConditionalFlowAction(BaseComponentAction):
         if result:
             # component 
             print("Executing True")
-            self.set_output({"result": True})
+            self.set_output(True, data={"result": True})
         else:
-            self.set_output({"result": False})
+            self.set_output(True, data={"result": False})
             print("Executing False")
         return True
 

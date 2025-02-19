@@ -69,7 +69,7 @@ class VariableValue(models.Model):
     label = models.CharField(max_length=100)
     key = models.CharField(max_length=100)
     data_type = models.CharField(max_length=50, default=VariableTypesEnum.STRING, choices=VariableTypesEnum.choices)
-    value = models.TextField()
+    value = models.JSONField(null=True, blank=True) # {type, value, options? }
     context_name = models.CharField(max_length=10, default=ContextTypesEnum.LOCAL, choices=ContextTypesEnum.choices)
     workflow = models.ForeignKey(to="Workflow", on_delete=models.CASCADE, related_name="variables")
 
@@ -180,10 +180,17 @@ class WorkflowInstanceFactory:
 
         instance = WorkFlowInstance(workflow=workflow)
         # collect variables
+        local_variables = workflow.variables.filter(context_name=ContextTypesEnum.LOCAL)
         input_values = workflow.input.all()
         context = {
             'inputs': {},
+            'global': {},
+            'local': {},
         }
+
+        for local_variable in local_variables:
+            context['local'][local_variable.key] = None
+
         for input in input_values:
             context['inputs'][input.key] = WorkflowInstanceFactory.__get_input_value(input, input_params.get(input.key))
         instance.variables = context
@@ -219,9 +226,6 @@ class WorkflowInstanceFactory:
                 else:
                     return param_value
 
-
-
-
 class JobQueueRecord(models.Model):
     workflow = models.ForeignKey(WorkFlowInstance, on_delete=models.CASCADE, related_name="workflow_jobs")
     action = models.ForeignKey(ComponentInstance, on_delete=models.CASCADE, related_name="action_job")
@@ -242,7 +246,7 @@ class ActionLogRecord(models.Model):
 class WorkflowComponentInstanceFactory:
 
     @staticmethod
-    def create_component_instance(workflow_instance, component, input_params={}):
+    def create_component_instance(workflow_instance: WorkFlowInstance, component: WorkflowComponent, input_params={}):
         input_values = component.get_input_values(input_params)
         instance = ComponentInstance.objects.create(workflow=workflow_instance, component=component, input=input_values)
         # collect variables

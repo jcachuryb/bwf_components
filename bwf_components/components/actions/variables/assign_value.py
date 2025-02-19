@@ -1,18 +1,19 @@
 
-from actions.base_action import BaseComponentAction
-from action_utils.emails import email_sender
+from bwf_components.components.actions.base_action import BaseComponentAction
+from bwf_components.components.action_utils.emails import email_sender
 
 
 class AssignValueAction(BaseComponentAction):
 
 
     def execute(self):
-        inputs = self.collect_inputs()
-        component_input = inputs['input']
+        context = self.collect_context_data()
+        component_input = context['input']
         
-        input = component_input['input']
-        key = input.get("local_variable_key")
+        key = component_input.get("local_variable_key")
 
-        self.workflow_instance.variables['local'][key] = input['value']
+        self.workflow_instance.variables['local'][key] = component_input.get("value")
+        self.workflow_instance.save()
+        self.set_output(True)
         return True
 

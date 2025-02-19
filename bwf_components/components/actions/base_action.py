@@ -21,7 +21,7 @@ class BaseComponentAction:
         self.component = component_instance
         self.base_component = component_instance.component
         self.workflow_instance = workflow_instance
-        self.context = context | component_instance.input
+        self.context = context
 
         # output
 
@@ -29,20 +29,21 @@ class BaseComponentAction:
     def execute(self):
         raise Exception("Need to implement the execute method")
 
-    def set_output(self, value={}):
+    def set_output(self, success:bool, message="", data={}):
         # Call workflow coordinator to set the output and call the next node
         # store result in workspace instance context
-        output = {"component_id": self.component, "output": value}
-        print(vars(output))
-        pass
+        self.component.output = {
+            "success": success,
+            "message": message,
+            "data": data
+        }
+        self.component.save()
     
 
-    def collect_inputs(self):
-        input = self.workflow_instance.variables
-        calculated_fields = self.component.get_input_values(context)
-        context = self.context['variables'] | {
-            "global": input['global'],
-            "local": input['local'],
-            "input": calculated_fields,
+    def collect_context_data(self):
+        context = self.context | {
+            "input": {},
         }
+        for key, value in self.component.input.items():
+            context["input"][key] = value["value"]
         return context

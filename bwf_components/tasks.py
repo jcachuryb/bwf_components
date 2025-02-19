@@ -2,6 +2,8 @@ import json
 from bwf_components.workflow.models import Workflow, WorkFlowInstance, WorkflowInstanceFactory, WorkflowComponentInstanceFactory, ComponentInstance
 from bwf_components.components.models import WorkflowComponent
 
+import logging
+logger = logging.getLogger(__name__)
 
 
 def start_workflow(workflow_id, payload={}):
@@ -29,13 +31,20 @@ def start_pending_component(current_component: ComponentInstance):
         current_component.set_status_running()
         # get secrets and globals
         task_class = base_component.get_component_class()
-        instance = task_class(component=current_component, workflow_instance=current_component.workflow, context={})
+        # TODO: Get Global variables
+        instance = task_class(component_instance=current_component, workflow_instance=current_component.workflow, context={
+            "global": {},
+            "local": current_component.workflow.variables.get("local", {}),
+            "inputs": current_component.workflow.variables.get("inputs", {}),
+        })
         if not instance.execute():
             # execute fallback action
             pass
         else:
             current_component.set_status_completed()
     except Exception as e:
+        logger.error(f"Error while executing component {current_component.id}")
+        logger.error(e)
         current_component.set_status_error(str(e))
         return None
     return instance

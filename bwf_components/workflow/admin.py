@@ -1,7 +1,19 @@
 from django.contrib import admin
 from django.db.models import Subquery, OuterRef
-from .models import Workflow, WorkflowCluster, ClusterComponent, WorkFlowInstance, WorkflowInput, ComponentInstance
+from .models import Workflow, WorkflowCluster, ClusterComponent, WorkFlowInstance, WorkflowInput, ComponentInstance, VariableValue
 # Register your models here.
+
+class VariableValueInline(admin.TabularInline):
+    model = VariableValue
+    extra = 0
+    fields = ('label','key', 'data_type', 'context_name',)
+    ordering = ('-id',)
+
+class WorkflowInputInline(admin.TabularInline):
+    model = WorkflowInput
+    extra = 0
+    fields = ('label','key', 'data_type','default_value', 'value', 'required',)
+    ordering = ('-id',)
 
 
 class ComponentInputInline(admin.TabularInline):
@@ -18,7 +30,7 @@ class WorkflowAdmin(admin.ModelAdmin):
         'description',
         'created_at',
     ]
-    inlines = [ComponentInputInline]
+    inlines = [VariableValueInline, WorkflowInputInline, ComponentInputInline]
 
 @admin.register(WorkflowCluster)
 class WorkflowClusterAdmin(admin.ModelAdmin):
@@ -41,9 +53,10 @@ admin.site.register(ClusterComponent)
 class ComponentInstanceInline(admin.TabularInline):
     model = ComponentInstance
     extra = 0
-    fields = ('created_at', 'updated_at', 'input', 'status',)
+    fields = ('component','created_at', 'updated_at', 'input', 'status',)
     ordering = ('-id',)
     readonly_fields = ('created_at','updated_at',)
+
 
 @admin.register(WorkFlowInstance)
 class WorkFlowInstanceAdmin(admin.ModelAdmin):
