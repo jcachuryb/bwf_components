@@ -2,21 +2,18 @@ import importlib
 
 from django.db import models
 
+class OutputTypesEnum(models.TextChoices):
+    STRING = "STRING", "string"
+    NUMBER = "NUMBER", "number"
+    ARRAY = "ARRAY", "array"
+    OBJECT = "OBJECT", "object"
+    BOOLEAN = "BOOLEAN", "boolean"
 
-OUTPUT_TYPES = [
-    ("STRING", "string"),
-    ("NUMBER", "number"),
-    ("ARRAY", "array"),
-    ("OBJECT", "object"),
-    ("BOOLEAN", "boolean"),
-]
-
-FAILURE_HANDLE_TYPES = [
-    ("RETRY", "Retry"),
-    ("IGNORE", "Ignore"),
-    ("TERMINATE", "Terminate"),
-    ("CUSTOM", "Custom"),
-]
+class FailureHandleTypesEnum(models.TextChoices):
+    RETRY = "RETRY", "Retry"
+    IGNORE = "IGNORE", "Ignore"
+    TERMINATE = "TERMINATE", "Terminate"
+    CUSTOM = "CUSTOM", "Custom"
 
 
 class WorkflowComponent(models.Model):
@@ -74,7 +71,7 @@ class ComponentInput(models.Model):
 
 class ComponentOutput(models.Model):
     name = models.CharField(max_length=100)
-    data_type = models.CharField(max_length=50, default="STRING", choices=OUTPUT_TYPES)
+    data_type = models.CharField(max_length=50, default=OutputTypesEnum.STRING, choices=OutputTypesEnum.choices)
     value = models.TextField()
     component = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="output")
     is_custom = models.BooleanField(default=False)
@@ -96,8 +93,12 @@ class ComponentDefinition(models.Model):
 
 
 class OnComponentFail(models.Model):
-    type = models.CharField(max_length=15, choices=FAILURE_HANDLE_TYPES, default="Retry")
+    type = models.CharField(max_length=15, choices=FailureHandleTypesEnum.choices , default=FailureHandleTypesEnum.RETRY)
     max_retries = models.SmallIntegerField(default=1, blank=True, null=True)
     retry_interval = models.IntegerField(blank=True, null=True)
-    component = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, blank=True, null=True)
+    num_retries = models.SmallIntegerField(default=0)
+    component = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, blank=True, null=True, related_name="on_fail")
+    # alternative_flow = models.ForeignKey(to="workflow.WorkflowInstance", on_delete=models.CASCADE, blank=True, null=True, related_name="on_fail")
 
+    def get_retry_interval_in_seconds(self):
+        return self.retry_interval if self.retry_interval else 5
