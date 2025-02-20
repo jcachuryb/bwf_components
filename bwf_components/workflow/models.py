@@ -24,22 +24,22 @@ class ComponentStepStatusEnum(models.TextChoices):
     ERROR = "ERROR", "error"
 
 class WorkflowInputTypesEnum(models.TextChoices):
-    STRING = "STRING", "string"
-    NUMBER = "NUMBER", "number"
-    ARRAY = "ARRAY", "array"
-    OBJECT = "OBJECT", "object"
-    BOOLEAN = "BOOLEAN", "boolean"
-    SELECT = "SELECT", "select"
-    MULTI_SELECT = "MULTI_SELECT", "multi_select"
-    FILE = "FILE", "file"
-    ANY = "ANY", "any"
+    STRING = "string", "string"
+    NUMBER = "number", "number"
+    ARRAY = "array", "array"
+    OBJECT = "object", "object"
+    BOOLEAN = "boolean", "boolean"
+    SELECT = "select", "select"
+    MULTI_SELECT = "multi_select", "multi_select"
+    FILE = "file", "file"
+    ANY = "any", "any"
 
 class VariableTypesEnum(models.TextChoices):
-    STRING = "STRING", "string"
-    NUMBER = "NUMBER", "number"
-    ARRAY = "ARRAY", "array"
-    OBJECT = "OBJECT", "object"
-    BOOLEAN = "BOOLEAN", "boolean"
+    STRING = "string", "string"
+    NUMBER = "number", "number"
+    ARRAY = "array", "array"
+    OBJECT = "object", "object"
+    BOOLEAN = "boolean", "boolean"
 
 class ContextTypesEnum(models.TextChoices):
     GLOBAL = "GLOBAL", "Global"

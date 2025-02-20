@@ -27,15 +27,16 @@ admin.site.site_header = conf.settings.PROJECT_TITLE
 admin.site.index_title = conf.settings.PROJECT_TITLE
 admin.site.site_title = conf.settings.PROJECT_TITLE
 
-router = routers.SimpleRouter()
-router.register(r'api/workflow', workflow_viewsets.WorkflowViewset)
+router = routers.DefaultRouter()
+router.register('workflow', workflow_viewsets.WorkflowViewset)
+router.register('workflow-inputs', workflow_viewsets.WorkflowInputsViewset)
+router.register('workflow-variables', workflow_viewsets.WorkflowVariablesViewset)
+router.register('component-definitions', component_viewsets.ComponentDefinitionViewset)
 
-urlpatterns = router.urls
 
-urlpatterns += [
+urlpatterns = [
     path('bwf_admin/', admin.site.urls),
     path('dashboard', views.HomeView.as_view(), name='home'),
     path('workflow/<int:workflow_id>/', views.WorkflowView.as_view(), name='workflow'),
-    path('api/definitions/', component_viewsets.ComponentDefinitionViewset.as_view()),
-
+    path("api/", include(router.urls)),
 ]

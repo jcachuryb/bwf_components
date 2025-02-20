@@ -32,6 +32,10 @@ class WorkflowAdmin(admin.ModelAdmin):
     ]
     inlines = [VariableValueInline, WorkflowInputInline, ComponentInputInline]
 
+admin.register(WorkflowInput)
+admin.register(VariableValue)
+
+
 @admin.register(WorkflowCluster)
 class WorkflowClusterAdmin(admin.ModelAdmin):
     list_display = [

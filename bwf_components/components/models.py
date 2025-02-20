@@ -3,11 +3,11 @@ import importlib
 from django.db import models
 
 class OutputTypesEnum(models.TextChoices):
-    STRING = "STRING", "string"
-    NUMBER = "NUMBER", "number"
-    ARRAY = "ARRAY", "array"
-    OBJECT = "OBJECT", "object"
-    BOOLEAN = "BOOLEAN", "boolean"
+    STRING = "string", "string"
+    NUMBER = "number", "number"
+    ARRAY = "array", "array"
+    OBJECT = "object", "object"
+    BOOLEAN = "boolean", "boolean"
 
 class FailureHandleTypesEnum(models.TextChoices):
     RETRY = "RETRY", "Retry"

@@ -8,6 +8,14 @@ class WorkflowComponentSerializer(serializers.ModelSerializer):
         model = WorkflowComponent
         fields = '__all__'
 
+class CreateComponentSerializer(serializers.Serializer):
+    workflow_id = serializers.IntegerField()
+    name = serializers.CharField(max_length=100, required=False)
+    index = serializers.IntegerField(default=1)
+    description = serializers.CharField(max_length=1000, required=False)
+    definition = serializers.IntegerField()
+    version_number = serializers.IntegerField(default=1)
+
 
 class ComponentInputSerializer(serializers.ModelSerializer):
     class Meta:
