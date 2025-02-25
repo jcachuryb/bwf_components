@@ -17,12 +17,3 @@ class SendStaticEmailAction(BaseComponentAction):
         email_sender.send_static_email(from_email, to, subject, body)
         self.set_output(True)
         return True
-
-
-
-        
-
-        
-
-
-        

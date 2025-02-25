@@ -32,6 +32,7 @@ router.register('workflow', workflow_viewsets.WorkflowViewset)
 router.register('workflow-inputs', workflow_viewsets.WorkflowInputsViewset)
 router.register('workflow-variables', workflow_viewsets.WorkflowVariablesViewset)
 router.register('component-definitions', component_viewsets.ComponentDefinitionViewset)
+router.register('workflow-components', component_viewsets.WorkflowComponentViewset)
 
 
 urlpatterns = [

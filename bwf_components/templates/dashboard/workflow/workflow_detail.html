@@ -1,6 +1,7 @@
 {% extends 'govapp/base.html' %} {% block content %}
 <div class="container-sm">
   <input type="hidden" id="workflow_id" value="{{workflow.id}}" />
+  <input type="hidden" id="csrf_token" value="{{ csrf_token }}" />
   <h1>{{workflow.name}}</h1>
   <p>{{workflow.description}}</p>
 
@@ -32,7 +33,7 @@
   ></div>
   <div
     class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center"
-    style="width: 450px"
+    
   >
     {% for component in main_cluster.components.all %}
     <div class="card">
@@ -51,6 +52,11 @@
       </div>
     </div>
     {% endfor %}
+      <button class="btn btn-outline-primary main-add-component" style="display: none;">
+        <i class="bi bi-plus me-2"></i>
+        Add input
+      </button>
+    
   </div>
 </div>
 <script src="/static/pages/workflow/workflow.js"></script>
@@ -62,6 +68,7 @@
 <!-- END: Fragments -->
 <!-- Modals -->
 {% include 'modals/inputs_modal.html' %}
+{% include 'modals/component_creation_modal.html' %}
 <!-- END: Modals -->
 
 <script>
@@ -69,6 +76,13 @@
     const workflow_id = $("#workflow_id").val();
     workflow_inputs.init(workflow_id, "inputs-node");
     workflow_components.init(workflow_id, "components-flow");
+    workflow_inputs.csrf_token = $("#csrf_token").val();
+    workflow_components.csrf_token = $("#csrf_token").val();
+    
+
+    $("button.main-add-component").on("click", function () {
+      $("#component-creation-modal").modal("show");
+    });
   });
 </script>
 {% endblock %}

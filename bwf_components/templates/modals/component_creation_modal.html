@@ -1,0 +1,199 @@
+<div
+  class="modal fade"
+  id="component-creation-modal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="component-creation-modal-label"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="component-creation-modal-label">
+          Component Definitions
+        </h5>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Select a component definition to create a new component.</p>
+        <form id="inputs-form">
+          <div class="row" id="definitions"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary close-button">
+          Close
+        </button>
+        <button type="button" class="btn btn-primary create-component-button">
+          Create Component
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  new_component_data = {
+    csrf_token: null,
+    selectedComponent: {
+      data: null,
+    },
+
+    validate: function (data) {
+      const {} = data;
+
+      return true;
+    },
+  };
+  $(() => {
+    const { markup } = utils;
+    const _ = workflow_components;
+    $("#definitions").empty();
+    _.fetchComponentDefinitions().then((data) => {
+      data.forEach((d, index) => {
+        $("#definitions").append(
+          markup(
+            "div",
+            [
+              {
+                tag: "input",
+                class: "list-group-item-check pe-none",
+                type: "radio",
+                name: "definition-radio",
+                id: `listGroupCheckableRadios${index}`,
+                value: d.id,
+              },
+
+              {
+                tag: "label",
+                content: [
+                  d.name,
+                  {
+                    tag: "span",
+                    content: d.description,
+                    class: "d-block small opacity-50",
+                  },
+                ],
+                class: "list-group-item rounded-3 py-1 my-1",
+                for: `listGroupCheckableRadios${index}`,
+              },
+            ],
+            { class: "col-6" }
+          )
+        );
+      });
+    });
+
+    $("#component-creation-modal").on("show.bs.modal", function (e) {});
+    $("#component-creation-modal").on("hidden.bs.modal", function (e) {
+      const value = $("#definitions input[type='radio']").prop(
+        "checked",
+        false
+      );
+    });
+
+    $("#component-creation-modal .create-component-button").on(
+      "click",
+      function () {
+        const _ = workflow_components;
+        const value = $("#definitions input:checked").val();
+        if (value) {
+          $(".create-component-button").prop("disabled", true);
+          const definition = _.componentDefinitions.find((d) => d.id == value);
+
+          const data = {
+            definition: definition.id,
+            index: 0,
+            name: definition.name,
+          };
+          _.api
+            .addComponent(data)
+            .then((data) => {
+              $(".create-component-button").prop("disabled", false);
+              $("#component-creation-modal").modal("hide");
+            })
+            .catch((error) => {
+              $(".create-component-button").prop("disabled", false);
+              alert("An error occurred while creating the component.");
+            });
+        } else {
+          alert("Please select a component definition.");
+        }
+      }
+    );
+  });
+</script>
+
+<style>
+  #definitions .list-group {
+    width: 100%;
+    max-width: 460px;
+    margin-inline: 1.5rem;
+  }
+
+  #definitions .form-check-input:checked + .form-checked-content {
+    opacity: 0.5;
+  }
+
+  #definitions .form-check-input-placeholder {
+    border-style: dashed;
+  }
+  [contenteditable]:focus {
+    outline: 0;
+  }
+
+  #definitions .list-group-item {
+    cursor: pointer;
+  }
+  #definitions .list-group-item-check {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+  }
+  #definitions .list-group-item-check:hover + .list-group-item {
+    background-color: var(--bs-secondary-bg);
+  }
+  #definitions .list-group-item-check:checked + .list-group-item {
+    color: #fff;
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    font-weight: 600;
+  }
+  #definitions .list-group-item-check[disabled] + .list-group-item,
+  #definitions .list-group-item-check:disabled + .list-group-item {
+    pointer-events: none;
+    filter: none;
+    opacity: 0.5;
+  }
+
+  #definitions .list-group-radio .list-group-item {
+    cursor: pointer;
+    border-radius: 0.5rem;
+  }
+  #definitions .list-group-radio .form-check-input {
+    z-index: 2;
+    margin-top: -0.5em;
+  }
+  #definitions .list-group-radio .list-group-item:hover,
+  #definitions .list-group-radio .list-group-item:focus {
+    background-color: var(--bs-secondary-bg);
+  }
+
+  #definitions .list-group-radio .form-check-input:checked + .list-group-item {
+    background-color: var(--bs-body);
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 2px var(--bs-primary);
+  }
+  #definitions .list-group-radio .form-check-input[disabled] + .list-group-item,
+  #definitions .list-group-radio .form-check-input:disabled + .list-group-item {
+    pointer-events: none;
+    filter: none;
+    opacity: 0.5;
+  }
+</style>

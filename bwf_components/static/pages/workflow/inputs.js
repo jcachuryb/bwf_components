@@ -3,6 +3,7 @@ var workflow_inputs = {
     add_input_btn: null,
     containerId: null,
     container: null,
+    csrf_token: null,
 
     selectedInput: null,
     progressBar: null,
@@ -12,7 +13,6 @@ var workflow_inputs = {
     componentsController: null,
     var: {
       base_url: "/bwf/api/workflow-inputs/",
-      csrf_token: null,
       inputs: []
     },
   
@@ -99,7 +99,7 @@ var workflow_inputs = {
         $.ajax({
           url: _.var.base_url,
           type: "POST",
-          headers: {'X-CSRFToken' : _.var.csrf_token },
+          headers: {'X-CSRFToken' : _.csrf_token },
           contentType: "application/json",
           data: JSON.stringify({...input, workflow_id: _.workflow_id}),
           success: success_callback,
@@ -111,7 +111,7 @@ var workflow_inputs = {
         $.ajax({
           url: _.var.base_url + input.id + "/",
           type: "PUT",
-          headers: {'X-CSRFToken' : _.var.csrf_token },
+          headers: {'X-CSRFToken' : _.csrf_token },
           contentType: "application/json",
           data: JSON.stringify({...input, workflow_id: _.workflow_id}),
           success: success_callback,
@@ -123,7 +123,7 @@ var workflow_inputs = {
         $.ajax({
           url: _.var.base_url + input.id + "/",
           type: "DELETE",
-          headers: {'X-CSRFToken' : _.var.csrf_token },
+          headers: {'X-CSRFToken' : _.csrf_token },
           contentType: "application/json",
           success: success_callback,
           error: error_callback,

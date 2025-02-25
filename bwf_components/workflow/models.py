@@ -80,7 +80,7 @@ class WorkflowInput(models.Model):
     description = models.CharField(max_length=1000)
     data_type = models.CharField(max_length=50, default=WorkflowInputTypesEnum.STRING, choices=WorkflowInputTypesEnum.choices)
     default_value = models.JSONField(null=True, blank=True) # type, value
-    value = models.JSONField(null=True, blank=True) # {type, value, options? }
+    value = models.JSONField(null=True, blank=True) # {type, value, options? } TODO: Remove
     required = models.BooleanField(default=False)
     workflow = models.ForeignKey(to="Workflow", on_delete=models.CASCADE, related_name="input")
 

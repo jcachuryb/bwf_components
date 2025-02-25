@@ -1,4 +1,4 @@
-import json
+import uuid
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.decorators import action
@@ -81,9 +81,8 @@ class WorkflowInputsViewset(ModelViewSet):
 
         workflow = Workflow.objects.get(id=serializer.validated_data.get("workflow_id"))
         key = serializer.validated_data.get("key")
-        
-        existing_number = WorkflowInput.objects.filter(workflow=workflow, key=key).count()
-        key = f"{key}_{existing_number}" if existing_number > 0 else key
+        if WorkflowInput.objects.filter(workflow=workflow, key=key).exists():
+            key = f"{key}_{str(uuid.uuid4())[0:8]}"   
         
         instance = WorkflowInput.objects.create(workflow=workflow, **serializer.validated_data)
         return Response(serializers.WorkflowInputSerializer(instance).data)
@@ -104,7 +103,17 @@ class WorkflowInputsViewset(ModelViewSet):
         
     
     def update(self, request, *args, **kwargs):
-        # TODO: make sure to update componentes relying on this key
+        item = self.get_object()
+        serializer = self.get_serializer(item, data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        workflow = Workflow.objects.get(id=serializer.validated_data.get("workflow_id"))
+        key = serializer.validated_data.get("key")
+        has_key_changed = key != item.key
+        if has_key_changed:
+            if WorkflowInput.objects.filter(workflow=workflow, key=key).exists():
+                key = f"{key}_{str(uuid.uuid4())[0:8]}"       
+
         return super().update(request, *args, **kwargs)
     
     def destroy(self, request, *args, **kwargs):
@@ -116,18 +125,25 @@ class WorkflowVariablesViewset(ModelViewSet):
     queryset = VariableValue.objects.all()
     serializer_class = serializers.VariableValueSerializer
 
+    def get_serializer(self, *args, **kwargs):
+        if self.action == 'create' or self.action == 'update':
+            return serializers.CreateVariableValueSerializer(*args, **kwargs)
+        return super().get_serializer(*args, **kwargs)
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         workflow = Workflow.objects.get(id=serializer.validated_data.get("workflow_id"))
-        key = serializer.validated_data.get("key")
         
-        existing_number = VariableValue.objects.filter(workflow=workflow, key=key).count()
-        key = f"{key}_{existing_number}" if existing_number > 0 else key
+        key = serializer.validated_data.get("key")
+        context_value = serializer.validated_data.get("context_name")
+        if VariableValue.objects.filter(workflow=workflow, key=key).exists():
+            key = f"{key}_{str(uuid.uuid4())[0:8]}"   
         
         instance = VariableValue.objects.create(workflow=workflow, **serializer.validated_data)
         return Response(serializers.VariableValueSerializer(instance).data)
+    
 
 
     def update(self, request, *args, **kwargs):

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import View
 from django.http import JsonResponse
-from django.db import transaction
+from django.db import transaction, models
 from rest_framework import status, decorators, permissions
 from rest_framework import viewsets, mixins
 from rest_framework.response import Response
@@ -9,6 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import ListAPIView, GenericAPIView
 from .models import WorkflowComponent, ComponentInput, ComponentOutput, ComponentDefinition
 from bwf_components.workflow.models import Workflow, WorkflowCluster, ClusterComponent
+from bwf_components.components.models import  InputOutputTypesEnum
 from . import serializers
 # Create your views here.
 
@@ -31,37 +32,49 @@ class WorkflowComponentViewset(viewsets.ModelViewSet):
             with transaction.atomic():
                 workflow = Workflow.objects.get(id=serializer.validated_data.get("workflow_id"))
                 defininition = ComponentDefinition.objects.get(id=serializer.validated_data.get("definition"))
-                index = serializer.validated_data.get("index")
+                index = serializer.validated_data.get("index", 0)
                 
                 instance = WorkflowComponent.objects.create(
-                    name=serializer.validated_data.get("name"), 
+                    name=serializer.validated_data.get("name", "Node"), 
                     definition=defininition,
                     parent_workflow=workflow,
-                    version_number=serializer.validated_data.get("version_number")
+                    version_number=serializer.validated_data.get("version_number", "1")
                 )
 
-                # cluster_components = workflow.main_cluster.components.all()
-                ClusterComponent.objects.create(
-                    index=index, 
-                    component=instance,
-                    cluster=workflow.main_cluster
-                )
+                # Update 
+                ClusterComponent.objects.filter(cluster=workflow.main_cluster, index__gte=index).update(index=models.F('index') + 1)
 
-                base_input = defininition.base_input
-                base_output = defininition.base_output
+                workflow.main_cluster.components.add(instance, through_defaults={"index": index})
 
-                for key, value in base_input.items():
+                base_input = defininition.base_input if defininition.base_input else []
+                base_output = defininition.base_output if defininition.base_output else []
+
+                input_index = 0
+                for input_item in base_input:
                     ComponentInput.objects.create(
-                        name=value.get("label"),
-                        key=value.get("key"),
+                        name=input_item.get("label"),
+                        key=input_item.get("key"),
                         json_value={
-                            "value": value.get("default_value"),
+                            "type": input_item.get("type"),
+                            "options": input_item.get("options"),
+                            "value_rules": input_item.get("value_rules"),
                         },
-                        index=index,
+                        index=input_index,
                         parent=instance,
-                        required=value.get("required")
+                        required=input_item.get("required", False)
                     )
-            
+                    input_index += 1
+                
+                for output_item in base_output:
+                    ComponentOutput.objects.create(
+                        name=output_item.get("label"),
+                        data_type=output_item.get("type", InputOutputTypesEnum.STRING),
+                        key=output_item.get("key"),
+                        json_value=output_item.get("value", None),
+                        many=output_item.get("many", False),
+                        is_custom=False,
+                        component=instance,
+                    )
                 
                 return Response(serializers.WorkflowComponentSerializer(instance).data)
         except Exception as e:
@@ -77,11 +90,12 @@ class WorkflowComponentViewset(viewsets.ModelViewSet):
         workflow_id = request.query_params.get("workflow_id", None)
         try:
             workflow = Workflow.objects.get(id=workflow_id)
-            components = WorkflowComponent.objects.get(id=kwargs.get("pk"), workflow__id=workflow_id)
+
+            components_list = workflow.main_cluster.components.all()
             
-            return Response(serializers.WorkflowComponentSerializer(components, many=True).data)
+            return Response(serializers.WorkflowComponentSerializer(components_list, many=True).data)
         except Exception as e:
-            return Response({"error": str(e)}, statu=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
     
     def update(self, request, *args, **kwargs):
@@ -89,7 +103,7 @@ class WorkflowComponentViewset(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
     
     def destroy(self, request, *args, **kwargs):
-        # TODO: make sure to update componentes relying on this key
+        
         return super().destroy(request, *args, **kwargs)
 
 

@@ -2,7 +2,7 @@ import importlib
 
 from django.db import models
 
-class OutputTypesEnum(models.TextChoices):
+class InputOutputTypesEnum(models.TextChoices):
     STRING = "string", "string"
     NUMBER = "number", "number"
     ARRAY = "array", "array"
@@ -19,7 +19,7 @@ class FailureHandleTypesEnum(models.TextChoices):
 class WorkflowComponent(models.Model):
     name = models.CharField(max_length=100)
     definition = models.ForeignKey(to="ComponentDefinition", on_delete=models.CASCADE, related_name="instances")
-    options = models.JSONField() # predefined
+    options = models.JSONField(null=True, blank=True) # predefined
     # input: related
     # output: related
     # action_flow: related
@@ -48,8 +48,9 @@ class WorkflowComponent(models.Model):
 class ComponentInput(models.Model):
     name = models.CharField(max_length=100)
     key = models.CharField(max_length=100)
-    expression = models.TextField(default='')
-    json_value = models.JSONField() # {key, label, type, value}
+    data_type = models.CharField(max_length=50, default=InputOutputTypesEnum.STRING, choices=InputOutputTypesEnum.choices)
+    expression = models.TextField(null=True, blank=True)
+    json_value = models.JSONField(default={}) # {key, label, type, value}
     index = models.SmallIntegerField(default=0)
     parent = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="input")
     required = models.BooleanField(default=False)
@@ -71,18 +72,21 @@ class ComponentInput(models.Model):
 
 class ComponentOutput(models.Model):
     name = models.CharField(max_length=100)
-    data_type = models.CharField(max_length=50, default=OutputTypesEnum.STRING, choices=OutputTypesEnum.choices)
-    value = models.TextField()
+    key = models.CharField(max_length=100)
+    data_type = models.CharField(max_length=50, default=InputOutputTypesEnum.STRING, choices=InputOutputTypesEnum.choices)
+    json_value = models.JSONField(default={}) # {key, label, type, value}  
+    many = models.BooleanField(default=False)
     component = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="output")
     is_custom = models.BooleanField(default=False)
 
 
 class ComponentDefinition(models.Model):
     name = models.CharField(max_length=100)
+    description = models.CharField(max_length=1000, default="")
     path_to_execute = models.CharField(max_length=1000, null=True, blank=True) # class name or class path 
     script = models.TextField(default='print("Workflow action")')
-    base_input = models.JSONField()  # TODO: Define the structure of these fields. {key, label, value, type, index}
-    base_output = models.JSONField(null=True, blank=True)
+    base_input = models.JSONField()  # {key, label, value, type, index} value:  expression, variable, value
+    base_output = models.JSONField(null=True, blank=True) # {key, label, value, type, index}
     version_number = models.IntegerField(default=1)
     version_name = models.CharField(max_length=15, default="0.0")
     editable = models.BooleanField(default=True)

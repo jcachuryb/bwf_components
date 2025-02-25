@@ -49,10 +49,15 @@ class WorkflowInputSerializer(serializers.ModelSerializer):
 class CreateVariableValueSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()
     key = serializers.CharField(max_length=255)
-    value = serializers.CharField(max_length=255)
+    value = serializers.CharField(max_length=255, required=False)
     data_type = serializers.CharField(max_length=255)
     context_name = serializers.CharField(max_length=255)
     label = serializers.CharField(max_length=255)
+
+    def validate(self, attrs):
+        context_name = attrs.get("context_name")
+        
+        return super().validate(attrs)
 
 
 class VariableValueSerializer(serializers.ModelSerializer):

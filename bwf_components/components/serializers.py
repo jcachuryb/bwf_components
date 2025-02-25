@@ -3,9 +3,10 @@
 from rest_framework import serializers
 from bwf_components.components.models import WorkflowComponent, ComponentInput, ComponentOutput, ComponentDefinition
 
-class WorkflowComponentSerializer(serializers.ModelSerializer):
+
+class ComponentOutputSerializer(serializers.ModelSerializer):
     class Meta:
-        model = WorkflowComponent
+        model = ComponentOutput
         fields = '__all__'
 
 class CreateComponentSerializer(serializers.Serializer):
@@ -20,6 +21,15 @@ class CreateComponentSerializer(serializers.Serializer):
 class ComponentInputSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComponentInput
+        fields = '__all__'
+
+
+
+class WorkflowComponentSerializer(serializers.ModelSerializer):
+    input = ComponentInputSerializer(many=True)
+    output = ComponentOutputSerializer(many=True)
+    class Meta:
+        model = WorkflowComponent
         fields = '__all__'
 
 class CreateComponentDefinitionSerializer(serializers.Serializer):

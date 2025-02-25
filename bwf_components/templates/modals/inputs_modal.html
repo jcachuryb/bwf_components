@@ -89,7 +89,6 @@
 
 <script>
   inputs_data = {
-    csrf_token: "{{ csrf_token }}",
     selectedInput: {
       isNew: true,
       data: null,
@@ -166,7 +165,6 @@
   $(() => {
     $("#inputs-modal").on("show.bs.modal", function (e) {
       const _ = workflow_inputs;
-      _.var.csrf_token = inputs_data.csrf_token;
       const data = _.selectedInput;
       inputs_data.selectedInput.isNew = !data;
       inputs_data.selectedInput.data = data;
@@ -269,7 +267,14 @@
       } else {
         updateInput(
           { ...data, id: inputs_data.selectedInput.data.id },
-          (data) => {},
+          (data) => {
+            console.log(data);
+            const index = workflow_inputs.var.inputs.findIndex(
+              (a) => a.id === data.id
+            );
+            workflow_inputs.var.inputs[index] = data;
+            workflow_inputs.updateInput(data);
+          },
           (err) => {
             console.log(err);
           }
