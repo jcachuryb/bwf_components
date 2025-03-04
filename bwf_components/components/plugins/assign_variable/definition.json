@@ -12,7 +12,10 @@
       "label": "Name",
       "type": "string",
       "value": "",
-      "required": true
+      "required": true,
+      "value_rules": {
+        "variable_only": true
+      }
     },
     {
       "key": "value",

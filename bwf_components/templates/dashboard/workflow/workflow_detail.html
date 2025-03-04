@@ -6,6 +6,13 @@
   <p>{{workflow.description}}</p>
 
   <div
+    id="variables-container"
+    class="row gap-4 py-md-5 align-items-center justify-content-center"
+  >
+  <div id="variables"></div>
+</div>
+
+  <div
     id="inputs-node"
     class="row gap-4 py-md-5 align-items-center justify-content-center"
   >
@@ -45,10 +52,12 @@
 </div>
 <script src="/static/pages/workflow/workflow.js"></script>
 <script src="/static/pages/workflow/inputs.js"></script>
+<script src="/static/pages/workflow/variables.js"></script>
 <script src="/static/pages/workflow/components.js"></script>
 
 <!-- Fragments -->
 {% include 'fragments/component_node.html' %}
+{% include 'fragments/value_popover.html' %}
 <!-- END: Fragments -->
 <!-- Modals -->
 {% include 'modals/inputs_modal.html' %} 
@@ -60,6 +69,7 @@
     const workflow_id = $("#workflow_id").val();
     workflow_inputs.init(workflow_id, "inputs-node");
     workflow_components.init(workflow_id, "components-flow");
+    workflow_variables.init(workflow_id, 'variables-container');
     workflow_inputs.csrf_token = $("#csrf_token").val();
     workflow_components.csrf_token = $("#csrf_token").val();
 

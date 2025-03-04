@@ -1,0 +1,11 @@
+
+.value-selector {
+    height: 2em;
+    width: 9em;
+    display: flex;
+    align-items: center;
+    background: #f7f7f7;
+    border-radius: 5px;
+    border: 1px solid #ababab;
+    cursor: pointer;
+}

@@ -1,6 +1,6 @@
 /* eslint-disable prefer-spread */
 /* eslint-disable no-plusplus */
-class VariableSelector {
+class ValueSelector {
   constructor(element, settings, $) {
     const _ = this;
 
@@ -10,22 +10,44 @@ class VariableSelector {
 
     };
 
+    const { type, options, value_rules } = settings
+
+
     _.initials = {
       present: true,
-      
+      type: type,
+      options: options,
+      value_rules: value_rules,
     };
 
     $.extend(_, _.initials);
 
     _.$element = $(element);
+    _.$element.addClass('value-selector');
+    // _.$element.attr('data-name', _.name);
     _.options = $.extend({}, _.defaults, settings);
+
     
+
+    const popoverOptions = {
+      html: true,
+      title: "",
+      //html element
+      //content: $("#popover-content")
+      content: $('[data-name="popover-content"]')
+      //Doing below won't work. Shows title only
+      //content: $("#popover-content").html()
+
+  }
+  
+  var popover = new bootstrap.Popover(_.$element, popoverOptions)
   }
 
   render(options) {
     const _ = this;
     _.$element.on('click', function () {
-debugger
+
+      
     })
   }
 
@@ -40,7 +62,7 @@ debugger
   }
 }
 
-jQuery.fn.variableSelector = function (...args) {
+jQuery.fn.valueSelector = function (...args) {
   const _ = this;
   const opt = args[0];
   const moreArgs = Array.prototype.slice.call(args, 1);
@@ -50,7 +72,7 @@ jQuery.fn.variableSelector = function (...args) {
 
   for (i = 0; i < l; i++) {
     if (typeof opt === 'object' || typeof opt === 'undefined') {
-      _[i].formb = new VariableSelector(_[i], opt, jQuery);
+      _[i].formb = new ValueSelector(_[i], opt, jQuery);
     } else {
       ret = _[i].formb[opt].apply(_[i].formb, moreArgs, jQuery);
     }

@@ -3,6 +3,20 @@
     <div class="card-header">
       <i class="bi bi-gear"></i>
       <span class="component-label"></span>
+
+      <button
+        class="btn btn-sm"
+        type="button"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+      >
+        <i class="bi bi-three-dots"></i>
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#">Something else here</a></li>
+        <li><hr class="dropdown-divider" /></li>
+        <li><a class="dropdown-item danger delete-component" href="#">Delete</a></li>
+      </ul>
     </div>
     <div class="card-body">
       <div class="list-group input"></div>
@@ -12,4 +26,3 @@
     </div>
   </div>
 </template>
-

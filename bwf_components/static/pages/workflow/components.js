@@ -61,16 +61,42 @@ var workflow_components = {
     const _ = workflow_components;
     const elementId = `node_${id}`;
     clone.querySelector(".component-node").setAttribute("id", elementId);
+    clone
+      .querySelector(".component-node")
+      .setAttribute("data-component-id", id);
+
     _.container.append(clone);
     $(`#${elementId}`).find(".component-label").html(name);
     const inputElement = markup("div");
     for (let i = 0; i < inputArray.length; i++) {
       const input = inputArray[i];
-      const inputElement = _.getComponentInputElement(input);
+      const divElementId = `${elementId}_${input.key}`;
+      const inputElement = _.getComponentInputElement({
+        ...input,
+        elementId: divElementId,
+      });
       $(`#${elementId}`).find(".list-group.input").append(inputElement);
-      $(`#${input.id}`)
+      if ($(`#${divElementId}.value-selector`).length > 0) {
+        $(`#${divElementId}.value-selector`).valueSelector({
+          type: input.data_type,
+          options: input.json_value.options,
+          value_rules: input.json_value.value_rules,
+        });
+      }
     }
-    
+
+    // Delete Component
+    $(`#${elementId}`)
+      .find(".delete-component")
+      .on("click", component, function (event) {
+        const _ = workflow_components;
+        const { id } = event.data;
+        const data = { id: id, workflow_id: _.workflow_id };
+        _.api.deleteComponent(data, function (data) {
+          $(`#${elementId}`).remove();
+        });
+      });
+    // END: Delete Component
     // $(`#${elementId}`).find(".list-group.output").html("<h4> Output </h4>");
     // $(`#${elementId}`).find(".list-group.on-fail").html("<h4> On Fail </h4>");
   },
@@ -78,6 +104,7 @@ var workflow_components = {
     const { markup } = utils;
     const {
       id,
+      elementId,
       name,
       key,
       data_type,
@@ -91,50 +118,73 @@ var workflow_components = {
     const value_only = json_value?.value_only || false;
     const options = json_value?.options || [];
     const default_value = json_value?.default_value || "";
+    const value_rules = json_value?.value_rules;
 
-    let element = null;
-    if (data_type === "string") {
-      element = markup("input", null, {
-        type: "text",
-        class: "form-control form-control-sm",
-        id: key,
-        name: key,
-        value: default_value,
-      });
-    } else if (data_type === "number") {
-      element = markup("input", null, {
-        type: "number",
-        class: "form-control form-control-sm",
-        id: key,
-        name: key,
-        value: default_value,
-      });
-    } else if (data_type === "boolean") {
-      element = markup("input", null, {
-        type: "checkbox",
-        class: "form-check-input",
-        id: key,
-        name: key,
-        value: default_value,
-      });
-    } else if (data_type === "array") {
-      element = markup("input", null, {
-        type: "text",
-        class: "form-control form-control-sm",
-        id: key,
-        name: key,
-        value: default_value,
-      });
-    } else if (data_type === "object") {
-      element = markup("input", null, {
-        type: "text",
-        class: "form-control form-control-sm",
-        id: key,
-        name: key,
-        value: default_value,
-      });
-    
+    let element = markup("div", "", {
+      id: elementId,
+      name: key,
+      class: "value-selector",
+    });
+
+    if (value_rules && value_rules.variable_only) {
+      element = markup(
+        "select",
+        [
+          markup("option", "Select Variable", { value: "" }),
+          workflow_variables.var.variables.map((variable) => {
+            return markup("option", variable.label, { value: variable.key });
+          }),
+        ],
+        {
+          id: elementId,
+          name: key,
+          class: "form-select form-select-sm",
+        }
+      );
     }
+
+    // if (data_type === "string") {
+    //   element = markup("input", null, {
+    //     type: "text",
+    //     class: "form-control form-control-sm",
+    //     id: elementId,
+    //     name: key,
+    //     value: default_value,
+    //   });
+    // } else if (data_type === "number") {
+    //   element = markup("input", null, {
+    //     type: "number",
+    //     class: "form-control form-control-sm",
+    //     id: elementId,
+    //     name: key,
+    //     value: default_value,
+    //   });
+    // } else if (data_type === "boolean") {
+    //   element = markup("input", null, {
+    //     type: "checkbox",
+    //     class: "form-check-input",
+    //     id: elementId,
+    //     name: key,
+    //     value: default_value,
+    //   });
+    // } else if (data_type === "array") {
+    //   element = markup("input", null, {
+    //     type: "text",
+    //     class: "form-control form-control-sm",
+    //     id: elementId,
+    //     name: key,
+    //     value: default_value,
+    //   });
+    // } else if (data_type === "object") {
+    //   element = markup("input", null, {
+    //     type: "text",
+    //     class: "form-control form-control-sm",
+    //     id: elementId,
+    //     name: key,
+    //     value: default_value,
+    //   });
+
+    // }
 
     const container = markup(
       "div",
@@ -145,11 +195,7 @@ var workflow_components = {
           { class: "col-auto" }
         ),
 
-        markup(
-          "div",
-            element,
-          { class: "col-auto" }
-        ),
+        markup("div", element, { class: "col-auto" }),
       ],
       { class: "row g-3 d-flex justify-content-between mb-1" }
     );
@@ -191,8 +237,14 @@ var workflow_components = {
     },
     deleteComponent: function (data, success_callback, error_callback) {
       const _ = workflow_components;
+      const { id, workflow_id } = data;
+      const _params = {
+        workflow_id: workflow_id,
+      };
+      const queryParams = utils.make_query_params(_params);
+
       $.ajax({
-        url: _.var.base_url + data.id + "/",
+        url: _.var.base_url + id + "/?" + queryParams,
         type: "DELETE",
         headers: { "X-CSRFToken": _.csrf_token },
         contentType: "application/json",

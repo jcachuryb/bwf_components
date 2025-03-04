@@ -109,8 +109,16 @@ class WorkflowComponentViewset(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
     
     def destroy(self, request, *args, **kwargs):
-        
-        return super().destroy(request, *args, **kwargs)
+        workflow_id = request.query_params.get("workflow_id", None)
+        try:
+            workflow = Workflow.objects.get(id=workflow_id)
+            instance = self.get_object()
+            if instance.parent_workflow != workflow:
+                raise Exception("Component not found")
+            instance.delete()
+            return Response("Component removed")
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 

@@ -110,7 +110,7 @@
         const value = $("#definitions input:checked").val();
         if (value) {
           $(".create-component-button").prop("disabled", true);
-          const definition = _.componentDefinitions.find((d) => d.id == value);
+          const definition = _.pluginDefinitions.find((d) => d.id == value);
 
           const data = {
             plugin_id: definition.id,
