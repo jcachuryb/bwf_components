@@ -1,0 +1,40 @@
+{
+  "id": "http_request",
+  "name": "HTTP Request",
+  "description": "Make an HTTP request",
+  "author": "BWF Components",
+  "editable": false,
+  "icon_class": "bi bi-box-arrow-in-up-right",
+  "icon_png": "icon.png",
+  "base_input": [
+    {
+      "key": "url",
+      "label": "URL",
+      "type": "string",
+      "value": "",
+      "required": true
+    },
+    {
+      "key": "method",
+      "label": "Method",
+      "type": "string",
+      "value": "GET",
+      "required": true
+    },
+    {
+      "key": "headers",
+      "label": "Headers",
+      "type": "array",
+      "value": [],
+      "required": false
+    },
+    {
+      "key": "body",
+      "label": "Body",
+      "type": "string",
+      "value": "",
+      "required": false
+    }
+  ],
+  "base_output": null
+}

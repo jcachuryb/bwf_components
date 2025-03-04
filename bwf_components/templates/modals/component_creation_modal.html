@@ -56,7 +56,7 @@
     const { markup } = utils;
     const _ = workflow_components;
     $("#definitions").empty();
-    _.fetchComponentDefinitions().then((data) => {
+    _.fetchPluginDefinitions().then((data) => {
       data.forEach((d, index) => {
         $("#definitions").append(
           markup(
@@ -74,6 +74,7 @@
               {
                 tag: "label",
                 content: [
+                  { tag: "i", class: d.icon_class ?? "bi bi-gear" },
                   d.name,
                   {
                     tag: "span",
@@ -99,6 +100,9 @@
       );
     });
 
+    $("#component-creation-modal .close-button").on("click", function () {
+      $("#component-creation-modal").modal("hide");
+    });
     $("#component-creation-modal .create-component-button").on(
       "click",
       function () {
@@ -109,7 +113,7 @@
           const definition = _.componentDefinitions.find((d) => d.id == value);
 
           const data = {
-            definition: definition.id,
+            plugin_id: definition.id,
             index: 0,
             name: definition.name,
           };

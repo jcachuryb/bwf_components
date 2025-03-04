@@ -31,7 +31,6 @@ router = routers.DefaultRouter()
 router.register('workflow', workflow_viewsets.WorkflowViewset)
 router.register('workflow-inputs', workflow_viewsets.WorkflowInputsViewset)
 router.register('workflow-variables', workflow_viewsets.WorkflowVariablesViewset)
-router.register('component-definitions', component_viewsets.ComponentDefinitionViewset)
 router.register('workflow-components', component_viewsets.WorkflowComponentViewset)
 
 
@@ -39,5 +38,6 @@ urlpatterns = [
     path('bwf_admin/', admin.site.urls),
     path('dashboard', views.HomeView.as_view(), name='home'),
     path('workflow/<int:workflow_id>/', views.WorkflowView.as_view(), name='workflow'),
+    path('api/plugin-definitions/', component_viewsets.PluginsCatalogueView.as_view()),
     path("api/", include(router.urls)),
 ]

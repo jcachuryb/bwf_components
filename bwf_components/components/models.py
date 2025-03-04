@@ -18,7 +18,8 @@ class FailureHandleTypesEnum(models.TextChoices):
 
 class WorkflowComponent(models.Model):
     name = models.CharField(max_length=100)
-    definition = models.ForeignKey(to="ComponentDefinition", on_delete=models.CASCADE, related_name="instances")
+    plugin_id = models.CharField(max_length=500, null=True, blank=True)    
+
     options = models.JSONField(null=True, blank=True) # predefined
     # input: related
     # output: related

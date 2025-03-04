@@ -58,10 +58,12 @@
             </select>
           </div>
           <div class="mb-3">
-            <label for="field_default_value" class="form-label"
+            <label class="form-label"
               >Default value</label
             >
-            <input type="text" class="form-control" id="field_default_value" />
+            <div class="data_type_container">
+
+            </div>
           </div>
           <div class="mb-3 form-check">
             <input
@@ -132,12 +134,51 @@
       },
     ],
     fillUpForm: function (input) {
+      const dataType = input.data_type ?? "string";
       $("#field_label").val(input.label);
       $("#key-span").text(input.key);
       $("#field_description").val(input.description);
       $("#field_data_type").val(input.data_type);
-      $("#field_default_value").val(input.default_value?.value ?? "");
+      // $("#field_default_value").val(input.default_value?.value ?? "");
       $("#field_required").prop("checked", input.required);
+    },
+    emptyForm: function () {
+      $("#field_label").val("");
+      $("#key-span").text("");
+      $("#field_description").val("");
+      $("#field_data_type").val("string");
+      inputs_data.renderDefaultValue($(".data_type_container"), "string");
+      $("#field_required").prop("checked", false);
+    },
+    renderDefaultValue: function (container, data_type, value) { 
+      // types : string, boolean, number, object, array, date, datetime
+      const current = container.find("#field_default_value");
+      if (current.length === 0 || current.data("datatype") !== data_type) {
+        current.remove();
+        const types = {
+          string: `<input type="text" class="form-control" id="field_default_value" data-datatype="${data_type}" value="${value ?? ""}">`,
+          boolean: `<select class="form-select" id="field_default_value" data-datatype="${data_type}">
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>`,
+          number: `<input type="number" class="form-control" id="field_default_value" data-datatype="${data_type}" value="${value ?? ""}">`,
+          object: `<textarea class="form-control" id="field_default_value" data-datatype="${data_type}" rows="3">${value ?? ""}</textarea>`,
+          array: `<textarea class="form-control" id="field_default_value" data-datatype="${data_type}" rows="3">${value ?? ""}</textarea>`,
+          date: `<input type="date" class="form-control" id="field_default_value" data-datatype="${data_type}" value="${value ?? ""}">`,
+          datetime: `<input type="datetime-local" class="form-control" id="field_default_value" data-datatype="${data_type}" value="${value ?? ""}">`,
+        };
+        container.empty();
+        container.append(types[data_type]);
+      }
+
+      if (value) {
+        if (data_type === "boolean") {
+          container.find("#field_default_value").val(value === "true" ? "true" : "false");
+        } else {
+          container.find("#field_default_value").val(value);
+        }
+      }
+
     },
     validate: function (data) {
       const { label, key, description, data_type, default_value, required } =
@@ -177,17 +218,14 @@
       );
 
       if (inputs_data.selectedInput.isNew) {
-        $("#field_label").val("");
-        $("#key-span").text("");
-        $("#field_description").val("");
-        $("#field_data_type").val("string");
-        $("#field_default_value").val("");
-        $("#field_required").prop("checked", false);
+        inputs_data.emptyForm()
       } else {
         inputs_data.fillUpForm(data);
       }
     });
-    $("#myModal").on("hidden.bs.modal", function (e) {});
+    $("#inputs-modal").on("hidden.bs.modal", function (e) {
+      inputs_data.emptyForm();
+    });
 
     $("#field_label").on("keyup", function () {
       const label = $(this).val() ?? "";
@@ -280,6 +318,12 @@
           }
         );
       }
+      $("#inputs-modal").modal("hide");
+    });
+    $("#field_data_type").on("change", function () {
+      inputs_data.renderDefaultValue($(".data_type_container"), $(this).val());
+    });
+    $("#inputs-modal .close-button").on("click", function () {
       $("#inputs-modal").modal("hide");
     });
   });

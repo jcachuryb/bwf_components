@@ -62,7 +62,7 @@ var workflow_inputs = {
       const _ = workflow_inputs
       const elementId = `input_${input.id}`
       const inputMarkup = `
-          <label id="${elementId}" class="list-group-item d-flex gap-2">
+          <label id="${elementId}" class="list-group-item d-flex gap-1">
             <div class="d-flex gap-2 justify-content-between w-100">
             <span>
               ${input.label}

@@ -1,15 +1,13 @@
 
-import urllib3.contrib
 import urllib3.util
 from django.http import JsonResponse
 from django.db.models import Q, Prefetch
 from django.core.paginator import Paginator
 from django.views import View
-from django.shortcuts import render, redirect
-from rest_framework.decorators import permission_classes, api_view
+from django.shortcuts import render
 
 from bwf_components.workflow.models import Workflow
-from bwf_components.components.models import WorkflowComponent, ComponentInput, ComponentOutput, ComponentDefinition
+from bwf_components.components.models import WorkflowComponent
 # Create your views here.
 class HomeView(View):
     template_name = 'dashboard/main.html'

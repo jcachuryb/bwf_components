@@ -144,7 +144,16 @@ class WorkflowVariablesViewset(ModelViewSet):
         instance = VariableValue.objects.create(workflow=workflow, **serializer.validated_data)
         return Response(serializers.VariableValueSerializer(instance).data)
     
-
+    
+    def list(self, request, *args, **kwargs):
+        workflow_id = request.query_params.get("workflow_id", None)
+        try:
+            workflow = Workflow.objects.get(id=workflow_id)
+            inputs = VariableValue.objects.filter(workflow=workflow)
+            return Response(serializers.VariableValueSerializer(inputs, many=True).data)
+        except Exception as e:
+            return Response({"error": str(e)}, statu=status.HTTP_400_BAD_REQUEST)
+        
 
     def update(self, request, *args, **kwargs):
         # TODO: make sure to update componentes relying on this key

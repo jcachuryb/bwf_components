@@ -15,7 +15,7 @@ context: Dict
  """
 
 
-class BaseComponentAction:
+class BasePlugin:
     
     def __init__(self, component_instance:ComponentInstance, workflow_instance: WorkFlowInstance, context={}):
         self.component = component_instance
@@ -47,3 +47,9 @@ class BaseComponentAction:
         for key, value in self.component.input.items():
             context["input"][key] = value["value"]
         return context
+
+
+    def update_workflow_variable(self, context, key, value):
+        self.workflow_instance.variables['local'][key] = value
+        self.workflow_instance.save()
+    

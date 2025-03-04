@@ -10,7 +10,7 @@ var workflow_components = {
     csrf_token: null,
     components: [],
   },
-  componentDefinitions: [],
+  pluginDefinitions: [],
 
   init: function (workflow_id, containerId) {
     const _ = workflow_components;
@@ -42,8 +42,8 @@ var workflow_components = {
   renderComponents: function () {
     const _ = workflow_components;
     const components = _.var.components;
-    if (components.length === 0) $(".main-add-component").show();
-    if (components.length > 0) $(".main-add-component").hide();
+    // if (components.length === 0) $(".main-add-component").show();
+    // if (components.length > 0) $(".main-add-component").hide();
     for (let i = 0; i < components.length; i++) {
       const component = components[i];
       _.appendComponent(component);
@@ -51,22 +51,116 @@ var workflow_components = {
   },
   appendComponent: function (component) {
     const template = document.querySelector("#component-node-template");
+    const { markup } = utils;
+
+    const { id, name, input, output } = component;
+    const inputArray = input || [];
+    const outputArray = output || [];
     // Clone the new row and insert it into the table
     const clone = template.content.cloneNode(true);
     const _ = workflow_components;
-    const elementId = `node_${component.id}`;
+    const elementId = `node_${id}`;
     clone.querySelector(".component-node").setAttribute("id", elementId);
     _.container.append(clone);
-    $(`#${elementId}`).find(".component-label").html(component.name);
-    $(`#${elementId}`).find(".list-group.input").html("<h4> Input </h4>");
-    $(`#${elementId}`).find(".list-group.output").html("<h4> Output </h4>");
-    $(`#${elementId}`).find(".list-group.on-fail").html("<h4> On Fail </h4>");
+    $(`#${elementId}`).find(".component-label").html(name);
+    const inputElement = markup("div");
+    for (let i = 0; i < inputArray.length; i++) {
+      const input = inputArray[i];
+      const inputElement = _.getComponentInputElement(input);
+      $(`#${elementId}`).find(".list-group.input").append(inputElement);
+      $(`#${input.id}`)
+    }
+    
+    // $(`#${elementId}`).find(".list-group.output").html("<h4> Output </h4>");
+    // $(`#${elementId}`).find(".list-group.on-fail").html("<h4> On Fail </h4>");
+  },
+  getComponentInputElement: function (input) {
+    const { markup } = utils;
+    const {
+      id,
+      name,
+      key,
+      data_type,
+      expression,
+      json_value,
+      index,
+      required,
+    } = input;
+    const multi = json_value?.multi || false;
+    const variable_only = json_value?.variable_only || false;
+    const value_only = json_value?.value_only || false;
+    const options = json_value?.options || [];
+    const default_value = json_value?.default_value || "";
+
+    let element = null;
+    if (data_type === "string") {
+      element = markup("input", null, {
+        type: "text",
+        class: "form-control form-control-sm",
+        id: key,
+        name: key,
+        value: default_value,
+      });
+    } else if (data_type === "number") {
+      element = markup("input", null, {
+        type: "number",
+        class: "form-control form-control-sm",
+        id: key,
+        name: key,
+        value: default_value,
+      });
+    } else if (data_type === "boolean") {
+      element = markup("input", null, {
+        type: "checkbox",
+        class: "form-check-input",
+        id: key,
+        name: key,
+        value: default_value,
+      });
+    } else if (data_type === "array") {
+      element = markup("input", null, {
+        type: "text",
+        class: "form-control form-control-sm",
+        id: key,
+        name: key,
+        value: default_value,
+      });
+    } else if (data_type === "object") {
+      element = markup("input", null, {
+        type: "text",
+        class: "form-control form-control-sm",
+        id: key,
+        name: key,
+        value: default_value,
+      });
+    
+    }
+
+    const container = markup(
+      "div",
+      [
+        markup(
+          "div",
+          markup("label", name, { for: key, class: "form-label" }),
+          { class: "col-auto" }
+        ),
+
+        markup(
+          "div",
+            element,
+          { class: "col-auto" }
+        ),
+      ],
+      { class: "row g-3 d-flex justify-content-between mb-1" }
+    );
+
+    return container;
   },
   api: {
     addComponent: function (data, success_callback, error_callback) {
       const _ = workflow_components;
 
-      const promise = new Promise((resolve, reject) => {
+      return new Promise((resolve, reject) => {
         $.ajax({
           url: _.var.base_url,
           type: "POST",
@@ -108,14 +202,15 @@ var workflow_components = {
     },
   },
 
-  fetchComponentDefinitions: function () {
+  fetchPluginDefinitions: function () {
     const promise = new Promise((resolve, reject) => {
       const _ = workflow_components;
       $.ajax({
-        url: "/bwf/api/component-definitions/",
+        // url: "/bwf/api/component-definitions/",
+        url: "/bwf/api/plugin-definitions/",
         type: "GET",
         success: function (data) {
-          _.componentDefinitions = data;
+          _.pluginDefinitions = data;
           resolve(data);
         },
         error: function (error) {

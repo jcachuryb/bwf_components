@@ -6,3 +6,8 @@ class BwfComponentsConfig(AppConfig):
     name = 'bwf_components'
     verbose_name = "Business Workflow Components"
 
+    def ready(self):
+        from  bwf_components.controller.controller import BWFPluginController
+        BWFPluginController().get_instance().load_plugins()
+        return super().ready()
+

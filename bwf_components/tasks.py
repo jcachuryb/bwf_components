@@ -1,6 +1,7 @@
 import json
 from bwf_components.workflow.models import Workflow, WorkFlowInstance, WorkflowInstanceFactory, WorkflowComponentInstanceFactory, ComponentInstance, ActionLogRecord
 from bwf_components.components.models import WorkflowComponent, FailureHandleTypesEnum
+from bwf_components.controller.controller import BWFPluginController
 
 import logging
 import time
@@ -42,19 +43,25 @@ def register_workflow_step(workflow_instance: WorkFlowInstance, step=0, output_p
 
 def start_pending_component(current_component: ComponentInstance):
     base_component = current_component.component
+    workflow_instance = current_component.workflow
     try:
         current_component.set_status_running()
-        # get secrets and globals
-        task_class = base_component.get_component_class()
+        controller = BWFPluginController.get_instance()
+        plugin_module = controller.get_plugin_module(base_component.plugin_id)
+        if not plugin_module:
+            current_component.set_status_error("Plugin not found")
+            workflow_instance.set_status_error("Plugin not found")
+            raise Exception("Component instance could not be created")
+        
         # TODO: Get Global variables
-        instance = task_class(component_instance=current_component, workflow_instance=current_component.workflow, context={
+        # get secrets and globals
+        plugin_instance = plugin_module.execute(component_instance=current_component, workflow_instance=current_component.workflow, context={
             "global": {},
             "local": current_component.workflow.variables.get("local", {}),
             "inputs": current_component.workflow.variables.get("inputs", {}),
         })
-        instance.execute()
-        instance.refresh_from_db()
-        output = instance.output
+        
+        output = plugin_instance.output
         if not output.get("success", False):
             initiate_fallback_component_action(current_component)
         else:
