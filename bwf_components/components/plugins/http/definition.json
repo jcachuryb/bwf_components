@@ -36,5 +36,25 @@
       "required": false
     }
   ],
-  "base_output": null
+  "base_output": [
+    {
+      "key": "response",
+      "label": "Response",
+      "type": "object",
+      "data": {
+        "response": {
+          "status": {
+            "label": "Status",
+            "key": "status",
+            "type": "number"
+          },
+          "body": {
+            "key": "body",
+            "label": "Body",
+            "type": "object"
+          }
+        }
+      }
+    }
+  ]
 }

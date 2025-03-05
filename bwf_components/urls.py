@@ -29,9 +29,9 @@ admin.site.site_title = conf.settings.PROJECT_TITLE
 
 router = routers.DefaultRouter()
 router.register('workflow', workflow_viewsets.WorkflowViewset)
-router.register('workflow-inputs', workflow_viewsets.WorkflowInputsViewset)
+router.register('workflow-inputs', workflow_viewsets.WorkflowInputsViewset, basename="workflow-inputs")
 router.register('workflow-variables', workflow_viewsets.WorkflowVariablesViewset)
-router.register('workflow-components', component_viewsets.WorkflowComponentViewset)
+router.register('workflow-components', component_viewsets.WorkflowComponentViewset, basename="workflow-components")
 
 
 urlpatterns = [
@@ -39,5 +39,7 @@ urlpatterns = [
     path('dashboard', views.HomeView.as_view(), name='home'),
     path('workflow/<int:workflow_id>/', views.WorkflowView.as_view(), name='workflow'),
     path('api/plugin-definitions/', component_viewsets.PluginsCatalogueView.as_view()),
+    urls.re_path(r'^workflows/(?P<id>\d+)/(?P<version>\d+)/(\w+).json$', workflow_viewsets.get_workflow_file, name='get_workflow_file'),
+
     path("api/", include(router.urls)),
 ]

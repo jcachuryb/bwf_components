@@ -1,29 +1,31 @@
 import uuid
-from django.http import JsonResponse
+import mimetypes
 from rest_framework import status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes, api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-
-from django.shortcuts import render
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render,get_object_or_404
 from .models import Workflow, WorkflowInput, VariableValue
-from . import serializers
+from .serializers import workflow_serializers
 from bwf_components.tasks import start_workflow
+from bwf_components.controller.controller import BWFPluginController
+
 # Create your views here.
 
 
 class WorkflowViewset(ModelViewSet):
     queryset = Workflow.objects.all()
-    serializer_class = serializers.WorkflowSerializer
+    serializer_class = workflow_serializers.WorkflowSerializer
 
     def get_serializer_class(self):
         if self.action == 'list':
-            return serializers.ListWorkflowSerializer
+            return workflow_serializers.ListWorkflowSerializer
         elif self.action == 'create' or self.action == 'update':
-            return serializers.CreateWorkflowSerializer
+            return workflow_serializers.CreateWorkflowSerializer
         return super().get_serializer_class()
     
     def create(self, request, *args, **kwargs):
@@ -33,7 +35,7 @@ class WorkflowViewset(ModelViewSet):
 
         instance = Workflow.objects.create(**serializer.validated_data)
 
-        return Response(serializers.WorkflowSerializer(instance).data)
+        return Response(workflow_serializers.WorkflowSerializer(instance).data)
 
     def update(self, request, *args, **kwargs):
 
@@ -56,50 +58,82 @@ class WorkflowViewset(ModelViewSet):
     def inputs(self, request, pk=None):
         workflow = self.get_object()
         inputs = WorkflowInput.objects.filter(workflow=workflow)
-        return JsonResponse(serializers.WorkflowInputSerializer(inputs, many=True).data, safe=False)
+        return JsonResponse(workflow_serializers.WorkflowInputSerializer(inputs, many=True).data, safe=False)
     
     @action(detail=True, methods=['get'], permission_classes=[AllowAny])
     def variables(self, request, pk=None):
         workflow = self.get_object()
         variables = VariableValue.objects.filter(workflow=workflow)
-        return JsonResponse(serializers.VariableValueSerializer(variables, many=True).data, safe=False)
-    
+        return JsonResponse(workflow_serializers.VariableValueSerializer(variables, many=True).data, safe=False)
 
 
-class WorkflowInputsViewset(ModelViewSet):
-    queryset = WorkflowInput.objects.all()
-    serializer_class = serializers.WorkflowInputSerializer
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_workflow_file(request, id, version):
+    workflow = get_object_or_404(Workflow, id=id)
+    file = workflow.workflow_file
+    if file is None:
+        return HttpResponse("File doesn't exist", status=status.HTTP_404_NOT_FOUND)
+
+    file_data = None
+    try:            
+        with open(file.path, 'rb') as f:
+            file_data = f.read()
+            f.close()
+    except Exception as e:
+        return render(request, 'govapp/404.html', context={})
+    return HttpResponse(file_data, content_type=mimetypes.types_map['.json'])
+
+ 
+
+
+class WorkflowInputsViewset(ViewSet):
 
     def get_serializer(self, *args, **kwargs):
         if self.action == 'create' or self.action == 'update':
-            return serializers.CreateWorkflowInputSerializer(*args, **kwargs)
+            return workflow_serializers.CreateWorkflowInputSerializer(*args, **kwargs)
         return super().get_serializer(*args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        workflow = Workflow.objects.get(id=serializer.validated_data.get("workflow_id"))
+        workflow = Workflow.objects.get(id=serializer.validated_data.pop("workflow_id"))
+        workflow_definition = workflow.get_json_definition()
+        workflow_inputs = workflow_definition.get("inputs", {})
         key = serializer.validated_data.get("key")
-        if WorkflowInput.objects.filter(workflow=workflow, key=key).exists():
-            key = f"{key}_{str(uuid.uuid4())[0:8]}"   
-        
-        instance = WorkflowInput.objects.create(workflow=workflow, **serializer.validated_data)
-        return Response(serializers.WorkflowInputSerializer(instance).data)
+        if key in workflow_inputs:
+            key = f"{key}_{str(uuid.uuid4())[0:8]}"
+        new_input = {
+            "label": serializer.validated_data.get("label"),
+            "key": key,
+            "description": serializer.validated_data.get("description", ""),
+            "data_type": serializer.validated_data.get("data_type"),
+            "default_value": serializer.validated_data.get("default_value", {}),
+            "required": serializer.validated_data.get("required", False),
+        }
+        workflow_inputs[key] = new_input
+        workflow.set_json_definition(workflow_definition)
+
+        return Response(workflow_serializers.WorkflowInputSerializer().data)
 
     def retrieve(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
-        instance = WorkflowInput.objects.get(id=kwargs.get("pk"), workflow__id=workflow_id)
-        return Response(serializers.WorkflowInputSerializer(instance).data)
+        workflow = Workflow.objects.get(id=workflow_id)
+        workflow_definition = workflow.get_json_definition()
+        workflow_inputs = workflow_definition.get("inputs", {})
+        instance = workflow_inputs.get(kwargs.get("pk"), None)
+        return Response(workflow_serializers.WorkflowInputSerializer(instance).data)
     
     def list(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
         try:
             workflow = Workflow.objects.get(id=workflow_id)
-            inputs = WorkflowInput.objects.filter(workflow=workflow)
-            return Response(serializers.WorkflowInputSerializer(inputs, many=True).data)
+            workflow_definition = workflow.get_json_definition()
+            workflow_inputs = workflow_definition.get("inputs", {})
+            return Response(workflow_serializers.WorkflowInputSerializer(list(workflow_inputs.values()), many=True).data)
         except Exception as e:
-            return Response({"error": str(e)}, statu=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
     
     def update(self, request, *args, **kwargs):
@@ -123,11 +157,11 @@ class WorkflowInputsViewset(ModelViewSet):
 
 class WorkflowVariablesViewset(ModelViewSet):
     queryset = VariableValue.objects.all()
-    serializer_class = serializers.VariableValueSerializer
+    serializer_class = workflow_serializers.VariableValueSerializer
 
     def get_serializer(self, *args, **kwargs):
         if self.action == 'create' or self.action == 'update':
-            return serializers.CreateVariableValueSerializer(*args, **kwargs)
+            return workflow_serializers.CreateVariableValueSerializer(*args, **kwargs)
         return super().get_serializer(*args, **kwargs)
 
     def create(self, request, *args, **kwargs):
@@ -142,7 +176,7 @@ class WorkflowVariablesViewset(ModelViewSet):
             key = f"{key}_{str(uuid.uuid4())[0:8]}"   
         
         instance = VariableValue.objects.create(workflow=workflow, **serializer.validated_data)
-        return Response(serializers.VariableValueSerializer(instance).data)
+        return Response(workflow.VariableValueSerializer(instance).data)
     
     
     def list(self, request, *args, **kwargs):
@@ -150,9 +184,9 @@ class WorkflowVariablesViewset(ModelViewSet):
         try:
             workflow = Workflow.objects.get(id=workflow_id)
             inputs = VariableValue.objects.filter(workflow=workflow)
-            return Response(serializers.VariableValueSerializer(inputs, many=True).data)
+            return Response(workflow.VariableValueSerializer(inputs, many=True).data)
         except Exception as e:
-            return Response({"error": str(e)}, statu=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 
     def update(self, request, *args, **kwargs):
@@ -162,3 +196,5 @@ class WorkflowVariablesViewset(ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         # TODO: make sure to update componentes relying on this key
         return super().destroy(request, *args, **kwargs)
+
+

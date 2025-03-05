@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
-from .models import Workflow, WorkflowInput, VariableValue
+from ..models import Workflow, WorkflowInput, VariableValue
 
 class ListWorkflowSerializer(serializers.Serializer):
     pass
@@ -30,21 +30,15 @@ class CreateWorkflowInputSerializer(serializers.Serializer):
     default_value = serializers.JSONField(required=False)
     required = serializers.BooleanField(default=False)
 
-    
 
-class WorkflowInputSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = WorkflowInput
-        fields = (
-            "id",
-            "label",
-            "key",
-            "description",
-            "data_type",
-            "default_value",
-            "value",
-            "required",)
-        
+class WorkflowInputSerializer(serializers.Serializer):
+    label = serializers.CharField(max_length=255)
+    key = serializers.CharField(max_length=255)
+    description = serializers.CharField(max_length=1000, required=False)
+    data_type = serializers.CharField(max_length=255)
+    default_value = serializers.JSONField(required=False)
+    required = serializers.BooleanField(default=False)
+
 
 class CreateVariableValueSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()

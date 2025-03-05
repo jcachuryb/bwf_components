@@ -32,11 +32,7 @@ class ValueSelector {
     const popoverOptions = {
       html: true,
       title: "",
-      //html element
-      //content: $("#popover-content")
-      content: $('[data-name="popover-content"]')
-      //Doing below won't work. Shows title only
-      //content: $("#popover-content").html()
+      content: $('[data-name="popover-content"]').clone(),
 
   }
   

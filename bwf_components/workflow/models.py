@@ -60,7 +60,7 @@ def get_unique_id():
     return str(uuid.uuid4())
 
 def upload_to_path(instance, filename):
-    return f"workflows/{instance.current_active_version}"
+    return f"bwf/workflows/{instance.id}/{instance.version_number}/{filename}"
 
 # TODO: Context Class
 
@@ -112,17 +112,39 @@ class Workflow(models.Model):
     current_active_version = models.CharField(max_length=15, default="0.0")
     workflow_file = models.FileField(max_length=1000, upload_to=upload_to_path, null=True, blank=True, storage=upload_storage)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # if we make this DB only
     version_number = models.IntegerField(default=1)
+    # Deprecated
     main_cluster = models.ForeignKey(WorkflowCluster, on_delete=models.CASCADE, related_name="parent_workflow",
                                      null=True, blank=True)
     # entrypoint = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, related_name="workflows")
 
     # input: related field
 
+    def set_json_definition(self, definition):
+        with open(self.workflow_file.path, 'w') as json_file:
+            json.dump(definition, json_file)
+        self.save()
+
+
+    def get_json_definition(self):
+        workflow_json = {}
+        if self.workflow_file:
+            with open(self.workflow_file.path) as json_file:
+                workflow_json = json.load(json_file)
+        return workflow_json
+
+    def get_workflow_definition(self):
+        definition = self.get_json_definition()
+        return definition.get('workflow', {})
+
+
     def __str__(self):
         return f"{self.name} - {self.current_active_version}"
+
+
 class WorkFlowInstance(models.Model):
     workflow = models.ForeignKey(to=Workflow, on_delete=models.CASCADE, related_name="instances")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -149,13 +171,16 @@ class WorkFlowInstance(models.Model):
 class ComponentInstance(models.Model):
     workflow = models.ForeignKey(WorkFlowInstance, on_delete=models.CASCADE, related_name="child_actions")
     component = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE)
-    parent_action = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, 
-                                    null=True, blank=True, related_name="child_actions")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    component_definition = models.JSONField(null=True, blank=True)
+    plugin_id = models.CharField(max_length=500, null=True, blank=True)
+    plugin_version = models.CharField(max_length=15, null=True, blank=True)
+    options = models.JSONField(null=True, blank=True) 
+
     output = models.JSONField(null=True, blank=True)
     input = models.JSONField(null=True, blank=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=50, choices=WorkflowStatusEnum.choices, default=WorkflowStatusEnum.PENDING)
     error_message = models.CharField(max_length=1000, null=True, blank=True)
 
@@ -171,6 +196,13 @@ class ComponentInstance(models.Model):
         self.status = WorkflowStatusEnum.ERROR
         self.error_message = message[:1000]
         self.save()
+
+    def get_input_values(self, inputs=[], context_values={}):
+        values = {} 
+        for input in inputs:
+            values[input.key] = {"key": input.get("key"), "value": input.get_value(context_values), "label": input.get("name")}
+        return values
+    
 
 
 class WorkflowInstanceFactory:

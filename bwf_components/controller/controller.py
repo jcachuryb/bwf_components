@@ -63,11 +63,21 @@ class BWFPluginController:
         # TODO: Validate it has all required fields
               
         return new_plugin
+    
+    @staticmethod
+    def get_plugins_list():
+        return BWFPluginController.get_instance().__get_plugins_list()
+    
+    
+    @staticmethod
+    def get_plugin_definition(plugin_id):
+        return BWFPluginController.get_instance().__get_plugin_definition(plugin_id)
+    
 
-    def get_plugins_list(self):
+    def __get_plugins_list(self):
         return list(self.plugins.values())
     
-    def get_plugin_definition(self, plugin_id):
+    def __get_plugin_definition(self, plugin_id):
         plugin = self.plugins.get(plugin_id, None)
         if plugin:
             plugin_path = plugin.get('plugin_path')

@@ -1,36 +1,31 @@
 
 
 from rest_framework import serializers
-from bwf_components.components.models import WorkflowComponent, ComponentInput, ComponentOutput
 
 
-class ComponentOutputSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComponentOutput
-        fields = '__all__'
+
+class WorkflowComponentSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    name = serializers.CharField()
+    plugin_id = serializers.CharField()
+    config = serializers.JSONField()
+    conditions = serializers.JSONField()
+
 
 class CreateComponentSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()
-    name = serializers.CharField(max_length=100, required=False)
-    index = serializers.IntegerField(default=1)
-    description = serializers.CharField(max_length=1000, required=False)
     plugin_id = serializers.CharField(max_length=500)
-    version_number = serializers.IntegerField(default=1)
+    plugin_version = serializers.IntegerField(default=1)
+    index = serializers.IntegerField(default=1)
+    route = serializers.CharField(max_length=50, required=False)
+    # conditions = 
 
 
-class ComponentInputSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComponentInput
-        fields = '__all__'
-
-
-
-class WorkflowComponentSerializer(serializers.ModelSerializer):
-    input = ComponentInputSerializer(many=True)
-    output = ComponentOutputSerializer(many=True)
-    class Meta:
-        model = WorkflowComponent
-        fields = '__all__'
+class UpdateComponentInputSerializer(serializers.Serializer):
+    workflow_id = serializers.IntegerField()
+    plugin_id = serializers.CharField(max_length=500)
+    plugin_version = serializers.IntegerField(default=1)
+    value = serializers.CharField(max_length=1000, required=False)
 
 
 class PluginDefinitionSerializer(serializers.Serializer):

@@ -53,9 +53,10 @@ var workflow_components = {
     const template = document.querySelector("#component-node-template");
     const { markup } = utils;
 
-    const { id, name, input, output } = component;
-    const inputArray = input || [];
-    const outputArray = output || [];
+    const { id, name } = component;
+    const { inputs, outputs } = component.config;
+    const inputArray = inputs || [];
+    const outputArray = outputs || [];
     // Clone the new row and insert it into the table
     const clone = template.content.cloneNode(true);
     const _ = workflow_components;
@@ -67,7 +68,6 @@ var workflow_components = {
 
     _.container.append(clone);
     $(`#${elementId}`).find(".component-label").html(name);
-    const inputElement = markup("div");
     for (let i = 0; i < inputArray.length; i++) {
       const input = inputArray[i];
       const divElementId = `${elementId}_${input.key}`;
@@ -76,13 +76,13 @@ var workflow_components = {
         elementId: divElementId,
       });
       $(`#${elementId}`).find(".list-group.input").append(inputElement);
-      if ($(`#${divElementId}.value-selector`).length > 0) {
+      
         $(`#${divElementId}.value-selector`).valueSelector({
           type: input.data_type,
           options: input.json_value.options,
           value_rules: input.json_value.value_rules,
         });
-      }
+      
     }
 
     // Delete Component
@@ -97,8 +97,6 @@ var workflow_components = {
         });
       });
     // END: Delete Component
-    // $(`#${elementId}`).find(".list-group.output").html("<h4> Output </h4>");
-    // $(`#${elementId}`).find(".list-group.on-fail").html("<h4> On Fail </h4>");
   },
   getComponentInputElement: function (input) {
     const { markup } = utils;
@@ -126,22 +124,22 @@ var workflow_components = {
       class: "value-selector",
     });
 
-    if (value_rules && value_rules.variable_only) {
-      element = markup(
-        "select",
-        [
-          markup("option", "Select Variable", { value: "" }),
-          workflow_variables.var.variables.map((variable) => {
-            return markup("option", variable.label, { value: variable.key });
-          }),
-        ],
-        {
-          id: elementId,
-          name: key,
-          class: "form-select form-select-sm",
-        }
-      );
-    }
+    // if (value_rules && value_rules.variable_only) {
+    //   element = markup(
+    //     "select",
+    //     [
+    //       markup("option", "Select Variable", { value: "" }),
+    //       workflow_variables.var.variables.map((variable) => {
+    //         return markup("option", variable.label, { value: variable.key });
+    //       }),
+    //     ],
+    //     {
+    //       id: elementId,
+    //       name: key,
+    //       class: "form-select form-select-sm",
+    //     }
+    //   );
+    // }
 
     // if (data_type === "string") {
     //   element = markup("input", null, {
@@ -273,4 +271,6 @@ var workflow_components = {
     });
     return promise;
   },
+
+  updateInputValue: function (elementId, value) {},
 };
