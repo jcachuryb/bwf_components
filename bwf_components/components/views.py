@@ -89,7 +89,7 @@ class WorkflowComponentViewset(ViewSet):
         instance_id = str(uuid.uuid4())        
         instance = {
             "id": instance_id,
-            "name": serializer.validated_data.get("name", "Node"),  
+            "name": definition.get("name", "Node"),  
             "plugin_id": plugin_id,
             "version_number": serializer.validated_data.get("version_number", "1"),
             "config": {

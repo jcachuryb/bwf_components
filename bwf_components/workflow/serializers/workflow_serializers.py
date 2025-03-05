@@ -45,22 +45,13 @@ class CreateVariableValueSerializer(serializers.Serializer):
     key = serializers.CharField(max_length=255)
     value = serializers.CharField(max_length=255, required=False)
     data_type = serializers.CharField(max_length=255)
-    context_name = serializers.CharField(max_length=255)
+    context = serializers.CharField(max_length=255)
     label = serializers.CharField(max_length=255)
 
-    def validate(self, attrs):
-        context_name = attrs.get("context_name")
-        
-        return super().validate(attrs)
 
-
-class VariableValueSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = VariableValue
-        fields = (
-            "label",
-            "key",
-            "data_type",
-            "value",
-            "context_name",
-        )
+class VariableValueSerializer(serializers.Serializer):
+    label = serializers.CharField(max_length=255)
+    key = serializers.CharField(max_length=255)
+    data_type = serializers.CharField(max_length=255)
+    value = serializers.CharField(max_length=255, required=False)
+    context = serializers.CharField(max_length=255, required=False)

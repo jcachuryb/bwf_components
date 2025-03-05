@@ -113,6 +113,7 @@ class WorkflowInputsViewset(ViewSet):
             "required": serializer.validated_data.get("required", False),
         }
         workflow_inputs[key] = new_input
+        workflow_definition["inputs"] = workflow_inputs
         workflow.set_json_definition(workflow_definition)
 
         return Response(workflow_serializers.WorkflowInputSerializer().data)
@@ -168,23 +169,33 @@ class WorkflowVariablesViewset(ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        workflow = Workflow.objects.get(id=serializer.validated_data.get("workflow_id"))
-        
+        workflow = Workflow.objects.get(id=serializer.validated_data.pop("workflow_id"))
+        workflow_definition = workflow.get_json_definition()
+        workflow_variables = workflow_definition.get("variables", {})
         key = serializer.validated_data.get("key")
-        context_value = serializer.validated_data.get("context_name")
-        if VariableValue.objects.filter(workflow=workflow, key=key).exists():
-            key = f"{key}_{str(uuid.uuid4())[0:8]}"   
-        
-        instance = VariableValue.objects.create(workflow=workflow, **serializer.validated_data)
-        return Response(workflow.VariableValueSerializer(instance).data)
+        if key in workflow_variables:
+            key = f"{key}_{str(uuid.uuid4())[0:8]}"
+        new_variable = {
+            "label": serializer.validated_data.get("label"),
+            "key": key,
+            "value": serializer.validated_data.get("value", ""),
+            "data_type": serializer.validated_data.get("data_type"),
+            "context": serializer.validated_data.get("context", "global"),
+        }
+        workflow_variables[key] = new_variable
+        workflow_definition["variables"] = workflow_variables
+        workflow.set_json_definition(workflow_definition)
+        return Response(workflow_serializers.VariableValueSerializer(new_variable).data)
+
     
     
     def list(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
         try:
             workflow = Workflow.objects.get(id=workflow_id)
-            inputs = VariableValue.objects.filter(workflow=workflow)
-            return Response(workflow.VariableValueSerializer(inputs, many=True).data)
+            workflow_definition = workflow.get_json_definition()
+            workflow_variables = workflow_definition.get("variables", {})
+            return Response(workflow_serializers.VariableValueSerializer(list(workflow_variables.values()), many=True).data)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
