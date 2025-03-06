@@ -6,10 +6,13 @@
     <link rel="stylesheet" type="text/css" href="/static/common/css/front_custom.css?ver={{ GIT_COMMIT_HASH }}"/>
     <link rel="stylesheet" type="text/css" href="/static/common/css/value-selector-plugin/value_selector.css?ver={{ GIT_COMMIT_HASH }}"/>
     <link rel="icon" type="image/png" href="/static/common/img/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css" integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js" integrity="sha512-8RnEqURPUc5aqFEN04aQEiPlSAdE0jlFS/9iGgUyNtwFnSKCXhmB6ZTNl7LnDtDWKabJIASzXrzD0K+LYexU9g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="/static/js/bwf_utils.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script src="/static/js/data_events.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script src="/static/js/common.pagination.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script src="/static/js/table.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script src="/static/common/js/value-selector-plugin/value_selector.js?ver={{ GIT_COMMIT_HASH }}"></script>

@@ -99,7 +99,7 @@ var workflow_inputs = {
         $.ajax({
           url: _.var.base_url,
           type: "POST",
-          headers: {'X-CSRFToken' : _.csrf_token },
+          headers: {'X-CSRFToken' : $("#csrf_token").val()},
           contentType: "application/json",
           data: JSON.stringify({...input, workflow_id: _.workflow_id}),
           success: success_callback,
@@ -111,7 +111,7 @@ var workflow_inputs = {
         $.ajax({
           url: _.var.base_url + input.id + "/",
           type: "PUT",
-          headers: {'X-CSRFToken' : _.csrf_token },
+          headers: {'X-CSRFToken' : $("#csrf_token").val()},
           contentType: "application/json",
           data: JSON.stringify({...input, workflow_id: _.workflow_id}),
           success: success_callback,
@@ -123,7 +123,7 @@ var workflow_inputs = {
         $.ajax({
           url: _.var.base_url + input.id + "/",
           type: "DELETE",
-          headers: {'X-CSRFToken' : _.csrf_token },
+          headers: {'X-CSRFToken' : $("#csrf_token").val()},
           contentType: "application/json",
           success: success_callback,
           error: error_callback,

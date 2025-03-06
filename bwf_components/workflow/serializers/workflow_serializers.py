@@ -50,6 +50,7 @@ class CreateVariableValueSerializer(serializers.Serializer):
 
 
 class VariableValueSerializer(serializers.Serializer):
+    id = serializers.CharField(max_length=100)
     name = serializers.CharField(max_length=255)
     key = serializers.CharField(max_length=255)
     data_type = serializers.CharField(max_length=255)

@@ -279,7 +279,6 @@ var utils = {
       .map((a) => "\\" + a)
       .join("|");
     return input
-      .toLowerCase()
       .trim()
       .split(/\ |\_/g)
       .map((a) => a.replace(new RegExp(chars, "g"), ""))

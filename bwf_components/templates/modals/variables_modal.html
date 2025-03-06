@@ -152,9 +152,6 @@
         addVariable(
           data,
           (data) => {
-            console.log(data);
-            workflow_variables.var.variables.push(data);
-            workflow_variables.appendVariable(data);
             $("#variables-modal .save-button").prop("disabled", false);
             $("#variables-modal").modal("hide");
           },
@@ -169,11 +166,6 @@
           { ...data, id: variables_data.selectedVar.data.id },
           (data) => {
             console.log(data);
-            const index = workflow_variables.var.variables.findIndex(
-              (a) => a.id === data.id
-            );
-            workflow_variables.var.variables[index] = data;
-            workflow_variables.updateVariable(data);
             $("#variables-modal .save-button").prop("disabled", false);
             $("#variables-modal").modal("hide");
           },

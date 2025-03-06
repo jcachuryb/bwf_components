@@ -17,6 +17,9 @@ var workflow_variables = {
     },
   
     init: function (workflow_id, containerId) {
+      const eventVariablesChange = new Event(EVENT_VARIABLES_CHANGE);
+
+
       const _ = workflow_variables
       if(!workflow_id || !containerId){
         console.error("workflow_id and containerId are required")
@@ -38,6 +41,7 @@ var workflow_variables = {
         success: function (data) {
           _.var.variables = data;
           _.renderVariables();
+          document.dispatchEvent(eventVariablesChange);
         },
         error: function (error) {
           console.error(error);
@@ -103,7 +107,14 @@ var workflow_variables = {
           headers: {'X-CSRFToken' : $("#csrf_token").val() },
           contentType: "application/json",
           data: JSON.stringify({...variable, workflow_id: _.workflow_id}),
-          success: success_callback,
+          success: (data)=> {
+            workflow_variables.var.variables.push(data);
+            workflow_variables.appendVariable(data);
+            const eventVariablesChange = new Event(EVENT_VARIABLES_CHANGE);
+            document.dispatchEvent(eventVariablesChange);
+            $(".variables-select").trigger(EVENT_VARIABLES_CHANGE);
+            success_callback(data)
+          },
           error: error_callback,
         });
       },
@@ -126,7 +137,15 @@ var workflow_variables = {
           type: "DELETE",
           headers: {'X-CSRFToken' : $("#csrf_token").val() },
           contentType: "application/json",
-          success: success_callback,
+          success: (data)=> {
+            const index = workflow_variables.var.variables.findIndex(
+              (a) => a.id === data.id
+            );
+            workflow_variables.var.variables[index] = data;
+            workflow_variables.updateVariable(data);
+            document.dispatchEvent(new Event(EVENT_VARIABLES_CHANGE));
+            success_callback(data)
+          },
           error: error_callback,
         });
       },

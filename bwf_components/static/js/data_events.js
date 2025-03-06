@@ -1,0 +1,1 @@
+var EVENT_VARIABLES_CHANGE = "variables:change";

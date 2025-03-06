@@ -107,24 +107,33 @@ class WorkflowComponentViewset(ViewSet):
         
         return Response(component_serializers.WorkflowComponentSerializer(instance).data)
 
-    @action(detail=False, methods=['POST'])
+    @action(detail=True, methods=['PUT'])
     def update_input_value(self, request, *args, **kwargs):
         try:
             serializer = component_serializers.UpdateComponentInputSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-
-            workflow_id = serializer.validated_data.get("workflow_id", None)
-            plugin_id = serializer.validated_data.get("plugin_id", None)
+            component_id = kwargs.get("pk", None)
+            workflow_id = serializer.validated_data.get("workflow_id")
+            plugin_id = serializer.validated_data.get("plugin_id")
+            key = serializer.validated_data.get("key")
             plugin_version = serializer.validated_data.get("plugin_version", None)
             value = serializer.validated_data.get("value", "")
 
             workflow = Workflow.objects.get(id=workflow_id)
             workflow_definition = workflow.get_json_definition()
             workflow_components = workflow_definition.get("workflow", {})
-            component = workflow_components.get(plugin_id, None)
+            component = workflow_components.get(component_id, None)
             if not component:
                 raise Exception("Component not found")
-            component['config']['inputs']['value'] = value
+            if component.get("plugin_id") != plugin_id:
+                raise Exception("Plugin ID does not match")
+            # TODO: Check plugin version
+
+            inputs = component['config']['inputs']
+            for input_item in inputs:
+                if input_item['key'] == key:
+                    input_item['value'] = value
+                    break
 
             workflow.set_json_definition(workflow_definition)
             return Response("Value updated")

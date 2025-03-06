@@ -1,5 +1,7 @@
+
 var workflow_components = {
   workflow_id: null,
+  has_init: false,
   add_component_btn: null,
   containerId: null,
   container: null,
@@ -38,6 +40,7 @@ var workflow_components = {
         console.error(error);
       },
     });
+    _.has_init = true;
   },
   renderComponents: function () {
     const _ = workflow_components;
@@ -207,7 +210,7 @@ var workflow_components = {
         $.ajax({
           url: _.var.base_url,
           type: "POST",
-          headers: { "X-CSRFToken": _.csrf_token },
+          headers: { "X-CSRFToken": $("#csrf_token").val()},
           contentType: "application/json",
           data: JSON.stringify({ ...data, workflow_id: _.workflow_id }),
           success: function (data) {
@@ -225,7 +228,19 @@ var workflow_components = {
       $.ajax({
         url: _.var.base_url + data.id + "/",
         type: "PUT",
-        headers: { "X-CSRFToken": _.csrf_token },
+        headers: { "X-CSRFToken": $("#csrf_token").val()},
+        contentType: "application/json",
+        data: JSON.stringify({ ...data, workflow_id: _.workflow_id }),
+        success: success_callback,
+        error: error_callback,
+      });
+    },
+    updateComponentInputValue: function (data, success_callback, error_callback) {
+      const _ = workflow_components;
+      $.ajax({
+        url: _.var.base_url + data.id + "/update_input_value/",
+        type: "PUT",
+        headers: { "X-CSRFToken": $("#csrf_token").val()},
         contentType: "application/json",
         data: JSON.stringify({ ...data, workflow_id: _.workflow_id }),
         success: success_callback,
@@ -243,7 +258,7 @@ var workflow_components = {
       $.ajax({
         url: _.var.base_url + id + "/?" + queryParams,
         type: "DELETE",
-        headers: { "X-CSRFToken": _.csrf_token },
+        headers: { "X-CSRFToken": $("#csrf_token").val()},
         contentType: "application/json",
         success: success_callback,
         error: error_callback,

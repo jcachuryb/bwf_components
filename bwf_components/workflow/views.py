@@ -176,6 +176,7 @@ class WorkflowVariablesViewset(ModelViewSet):
         if key in workflow_variables:
             key = f"{key}_{str(uuid.uuid4())[0:8]}"
         new_variable = {
+            "id": str(uuid.uuid4()),
             "name": serializer.validated_data.get("name"),
             "key": key,
             "value": serializer.validated_data.get("value", ""),

@@ -1,5 +1,6 @@
-{% extends 'govapp/bwf_base.html' %} 
+{% extends 'govapp/bwf_base.html' %}
 {% block content %}
+
 <div class="container-sm">
   <input type="hidden" id="workflow_id" value="{{workflow.id}}" />
   <input type="hidden" id="csrf_token" value="{{ csrf_token }}" />
@@ -73,8 +74,12 @@
   $(() => {
     const workflow_id = $("#workflow_id").val();
     workflow_inputs.init(workflow_id, "inputs-node");
-    workflow_components.init(workflow_id, "components-flow");
     workflow_variables.init(workflow_id, "variables-container");
+    document.addEventListener("variables:change", () => {
+      if (!workflow_components.has_init) {
+        workflow_components.init(workflow_id, "components-flow");        
+      }
+    });
     workflow_inputs.csrf_token = $("#csrf_token").val();
     workflow_components.csrf_token = $("#csrf_token").val();
 
