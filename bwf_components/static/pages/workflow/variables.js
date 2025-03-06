@@ -65,15 +65,14 @@ var workflow_variables = {
           <label id="${elementId}" class="list-group-item d-flex gap-2">
             <div class="d-flex gap-2 justify-content-between w-100">
             <span>
-              ${variable.label}
-              <small class="d-block text-body-secondary">${variable.description}</small>
-              <span class="badge rounded-pill text-bg-info">${variable.data_type}</span>
+              ${variable.name}
+              <small class="d-block text-body-secondary">${variable.data_type}</small>
             </span>
             <div class="form-check form-switch">
-              <button class="btn btn-ghost add-variable"data-variable-id="${variable.id}">
+              <button class="btn btn-ghost edit-variable"data-variable-id="${variable.key}">
                 <i class="bi bi-gear"></i>
               </button>
-              <button class="btn btn-ghost remove-variable" data-variable-id="${variable.id}">
+              <button class="btn btn-ghost remove-variable" data-variable-id="${variable.key}">
                 <i class="bi bi-trash text-danger"></i>
               </button>
             </div>
@@ -81,8 +80,10 @@ var workflow_variables = {
           </label>
         `
         _.container.append(variableMarkup)
-        $(`#${elementId} button.add-variable`).on("click", function () {
+        $(`#${elementId} button.edit-variable`).on("click", function (event) {
+          const variableKey = $(event.currentTarget).data('variable-id')
           const _ = workflow_variables
+          const variable = _.var.variables.find(v => v.key == variableKey)
           _.selectedVariable = variable
           $('#variables-modal').modal('show')
         })
@@ -99,7 +100,7 @@ var workflow_variables = {
         $.ajax({
           url: _.var.base_url,
           type: "POST",
-          headers: {'X-CSRFToken' : _.csrf_token },
+          headers: {'X-CSRFToken' : $("#csrf_token").val() },
           contentType: "application/json",
           data: JSON.stringify({...variable, workflow_id: _.workflow_id}),
           success: success_callback,
@@ -111,7 +112,7 @@ var workflow_variables = {
         $.ajax({
           url: _.var.base_url + variable.id + "/",
           type: "PUT",
-          headers: {'X-CSRFToken' : _.csrf_token },
+          headers: {'X-CSRFToken' : $("#csrf_token").val() },
           contentType: "application/json",
           data: JSON.stringify({...variable, workflow_id: _.workflow_id}),
           success: success_callback,
@@ -123,7 +124,7 @@ var workflow_variables = {
         $.ajax({
           url: _.var.base_url + variable.id + "/",
           type: "DELETE",
-          headers: {'X-CSRFToken' : _.csrf_token },
+          headers: {'X-CSRFToken' : $("#csrf_token").val() },
           contentType: "application/json",
           success: success_callback,
           error: error_callback,

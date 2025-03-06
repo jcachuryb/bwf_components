@@ -9,11 +9,11 @@ var utils = {
     }
     return url_params;
   },
-  formatFileSize : function(bytes)  {
-    if (bytes === 0) return '0 Bytes';
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  formatFileSize: function (bytes) {
+    if (bytes === 0) return "0 Bytes";
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + " " + sizes[i];
   },
   generateRandomId: function () {
     return Math.random().toString(36).slice(2, 10);
@@ -122,8 +122,8 @@ var utils = {
           }
         } else {
           /* if (name === 'id' || name === 'name') {
-                attrVal = sanitizeNamedAttribute(attrVal);
-              } */
+                  attrVal = sanitizeNamedAttribute(attrVal);
+                } */
           if (attrVal !== undefined) {
             field.setAttribute(name, attrVal);
           }
@@ -217,17 +217,17 @@ var utils = {
     });
   },
   register_prevent_from_leaving: function (tip_obj) {
-    window.onbeforeunload = function() {
+    window.onbeforeunload = function () {
       if (tip_obj && tip_obj.isDownloading) {
-          return "A download is in progress. Are you sure you want to leave?";
+        return "A download is in progress. Are you sure you want to leave?";
       } else {
-         return;
+        return;
       }
-   };
+    };
   },
 
   datatable: {
-    common: {      
+    common: {
       language: {
         loadingRecords: function () {
           return utils.markup(
@@ -240,7 +240,49 @@ var utils = {
           );
         },
       },
-    }
-
-  }
+    },
+  },
+  generate_key_value: function (input) {
+    const chars = [
+      "!",
+      "@",
+      "#",
+      "$",
+      "%",
+      "^",
+      "&",
+      "*",
+      "(",
+      ")",
+      "-",
+      "+",
+      "'",
+      '"',
+      ".",
+      ",",
+      "<",
+      ">",
+      "?",
+      "/",
+      "\\",
+      "|",
+      "[",
+      "]",
+      "{",
+      "}",
+      "=",
+      "~",
+      "`",
+      ":",
+      ";",
+    ]
+      .map((a) => "\\" + a)
+      .join("|");
+    return input
+      .toLowerCase()
+      .trim()
+      .split(/\ |\_/g)
+      .map((a) => a.replace(new RegExp(chars, "g"), ""))
+      .join("_");
+  },
 };

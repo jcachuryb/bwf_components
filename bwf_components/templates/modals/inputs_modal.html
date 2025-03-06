@@ -223,52 +223,17 @@
         inputs_data.fillUpForm(data);
       }
     });
+    $("#inputs-modal").on("show.bs.modal", function (e) {
+      $("#field_label").focus();
+    });
+
     $("#inputs-modal").on("hidden.bs.modal", function (e) {
       inputs_data.emptyForm();
     });
 
     $("#field_label").on("keyup", function () {
       const label = $(this).val() ?? "";
-      const chars = [
-        "!",
-        "@",
-        "#",
-        "$",
-        "%",
-        "^",
-        "&",
-        "*",
-        "(",
-        ")",
-        "-",
-        "+",
-        "'",
-        '"',
-        ".",
-        ",",
-        "<",
-        ">",
-        "?",
-        "/",
-        "\\",
-        "|",
-        "[",
-        "]",
-        "{",
-        "}",
-        "=",
-        "~",
-        "`",
-        ":",
-        ";",
-      ]
-        .map((a) => "\\" + a)
-        .join("|");
-      const key = label
-        .toLowerCase()
-        .trim()
-        .split(/\ |\_/g)
-        .map((a) => a.replace(new RegExp(chars, "g"), "")).join("_");
+      const key = utils.generate_key_value(label);
       $("#key-span").text(key);
     });
     $("#inputs-modal .save-button").on("click", function () {

@@ -4,14 +4,15 @@
     <link rel="stylesheet" type="text/css" href="/static/common/css/select2.css?ver={{ GIT_COMMIT_HASH }}"/>
     <link rel="stylesheet" type="text/css" href="/static/common/css/select2-bootstrap-5-theme.css?ver={{ GIT_COMMIT_HASH }}"/>
     <link rel="stylesheet" type="text/css" href="/static/common/css/front_custom.css?ver={{ GIT_COMMIT_HASH }}"/>
+    <link rel="stylesheet" type="text/css" href="/static/common/css/value-selector-plugin/value_selector.css?ver={{ GIT_COMMIT_HASH }}"/>
     <link rel="icon" type="image/png" href="/static/common/img/favicon.ico">
 {% endblock %}
 
 {% block extra_js %}
-<script src="/static/js/utils.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script src="/static/js/bwf_utils.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script src="/static/js/common.pagination.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script src="/static/js/table.js?ver={{ GIT_COMMIT_HASH }}"></script>
-<script src="/static/common/js/sam_app.js?ver={{ GIT_COMMIT_HASH }}"></script>
+<script src="/static/common/js/value-selector-plugin/value_selector.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script src="/static/common/js/select2.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <!-- any extra javascript goes here -->
 <!-- datatables -->
@@ -44,8 +45,6 @@
 
     <li><a class="dropdown-item" href="{% url 'logout' %}?next=/">Logout</a></li>
 {% endblock %}
-
-
 
 
 {% block menu_spacer %}

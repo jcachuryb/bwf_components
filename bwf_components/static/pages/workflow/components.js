@@ -78,9 +78,8 @@ var workflow_components = {
       $(`#${elementId}`).find(".list-group.input").append(inputElement);
       
         $(`#${divElementId}.value-selector`).valueSelector({
-          type: input.data_type,
-          options: input.json_value.options,
-          value_rules: input.json_value.value_rules,
+          input: input,
+          component: component,
         });
       
     }

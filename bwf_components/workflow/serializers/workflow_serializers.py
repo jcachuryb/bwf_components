@@ -42,15 +42,15 @@ class WorkflowInputSerializer(serializers.Serializer):
 
 class CreateVariableValueSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()
+    name = serializers.CharField(max_length=255)
     key = serializers.CharField(max_length=255)
-    value = serializers.CharField(max_length=255, required=False)
     data_type = serializers.CharField(max_length=255)
-    context = serializers.CharField(max_length=255)
-    label = serializers.CharField(max_length=255)
+    value = serializers.CharField(max_length=255, required=False)
+    context = serializers.CharField(max_length=255, required=False)
 
 
 class VariableValueSerializer(serializers.Serializer):
-    label = serializers.CharField(max_length=255)
+    name = serializers.CharField(max_length=255)
     key = serializers.CharField(max_length=255)
     data_type = serializers.CharField(max_length=255)
     value = serializers.CharField(max_length=255, required=False)
