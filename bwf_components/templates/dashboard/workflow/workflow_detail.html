@@ -1,4 +1,4 @@
-{% extends 'govapp/bwf_base.html' %}
+{% extends 'govapp/bwf_base.html' %} 
 {% block content %}
 
 <div class="container-sm">
@@ -7,10 +7,81 @@
   <h1>{{workflow.name}}</h1>
   <p>{{workflow.description}}</p>
 
+  <textarea id="code" name="code" style="display: none"></textarea>
+  <p>
+    Select a theme:
+    <select id="select">
+      <option selected="">default</option>
+      <option>3024-day</option>
+      <option>3024-night</option>
+      <option>abbott</option>
+      <option>abcdef</option>
+      <option>ambiance</option>
+      <option>ayu-dark</option>
+      <option>ayu-mirage</option>
+      <option>base16-dark</option>
+      <option>base16-light</option>
+      <option>bespin</option>
+      <option>blackboard</option>
+      <option>cobalt</option>
+      <option>colorforth</option>
+      <option>darcula</option>
+      <option>dracula</option>
+      <option>duotone-dark</option>
+      <option>duotone-light</option>
+      <option>eclipse</option>
+      <option>elegant</option>
+      <option>erlang-dark</option>
+      <option>gruvbox-dark</option>
+      <option>hopscotch</option>
+      <option>icecoder</option>
+      <option>idea</option>
+      <option>isotope</option>
+      <option>juejin</option>
+      <option>lesser-dark</option>
+      <option>liquibyte</option>
+      <option>lucario</option>
+      <option>material</option>
+      <option>material-darker</option>
+      <option>material-palenight</option>
+      <option>material-ocean</option>
+      <option>mbo</option>
+      <option>mdn-like</option>
+      <option>midnight</option>
+      <option>monokai</option>
+      <option>moxer</option>
+      <option>neat</option>
+      <option>neo</option>
+      <option>night</option>
+      <option>nord</option>
+      <option>oceanic-next</option>
+      <option>panda-syntax</option>
+      <option>paraiso-dark</option>
+      <option>paraiso-light</option>
+      <option>pastel-on-dark</option>
+      <option>railscasts</option>
+      <option>rubyblue</option>
+      <option>seti</option>
+      <option>shadowfox</option>
+      <option>solarized dark</option>
+      <option>solarized light</option>
+      <option>the-matrix</option>
+      <option>tomorrow-night-bright</option>
+      <option>tomorrow-night-eighties</option>
+      <option>ttcn</option>
+      <option>twilight</option>
+      <option>vibrant-ink</option>
+      <option>xq-dark</option>
+      <option>xq-light</option>
+      <option>yeti</option>
+      <option>yonce</option>
+      <option>zenburn</option>
+    </select>
+  </p>
+  <div class="test-editor"></div>
   <div
     id="variables-container"
-    class="row gap-1 py-md-2 align-items-center justify-content-center"
-    style="width: 30%"
+    class="row gap-1 py-md-2 align-items-center justify-content-center width-md-30"
   >
     <div id="variables"></div>
     <label class="d-grid mt-2">
@@ -62,7 +133,8 @@
 <script src="/static/pages/workflow/components.js"></script>
 
 <!-- Fragments -->
-{% include 'fragments/component_node.html' %} {% include 'fragments/value_popover.html' %}
+{% include 'fragments/component_node.html' %}
+{% include 'fragments/value_popover.html' %}
 <!-- END: Fragments -->
 <!-- Modals -->
 {% include 'modals/inputs_modal.html' %}
@@ -77,7 +149,7 @@
     workflow_variables.init(workflow_id, "variables-container");
     document.addEventListener("variables:change", () => {
       if (!workflow_components.has_init) {
-        workflow_components.init(workflow_id, "components-flow");        
+        workflow_components.init(workflow_id, "components-flow");
       }
     });
     workflow_inputs.csrf_token = $("#csrf_token").val();
@@ -85,6 +157,100 @@
 
     $("button.main-add-component").on("click", function () {
       $("#component-creation-modal").modal("show");
+    });
+    // CodeMirror($(".test-editor")[0], {
+    //         doc: "Start document",
+    //         value: "Orale",
+    //         mode: "htmlmixed",
+    //         placeholder: "Enter a value",
+    //         theme: 'blackboard'
+    //       });
+
+    var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+      lineNumbers: true,
+      styleActiveLine: true,
+      matchBrackets: true,
+      mode: "python",
+      theme: "blackboard",
+    });
+    var input = document.getElementById("select");
+    function selectTheme() {
+      var theme = input.options[input.selectedIndex].textContent;
+      editor.setOption("theme", theme);
+      location.hash = "#" + theme;
+    }
+    $("#select").on("change", selectTheme);
+    var choice =
+      (location.hash && location.hash.slice(1)) ||
+      (document.location.search &&
+        decodeURIComponent(document.location.search.slice(1)));
+    if (choice) {
+      input.value = choice;
+      editor.setOption("theme", choice);
+    }
+    CodeMirror.on(window, "hashchange", function () {
+      var theme = location.hash.slice(1);
+      if (theme) {
+        input.value = theme;
+        selectTheme();
+      }
+    });
+    var comp = [
+    ["here", "hither"],
+    ["asynchronous", "nonsynchronous"],
+    ["completion", "achievement", "conclusion", "culmination", "expirations"],
+    ["hinting", "advise", "broach", "imply"],
+    ["function","action"],
+    ["provide", "add", "bring", "give"],
+    ["synonyms", "equivalents"],
+    ["words", "token"],
+    ["each", "every"],
+  ]
+    function synonyms(cm, option) {
+      return new Promise(function(accept) {
+        setTimeout(function() {
+          var cursor = cm.getCursor(), line = cm.getLine(cursor.line)
+          var start = cursor.ch, end = cursor.ch
+          while (start && /(\$|\w)/.test(line.charAt(start - 1))) --start
+          while (end < line.length && /(\$)\w/.test(line.charAt(end))) ++end
+          var word = line.slice(start, end).toLowerCase()
+          if(word === "" || word.startsWith("$")) return accept(null)
+          const vars = workflow_variables.var.variables.map(v=> ({label: v.name, type: "variable", info: v.context})).filter(v=> v.label.startsWith(word))
+          const inputs = workflow_inputs.inputs.map(v=> ({label: v.name, type: "variable", info: v.context})).filter(v=> v.label.startsWith(word))
+          return accept({list: vars.concat(inputs),
+                        from: CodeMirror.Pos(cursor.line, start),
+                        to: CodeMirror.Pos(cursor.line, end)})
+          // return accept({list:[
+          //                     { label: "match", type: "keyword" },
+          //                     { label: "hello", type: "variable", info: "(World)" },
+          //                     { label: "magic", type: "text", apply: "⠁⭒*.✩.*⭒⠁", detail: "macro" },
+          //                   ],
+          //                   from: CodeMirror.Pos(cursor.line, start),
+          //                   to: CodeMirror.Pos(cursor.line, end)})
+            
+        }, 100)
+      })
+   }
+
+    function myCompletions(cm, option) {
+
+      let word = context.matchBefore(/\w*/);
+      if (word.from == word.to && !context.explicit) return null;
+      return {
+        from: word.from,
+        options: [
+          { label: "match", type: "keyword" },
+          { label: "hello", type: "variable", info: "(World)" },
+          { label: "magic", type: "text", apply: "⠁⭒*.✩.*⭒⠁", detail: "macro" },
+        ],
+      };
+    }
+    editor.setOption("extraKeys", {
+      "Escape": (cm) => {console.log("Escape");},
+      "Ctrl-Space": "autocomplete",
+    });
+    editor.setOption("hintOptions", {
+      hint: synonyms,
     });
   });
 </script>

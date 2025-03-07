@@ -80,7 +80,7 @@ var workflow_components = {
       });
       $(`#${elementId}`).find(".list-group.input").append(inputElement);
       
-        $(`#${divElementId}.value-selector`).valueSelector({
+        $(`#${divElementId}.input-value`).valueSelector({
           input: input,
           component: component,
         });
@@ -123,7 +123,7 @@ var workflow_components = {
     let element = markup("div", "", {
       id: elementId,
       name: key,
-      class: "value-selector",
+      class: "input-value",
     });
 
     // if (value_rules && value_rules.variable_only) {

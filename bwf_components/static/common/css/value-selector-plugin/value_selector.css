@@ -4,8 +4,13 @@
     width: 13em;
     display: flex;
     align-items: center;
-    background: #f7f7f7;
+    background: #fbfbfb;
     border-radius: 5px;
     border: 1px solid #ababab;
     cursor: pointer;
+    padding: 2px 11px;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

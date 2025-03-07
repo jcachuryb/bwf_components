@@ -1,26 +1,29 @@
 {% extends "webtemplate_dbca/base_b5_auth_session.html" %}
 {% load static %}
 {% block extra_css %}
-    <link rel="stylesheet" type="text/css" href="/static/common/css/select2.css?ver={{ GIT_COMMIT_HASH }}"/>
-    <link rel="stylesheet" type="text/css" href="/static/common/css/select2-bootstrap-5-theme.css?ver={{ GIT_COMMIT_HASH }}"/>
-    <link rel="stylesheet" type="text/css" href="/static/common/css/front_custom.css?ver={{ GIT_COMMIT_HASH }}"/>
-    <link rel="stylesheet" type="text/css" href="/static/common/css/value-selector-plugin/value_selector.css?ver={{ GIT_COMMIT_HASH }}"/>
     <link rel="icon" type="image/png" href="/static/common/img/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/static/common/css/value-selector-plugin/value_selector.css?ver={{ GIT_COMMIT_HASH }}"/>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css" integrity="sha512-uf06llspW44/LZpHzHT6qBOIVODjWtv4MxCricRxkzvopAlSWnTf6hpZTFxuuZcuNE9CBQhqE0Seu1CoRk84nQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/show-hint.min.css" integrity="sha512-OmcLQEy8iGiD7PSm85s06dnR7G7C9C0VqahIPAj/KHk5RpOCmnC6R2ob1oK4/uwYhWa9BF1GC6tzxsC8TIx7Jg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 {% endblock %}
-
+    
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js" integrity="sha512-8RnEqURPUc5aqFEN04aQEiPlSAdE0jlFS/9iGgUyNtwFnSKCXhmB6ZTNl7LnDtDWKabJIASzXrzD0K+LYexU9g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/edit/matchbrackets.min.js" integrity="sha512-GSYCbN/le5gNmfAWVEjg1tKnOH7ilK6xCLgA7c48IReoIR2g2vldxTM6kZlN6o3VtWIe6fHu/qhwxIt11J8EBA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/display/placeholder.min.js" integrity="sha512-acBo6sW2h2GZQ9BqU9v5RyYGPUEr1a9jrukJg825Y0ahxAg/7aqTNPtcalloqnf4DfsRVdcdNmcBNWPD8b8W8Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/python/python.min.js" integrity="sha512-2M0GdbU5OxkGYMhakED69bw0c1pW3Nb0PeF3+9d+SnwN1ryPx3wiDdNqK3gSM7KAU/pEV+2tFJFbMKjKAahOkQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/htmlmixed/htmlmixed.min.js" integrity="sha512-HN6cn6mIWeFJFwRN9yetDAMSh+AK9myHF1X9GlSlKmThaat65342Yw8wL7ITuaJnPioG0SYG09gy0qd5+s777w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/anyword-hint.min.js" integrity="sha512-wdYOcbX/zcS4tP3HEDTkdOI5UybyuRxJMQzDQIRcafRLY/oTDWyXO+P8SzuajQipcJXkb2vHcd1QetccSFAaVw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/addon/hint/show-hint.min.js" integrity="sha512-yhmeAerubMLaGAsyS7sE8Oqub6GeTkBDQpkXo2JKHgg7JOCudQvcbDQc5rPxdl7MqcDusTJzSy+ODlyzAwETfQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://code.jquery.com/ui/1.14.0/jquery-ui.min.js" integrity="sha256-Fb0zP4jE3JHqu+IBB9YktLcSjI1Zc6J2b6gTjB0LpoM=" crossorigin="anonymous"></script>
 <script src="/static/js/bwf_utils.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script src="/static/js/data_events.js?ver={{ GIT_COMMIT_HASH }}"></script>
-<script src="/static/js/common.pagination.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script src="/static/js/table.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <script src="/static/common/js/value-selector-plugin/value_selector.js?ver={{ GIT_COMMIT_HASH }}"></script>
-<script src="/static/common/js/select2.js?ver={{ GIT_COMMIT_HASH }}"></script>
 <!-- any extra javascript goes here -->
 <!-- datatables -->
-<link href="/static/common/css/datatables.css" rel="stylesheet" />
-<script src="/static/common/js/datatables.min.js?ver={{ GIT_COMMIT_HASH }}"></script>
 {% endblock %}
 
 {% block header_top_menu %}
