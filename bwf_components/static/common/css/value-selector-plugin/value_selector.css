@@ -1,4 +1,6 @@
-
+#cm-complete-0 {
+    z-index: 10000;
+}
 .value-selector {
     height: 2em;
     width: 13em;
@@ -14,3 +16,4 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+

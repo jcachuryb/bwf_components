@@ -168,6 +168,7 @@
 
     var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
       lineNumbers: true,
+      lineWrapping: true,
       styleActiveLine: true,
       matchBrackets: true,
       mode: "python",
@@ -195,18 +196,8 @@
         selectTheme();
       }
     });
-    var comp = [
-    ["here", "hither"],
-    ["asynchronous", "nonsynchronous"],
-    ["completion", "achievement", "conclusion", "culmination", "expirations"],
-    ["hinting", "advise", "broach", "imply"],
-    ["function","action"],
-    ["provide", "add", "bring", "give"],
-    ["synonyms", "equivalents"],
-    ["words", "token"],
-    ["each", "every"],
-  ]
-    function synonyms(cm, option) {
+
+    function getVarsAndContextHint(cm, option) {
       return new Promise(function(accept) {
         setTimeout(function() {
           var cursor = cm.getCursor(), line = cm.getLine(cursor.line)
@@ -215,42 +206,25 @@
           while (end < line.length && /(\$)\w/.test(line.charAt(end))) ++end
           var word = line.slice(start, end).toLowerCase()
           if(word === "" || word.startsWith("$")) return accept(null)
-          const vars = workflow_variables.var.variables.map(v=> ({label: v.name, type: "variable", info: v.context})).filter(v=> v.label.startsWith(word))
-          const inputs = workflow_inputs.inputs.map(v=> ({label: v.name, type: "variable", info: v.context})).filter(v=> v.label.startsWith(word))
+          const vars = workflow_variables.var.variables.filter(v=> v.key.startsWith(word)).map(v=> `${v.context}['${v.key}']`)
+          const inputs = workflow_inputs.var.inputs.filter(v=> v.key.startsWith(word)).map(v=> `$inputs['${v.key}']`)
+          console.log({vars, inputs})
           return accept({list: vars.concat(inputs),
                         from: CodeMirror.Pos(cursor.line, start),
                         to: CodeMirror.Pos(cursor.line, end)})
-          // return accept({list:[
-          //                     { label: "match", type: "keyword" },
-          //                     { label: "hello", type: "variable", info: "(World)" },
-          //                     { label: "magic", type: "text", apply: "⠁⭒*.✩.*⭒⠁", detail: "macro" },
-          //                   ],
-          //                   from: CodeMirror.Pos(cursor.line, start),
-          //                   to: CodeMirror.Pos(cursor.line, end)})
             
         }, 100)
       })
-   }
+  }
 
-    function myCompletions(cm, option) {
-
-      let word = context.matchBefore(/\w*/);
-      if (word.from == word.to && !context.explicit) return null;
-      return {
-        from: word.from,
-        options: [
-          { label: "match", type: "keyword" },
-          { label: "hello", type: "variable", info: "(World)" },
-          { label: "magic", type: "text", apply: "⠁⭒*.✩.*⭒⠁", detail: "macro" },
-        ],
-      };
-    }
     editor.setOption("extraKeys", {
-      "Escape": (cm) => {console.log("Escape");},
       "Ctrl-Space": "autocomplete",
+      "Ctrl-Enter": function(cm) {
+        console.log(cm.getValue());
+      },
     });
     editor.setOption("hintOptions", {
-      hint: synonyms,
+      hint: getVarsAndContextHint,
     });
   });
 </script>
