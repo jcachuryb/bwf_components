@@ -16,6 +16,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.input-value {
+    display: inline-flex;
+    
+}
 
 .context-menu.ui-menu.ui-widget.ui-widget-content {
   border: none;

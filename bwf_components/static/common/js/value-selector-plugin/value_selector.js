@@ -3,6 +3,7 @@
 class ValueSelector {
   constructor(element, settings, $) {
     const _ = this;
+    const { markup } = utils;
 
     _.defaults = {
       name: "DBCA-BWF-VARIABLE-SELECTOR",
@@ -15,8 +16,9 @@ class ValueSelector {
       return;
     }
 
-    const { value, value_ref, json_value, data_type } = input;
+    const { json_value, data_type } = input;
     const { type, options, value_rules } = json_value || {};
+    const { value_ref, value, is_expression } = input.value ?? {};
 
     _.component = component;
     _.input = input;
@@ -28,6 +30,8 @@ class ValueSelector {
       type: type,
       options: options,
       value_rules: value_rules,
+      is_expression: !!is_expression,
+      showEditor: !!is_expression,
     };
     const elementSettings = {
       type,
@@ -39,12 +43,26 @@ class ValueSelector {
     $.extend(_, _.initials);
     _.$element = $(element);
 
-    if (value_ref) {
-      const { context: ref_context, id: ref_id, name: ref_name } = value_ref;
-      _.$element.html(`${ref_context} - ${ref_name}`);
-    } else {
-      _.$element.html(value);
-    }
+    const content = markup("div", "", {
+      "data-id": `${component.id}-${input.key}`,
+      class: "value-selector-content",
+    });
+    const resetButton = markup("button", [{ tag: "i", class: "bi bi-trash" }], {
+      class: "btn btn-sm btn-outline-danger value-selector-reset",
+    });
+    const editButton = markup("button", [{ tag: "i", class: "bi bi-pencil" }], {
+      class: "btn btn-sm btn-primary value-selector-edit",
+    });
+    _.$element.append(content);
+    _.$element.append(editButton);
+    _.$element.append(resetButton);
+
+    _.$content = _.$element.find(".value-selector-content");
+    _.$resetButton = _.$element.find(".value-selector-reset");
+    _.$editButton = _.$element.find(".value-selector-edit");
+    _.$saveButton = null;
+
+    _.updateHtml();
     _.render(value, value_ref);
   }
 
@@ -56,7 +74,9 @@ class ValueSelector {
     const { type, options, value_rules } = _.input?.json_value ?? {};
 
     if (value_rules && value_rules.variable_only) {
-      _.$element.empty();
+      _.$content.empty();
+      _.$resetButton.hide();
+      _.$editButton.hide();
       const selectElement = markup(
         "select",
         [
@@ -66,6 +86,7 @@ class ValueSelector {
               value: variable.id,
               "data-context": variable.context ?? "variables",
               "data-name": variable.name,
+              "data-key": variable.key,
             };
             if (variable.id === value) {
               opts.selected = true;
@@ -78,7 +99,7 @@ class ValueSelector {
           value: value ?? "",
         }
       );
-      _.$element.append(selectElement);
+      _.$content.append(selectElement);
 
       $(selectElement).on(EVENT_VARIABLES_CHANGE, _, (event) => {
         const selector = event.data;
@@ -92,19 +113,23 @@ class ValueSelector {
           "variables";
         const name =
           $(event.target).find("option:selected").data("name") ?? "undefined";
-
+        const key = $(event.target).find("option:selected").data("key");
         selector.saveValue({
           value: null,
           is_expression: false,
           value_ref: {
             context: context,
             id: selectedValue,
+            key: key,
             name: name,
           },
         });
       });
     } else if (options) {
-      _.$element.empty();
+      _.$content.empty();
+      _.$resetButton.hide();
+      _.$editButton.hide();
+
       const selectElement = markup(
         "select",
         [
@@ -122,7 +147,7 @@ class ValueSelector {
           value: value ?? "",
         }
       );
-      _.$element.append(selectElement);
+      _.$content.append(selectElement);
 
       $(selectElement).on("change", _, function (event) {
         const selector = event.data;
@@ -141,10 +166,28 @@ class ValueSelector {
 
   onPopoverOpen() {
     const _ = this;
+    console.log({ settings: _.initials });
     const { input, component } = _;
+    const { value, value_ref, is_expression } = input.value ?? {};
+    const { type, options, value_rules } = _.input?.json_value ?? {};
+    if ((!value || value_ref) && !_.initials.showEditor) {
+      _.$saveButton.hide();
+    } else {
+      _.$saveButton.show();
+    }
+
+    if (_.editor) {
+      if (!value && !value_ref) {
+        _.editor.setValue("");
+      }
+      if (value) _.editor.setValue(value);
+      if (!value && value_ref) {
+        _.editor.setValue(`$${value_ref.context}['${value_ref.key}']`);
+      }
+    }
     // $(`#context-menu-${input.key}`).menu();
     // $(`#context-menu-${input.key}`).show();
-    $(`#context-menu-${input.key}`).contextMenu("rerenderMenu");
+    // $(`#context-menu-${input.key}`).contextMenu("rerenderMenu");
   }
 
   renderPopover() {
@@ -155,18 +198,42 @@ class ValueSelector {
     const $inputs = workflow_inputs;
 
     const { type, options, value_rules } = _.input?.json_value ?? {};
-    let showEditor = true;
+    const { value, value_ref, is_expression } = input.value ?? {};
 
-    _.$element.addClass("value-selector");
+    if (value) {
+      _.$resetButton.show();
+      _.$resetButton.on("click", _, function (event) {
+        const selector = event.data;
+        selector.saveValue({
+          value: null,
+          is_expression: false,
+          value_ref: null,
+        });
+      });
+    } else {
+      _.$resetButton.off("click");
+      _.$resetButton.hide();
+    }
+    _.$editButton.show();
+    _.$editButton.on("click", _, function (event) {
+      const selector = event.data;
+      _.initials.showEditor = true;
+      selector.popover.show();
+    });
+    // _.$resetButton.hide();
+    // _.$editButton.hide();
     const popoverContent = $('[data-name="popover-content"]').clone();
+    
+    _.$content.addClass("value-selector");
+    _.$saveButton = popoverContent.find(".btn-save");
+    
     popoverContent.attr("data-name", null);
-    popoverContent.attr("id", `popover-content-${input.key}`);
-
+    popoverContent.attr("id", `popover-content-${component.id}-${input.key}`);
     popoverContent
       .find(".context-menu")
-      .attr("id", `context-menu-${input.key}`);
+      .attr("id", `context-menu-${component.id}-${input.key}`);
 
-    popoverContent.find(".btn-save").on("click", _, function (event) {
+    _.$saveButton.on("click", _, function (event) {
       const selector = event.data;
       const selectedValue = selector.editor?.getValue();
       selector.saveValue({
@@ -178,11 +245,13 @@ class ValueSelector {
 
     popoverContent.find(".btn-close").on("click", _, function (event) {
       const selector = event.data;
-      selector.editor?.setValue(selector.input.value);
+      selector.editor?.setValue(selector.input.value?.value ?? "");
       selector.popover.hide();
     });
 
-    popoverContent.find(".editor").attr("id", `editor-${input.key}`);
+    popoverContent
+      .find(".editor")
+      .attr("id", `editor-${component.id}-${input.key}`);
     // POPOVER
     const popoverOptions = {
       html: true,
@@ -190,38 +259,49 @@ class ValueSelector {
       content: popoverContent,
       placement: "top",
     };
-    _.popover = new bootstrap.Popover(_.$element, popoverOptions);
+    _.popover = new bootstrap.Popover(_.$content, popoverOptions);
 
-    _.$element.on("click", _, function (event) {
+    _.$content.on("click", _, function (event) {
       const selector = event.data;
     });
-    _.$element.on("shown.bs.popover", _, function (event) {
+    _.$content.on("shown.bs.popover", _, function (event) {
       const _ = event.data;
       const { input, component } = _;
-      if (!input.value && !input.value_ref) {
-        $(`#context-menu-${input.key}`).contextMenu({
-          input,
-          component,
-          onSelectValue: (value) => {
-            console.log("Selected value", value);
-            if (showEditor && _.editor) {
-              const doc = _.editor.getDoc();
-              const cursor = doc.getCursor();
-              doc.replaceRange(`$${value?.context}['${value?.key}']`, cursor);
-            }
-          },
-          showInPopover: showEditor,
-        });
-      }
-      _.setUpEditor();
+      const { value, is_expression } = input.value ?? {};
+      if (_.initials.showEditor)
+        _.setUpEditor(`editor-${component.id}-${input.key}`);
+
+      $(`#context-menu-${component.id}-${input.key}`).contextMenu({
+        input,
+        component,
+        showInPopover: !!is_expression || _.initials.showEditor,
+        onSelectValue: (value) => {
+          console.log("Selected value", value);
+          if (_.initials.showEditor && _.editor) {
+            const doc = _.editor.getDoc();
+            const cursor = doc.getCursor();
+            doc.replaceRange(`$${value?.context}['${value?.key}']`, cursor);
+          } else {
+            _.saveValue({
+              value: null,
+              is_expression: false,
+              value_ref: {
+                context: value.context,
+                key: value.key,
+                id: value.id,
+              },
+            });
+          }
+        },
+      });
     });
-    _.$element.on("show.bs.popover", _, function (event) {
+    _.$content.on("show.bs.popover", _, function (event) {
       $(".popover.show").each(function () {
         // hide any open popovers when the anywhere else in the body is clicked
         if (
-          !$(this).is(_.$element) &&
-          $(this).has(_.$element).length === 0 &&
-          $(".popover").has(_.$element).length === 0
+          !$(this).is(_.$content) &&
+          $(this).has(_.$content).length === 0 &&
+          $(".popover").has(_.$content).length === 0
         ) {
           $(this).popover("hide");
         }
@@ -231,15 +311,15 @@ class ValueSelector {
     });
   }
 
-  setUpEditor() {
+  setUpEditor(editorId) {
     const _ = this;
     const { input, component } = _;
-    const value = input.value;
+    const { value, value_ref, is_expression } = input.value ?? {};
     const { type, options, value_rules } = _.input?.json_value ?? {};
     if (!_.editor) {
-      _.editor = CodeMirror.fromTextArea($(`#editor-${input.key}`)[0], {
+      _.editor = CodeMirror.fromTextArea($(`#${editorId}`)[0], {
         doc: "Start document",
-        value: value,
+        value: "",
         mode: "python",
         placeholder: "Enter a value",
         theme: "default",
@@ -249,6 +329,10 @@ class ValueSelector {
         autoCloseBrackets: true,
         lineWrapping: true,
       });
+      if (value) _.editor.setValue(value);
+      if (!value && value_ref) {
+        _.editor.setValue(`$${value_ref.context}['${value_ref.key}']`);
+      }
 
       _.editor.setOption("extraKeys", {
         "Ctrl-Space": "autocomplete",
@@ -327,10 +411,17 @@ class ValueSelector {
     const { type, options, value_rules } = json_value ?? {};
 
     if ((value_rules && value_rules.variable_only) || options) {
+      _.$resetButton.hide();
+      _.$editButton.hide();
       return;
     }
-    _.$element.empty();
-    _.$element.html(value);
+    _.$content.empty();
+    if (value && value.value_ref) {
+      const { context: ref_context, key: ref_key } = value.value_ref;
+      _.$content.html(`$${ref_context}['${ref_key}']`);
+    } else {
+      _.$content.html(value.is_expression ? "Editor" : "");
+    }
   }
 }
 

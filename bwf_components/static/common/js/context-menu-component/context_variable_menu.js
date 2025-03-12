@@ -21,7 +21,7 @@ class ContextVariableMenu {
     _.component = component;
     _.input = input;
 
-    _.elementId = `context-menu-${input.key}${showInPopover ? "-popover" : ""}`;
+    _.elementId = `context-menu-${component.id}-${input.key}${showInPopover ? "-popover" : ""}`;
 
     _.initials = {
       present: true,
@@ -112,14 +112,6 @@ class ContextVariableMenu {
   setupMenu(container) {
     const _ = this;
     const { markup } = utils;
-    const { input, component } = _;
-    const value = input.value;
-    const {
-      context: ref_context,
-      name: ref_name,
-      id: ref_id,
-    } = input.value_ref || {};
-    const { type, options, value_rules } = _.input?.json_value ?? {};
 
     const menuElements = markup("ul", [
       // inputs,

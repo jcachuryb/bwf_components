@@ -2,8 +2,6 @@
 
 from rest_framework import serializers
 
-
-
 class WorkflowComponentSerializer(serializers.Serializer):
     id = serializers.CharField()
     name = serializers.CharField()
@@ -43,3 +41,4 @@ class ComponentInputUpdateSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     json_value = serializers.JSONField(required=False)
     expression = serializers.CharField(max_length=1000, required=False)
+    value = serializers.JSONField(required=False)
