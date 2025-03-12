@@ -10,7 +10,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="component-creation-modal-label">
-          Component Definitions
+          Insert Component
         </h5>
         <button
           type="button"
@@ -22,8 +22,12 @@
         </button>
       </div>
       <div class="modal-body">
-        <p>Select a component definition to create a new component.</p>
         <form id="inputs-form">
+          <div id="component-route" style="display: none">
+            <label class="form-label">Insert after</label>
+            <div id="components-list"></div>
+          </div>
+          <p class="my-2">Select a component definition to create a new component.</p>
           <div class="row" id="definitions"></div>
         </form>
       </div>
@@ -74,7 +78,10 @@
               {
                 tag: "label",
                 content: [
-                  { tag: "i", class: [d.icon_class ?? "bi bi-gear", "me-2"].join(" ") },
+                  {
+                    tag: "i",
+                    class: [d.icon_class ?? "bi bi-gear", "me-2"].join(" "),
+                  },
                   d.name,
                   {
                     tag: "span",
@@ -92,7 +99,29 @@
       });
     });
 
-    $("#component-creation-modal").on("show.bs.modal", function (e) {});
+    $("#component-creation-modal").on("show.bs.modal", function (e) {
+      $(`#components-list`).empty();
+      const { markup } = utils;
+      const _ = workflow_components.var.components;
+      const hasComponents = workflow_components.var.components.length > 0;
+      if (hasComponents) {
+        $("#component-route").show();
+        const selectComponents = markup(
+          "select",
+          [
+            { tag: "option", value: "", content: "Select a component", disabled: true, selected: true },
+            ..._.map((c) => {
+              return { tag: "option", value: c.id, content: c.name };
+            }),
+          ],
+          { class: "form-select" }
+        );
+        $(`#components-list`).append(selectComponents);
+      } else {
+        $("#component-route").empty();
+        $("#component-route").hide();
+      }
+    });
     $("#component-creation-modal").on("hidden.bs.modal", function (e) {
       const value = $("#definitions input[type='radio']").prop(
         "checked",
@@ -108,6 +137,12 @@
       function () {
         const _ = workflow_components;
         const value = $("#definitions input:checked").val();
+        const hasComponents = _.var.components.length > 0;
+
+        if (hasComponents && $('#components-list select').val() == "") {
+          alert("Please select a component to insert after.");
+          return;
+        }
         if (value) {
           $(".create-component-button").prop("disabled", true);
           const definition = _.pluginDefinitions.find((d) => d.id == value);
@@ -116,6 +151,7 @@
             plugin_id: definition.id,
             index: 0,
             name: definition.name,
+            route: hasComponents ? $('#components-list select').val() : null,
           };
           _.api
             .addComponent(data)
