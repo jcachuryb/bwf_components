@@ -26,7 +26,7 @@ class UpdateComponentInputSerializer(serializers.Serializer):
     plugin_id = serializers.CharField(max_length=500)
     plugin_version = serializers.IntegerField(default=1)
     key = serializers.CharField(max_length=500)
-    value = serializers.CharField(max_length=1000, required=False)
+    value = serializers.JSONField()
 
 
 class PluginDefinitionSerializer(serializers.Serializer):

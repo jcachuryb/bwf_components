@@ -10,7 +10,12 @@ class ValueSelector {
     };
 
     const { input, component } = settings;
-    const { value, json_value, data_type } = input;
+
+    if (!input || !component) {
+      return;
+    }
+
+    const { value, value_ref, json_value, data_type } = input;
     const { type, options, value_rules } = json_value || {};
 
     _.component = component;
@@ -19,6 +24,7 @@ class ValueSelector {
     _.initials = {
       present: true,
       value: value,
+      value_ref: value_ref,
       type: type,
       options: options,
       value_rules: value_rules,
@@ -32,17 +38,20 @@ class ValueSelector {
 
     $.extend(_, _.initials);
     _.$element = $(element);
-    _.$element.html(value);
 
-    _.render(value);
+    if (value_ref) {
+      const { context: ref_context, id: ref_id, name: ref_name } = value_ref;
+      _.$element.html(`${ref_context} - ${ref_name}`);
+    } else {
+      _.$element.html(value);
+    }
+    _.render(value, value_ref);
   }
 
-  render(value) {
+  render(value, value_ref = {}) {
     const _ = this;
-    const { input, component } = _;
     const { markup } = utils;
     const $vars = workflow_variables;
-    const $inputs = workflow_inputs;
 
     const { type, options, value_rules } = _.input?.json_value ?? {};
 
@@ -53,7 +62,11 @@ class ValueSelector {
         [
           markup("option", "Select a variable", { value: "" }),
           ...$vars.var.variables.map((variable) => {
-            const opts = { value: variable.id };
+            const opts = {
+              value: variable.id,
+              "data-context": variable.context ?? "variables",
+              "data-name": variable.name,
+            };
             if (variable.id === value) {
               opts.selected = true;
             }
@@ -69,12 +82,26 @@ class ValueSelector {
 
       $(selectElement).on(EVENT_VARIABLES_CHANGE, _, (event) => {
         const selector = event.data;
-        selector.render(selector.input.value);
+        selector.render(selector.input.value, {});
       });
       $(selectElement).on("change", _, function (event) {
         const selector = event.data;
         const selectedValue = event.target.value;
-        selector.saveValue(selectedValue);
+        const context =
+          $(event.target).find("option:selected").data("context") ??
+          "variables";
+        const name =
+          $(event.target).find("option:selected").data("name") ?? "undefined";
+
+        selector.saveValue({
+          value: null,
+          is_expression: false,
+          value_ref: {
+            context: context,
+            id: selectedValue,
+            name: name,
+          },
+        });
       });
     } else if (options) {
       _.$element.empty();
@@ -100,113 +127,110 @@ class ValueSelector {
       $(selectElement).on("change", _, function (event) {
         const selector = event.data;
         const selectedValue = event.target.value;
-        selector.saveValue(selectedValue);
+        selector.saveValue({
+          value: selectedValue,
+          is_expression: false,
+          value_ref: null,
+        });
       });
     } else {
-      _.$element.addClass("value-selector");
-      const popoverContent = $('[data-name="popover-content"]').clone();
-      popoverContent.attr("data-name", null);
-      popoverContent.attr("id", `popover-content-${input.key}`);
-      popoverContent
-        .find(".context-menu")
-        .attr("id", `context-menu-${input.key}`);
-      popoverContent.find(".btn-save").on("click", _, function (event) {
-        const selector = event.data;
-        const selectedValue = selector.editor.getValue();
-        selector.saveValue(selectedValue);
-      });
-      popoverContent.find(".btn-close").on("click", _, function (event) {
-        const selector = event.data;
-        selector.editor.setValue(selector.input.value);
-        selector.popover.hide();
-      });
-      popoverContent.find(".editor").attr("id", `editor-${input.key}`);
-      const popoverOptions = {
-        html: true,
-        title: "",
-        content: popoverContent,
-        placement: "top",
-      };
-      _.popover = new bootstrap.Popover(_.$element, popoverOptions);
-
-      _.$element.on("click", _, function (event) {
-        const selector = event.data;
-      });
-      _.$element.on("shown.bs.popover", _, function (event) {
-        const _ = event.data;
-        const { input, component } = _;
-        _.setupMenu();
-        // _.setUpEditor();
-      });
-      _.$element.on("show.bs.popover", _, function (event) {
-        $(".popover.show").each(function () {
-          // hide any open popovers when the anywhere else in the body is clicked
-          if (
-            !$(this).is(_.$element) &&
-            $(this).has(_.$element).length === 0 &&
-            $(".popover").has(_.$element).length === 0
-          ) {
-            $(this).popover("hide");
-          }
-        });
-        const selector = event.data;
-        selector.onPopoverOpen();
-      });
+      // render popover
+      _.renderPopover();
     }
   }
 
   onPopoverOpen() {
     const _ = this;
-  }
-  setupMenu() {
-    const _ = this;
-    const { markup } = utils;
     const { input, component } = _;
-    const value = input.value;
-    const { type, options, value_rules } = _.input?.json_value ?? {};
-
-    const menuElements = markup("ul", [
-      // inputs,
-      {
-        tag: "li",
-        content: [
-          markup("div", "Inputs"),
-          markup(
-            "ul",
-            workflow_inputs.var.inputs.map((el) => ({
-              tag: "li",
-              content: el.label,
-              class: "",
-              "data-value": el.id,
-              "data-key": el.key,
-            }))
-          ),
-        ],
-      },
-      // variables
-      {
-        tag: "li",
-        content: [
-          markup("div", "Variables"),
-          markup(
-            "ul",
-            workflow_variables.var.variables.map((el) => ({
-              tag: "li",
-              content: el.name,
-              class: "",
-              "data-value": el.id,
-              "data-key": el.key,
-            }))
-          ),
-        ],
-      },
-    ]);
-
-    $(`#context-menu-${input.key}`).empty();
-    $(`#context-menu-${input.key}`).append(menuElements.children);
-    $(`#context-menu-${input.key}`).menu();
-    $(`#context-menu-${input.key}`).show();
+    // $(`#context-menu-${input.key}`).menu();
+    // $(`#context-menu-${input.key}`).show();
+    $(`#context-menu-${input.key}`).contextMenu("rerenderMenu");
   }
+
+  renderPopover() {
+    const _ = this;
+    const { input, component } = _;
+    const { markup } = utils;
+    const $vars = workflow_variables;
+    const $inputs = workflow_inputs;
+
+    const { type, options, value_rules } = _.input?.json_value ?? {};
+    let showEditor = true;
+
+    _.$element.addClass("value-selector");
+    const popoverContent = $('[data-name="popover-content"]').clone();
+    popoverContent.attr("data-name", null);
+    popoverContent.attr("id", `popover-content-${input.key}`);
+
+    popoverContent
+      .find(".context-menu")
+      .attr("id", `context-menu-${input.key}`);
+
+    popoverContent.find(".btn-save").on("click", _, function (event) {
+      const selector = event.data;
+      const selectedValue = selector.editor?.getValue();
+      selector.saveValue({
+        value: selectedValue,
+        is_expression: true,
+        value_ref: null,
+      });
+    });
+
+    popoverContent.find(".btn-close").on("click", _, function (event) {
+      const selector = event.data;
+      selector.editor?.setValue(selector.input.value);
+      selector.popover.hide();
+    });
+
+    popoverContent.find(".editor").attr("id", `editor-${input.key}`);
+    // POPOVER
+    const popoverOptions = {
+      html: true,
+      title: "",
+      content: popoverContent,
+      placement: "top",
+    };
+    _.popover = new bootstrap.Popover(_.$element, popoverOptions);
+
+    _.$element.on("click", _, function (event) {
+      const selector = event.data;
+    });
+    _.$element.on("shown.bs.popover", _, function (event) {
+      const _ = event.data;
+      const { input, component } = _;
+      if (!input.value && !input.value_ref) {
+        $(`#context-menu-${input.key}`).contextMenu({
+          input,
+          component,
+          onSelectValue: (value) => {
+            console.log("Selected value", value);
+            if (showEditor && _.editor) {
+              const doc = _.editor.getDoc();
+              const cursor = doc.getCursor();
+              doc.replaceRange(`$${value?.context}['${value?.key}']`, cursor);
+            }
+          },
+          showInPopover: showEditor,
+        });
+      }
+      _.setUpEditor();
+    });
+    _.$element.on("show.bs.popover", _, function (event) {
+      $(".popover.show").each(function () {
+        // hide any open popovers when the anywhere else in the body is clicked
+        if (
+          !$(this).is(_.$element) &&
+          $(this).has(_.$element).length === 0 &&
+          $(".popover").has(_.$element).length === 0
+        ) {
+          $(this).popover("hide");
+        }
+      });
+      const selector = event.data;
+      selector.onPopoverOpen();
+    });
+  }
+
   setUpEditor() {
     const _ = this;
     const { input, component } = _;
@@ -229,7 +253,11 @@ class ValueSelector {
       _.editor.setOption("extraKeys", {
         "Ctrl-Space": "autocomplete",
         "Ctrl-Enter": function (cm) {
-          _.saveValue(cm.getValue());
+          _.saveValue({
+            value: cm.getValue(),
+            is_expression: true,
+            value_ref: null,
+          });
         },
       });
     }

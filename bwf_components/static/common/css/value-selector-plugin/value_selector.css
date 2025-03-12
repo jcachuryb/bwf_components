@@ -1,19 +1,54 @@
 #cm-complete-0 {
-    z-index: 10000;
+  z-index: 10000;
 }
 .value-selector {
-    height: 2em;
-    width: 13em;
-    display: flex;
-    align-items: center;
-    background: #fbfbfb;
-    border-radius: 5px;
-    border: 1px solid #ababab;
-    cursor: pointer;
-    padding: 2px 11px;
-    font-size: 13px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  height: 2em;
+  width: 13em;
+  display: flex;
+  align-items: center;
+  background: #fbfbfb;
+  border-radius: 5px;
+  border: 1px solid #ababab;
+  cursor: pointer;
+  padding: 2px 11px;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+.context-menu.ui-menu.ui-widget.ui-widget-content {
+  border: none;
+}
+
+.context-menu.ui-menu.ui-widget.ui-widget-content ul {
+  padding: 2px;
+}
+.context-menu.ui-menu > li.ui-menu-item {
+  border-bottom: 1px solid #f1f1f1 !important;
+}
+
+.context-menu.ui-menu > li.ui-menu-item > div {
+  padding: 10px;
+}
+
+.context-menu.ui-menu
+  > li.ui-menu-item
+  > div.ui-menu-item-wrapper.ui-state-active {
+  background-color: #0d6efd;
+  border: none;
+  border-radius: inherit;
+  font-weight: bold;
+}
+
+.context-menu.ui-menu > li.ui-menu-item ul li {
+  background-color: #fff;
+  border: none;
+  padding: 8px;
+  width: 150px;
+}
+.context-menu.ui-menu > li.ui-menu-item ul li.ui-menu-item:hover {
+  background-color: #0d6dfdaf;
+  font-weight: bold;
+  color: #fff;
+}
