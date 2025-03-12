@@ -85,7 +85,7 @@ class WorkflowComponentViewset(ViewSet):
                 output_index += 1
 
         index = serializer.validated_data.get("index", 0)                
-        
+        route = serializer.validated_data.get("route", None)
         instance_id = str(uuid.uuid4())        
         instance = {
             "id": instance_id,
@@ -98,11 +98,13 @@ class WorkflowComponentViewset(ViewSet):
             },
             "conditions": {
                 "is_entry": is_empty,
-                "route": serializer.validated_data.get("route", None),
+                "route": None,
             },
         }
 
-        workflow_components[instance_id] =  instance
+        workflow_components[instance_id] = instance
+        if route:
+            workflow_components[route]['route'] = instance_id
         workflow.set_json_definition(workflow_definition)
         
         return Response(component_serializers.WorkflowComponentSerializer(instance).data)

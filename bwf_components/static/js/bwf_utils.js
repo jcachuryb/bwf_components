@@ -278,6 +278,9 @@ var utils = {
     ]
       .map((a) => "\\" + a)
       .join("|");
+      if (input.length > 0) {
+        input = (input[0].toLowerCase()) + input.slice(1);
+      }
     return input
       .trim()
       .split(/\ |\_/g)

@@ -121,7 +121,7 @@ var workflow_inputs = {
       deleteInput: function (input, success_callback, error_callback) {
         const _ = workflow_inputs
         $.ajax({
-          url: _.var.base_url + input.id + "/",
+          url: _.var.base_url + input.id + "/?workflow_id=" + _.workflow_id,
           type: "DELETE",
           headers: {'X-CSRFToken' : $("#csrf_token").val()},
           contentType: "application/json",

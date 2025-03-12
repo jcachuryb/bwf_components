@@ -102,21 +102,23 @@ class WorkflowInputsViewset(ViewSet):
         workflow_definition = workflow.get_json_definition()
         workflow_inputs = workflow_definition.get("inputs", {})
         key = serializer.validated_data.get("key")
+        id = str(uuid.uuid4())
         if key in workflow_inputs:
-            key = f"{key}_{str(uuid.uuid4())[0:8]}"
+            key = f"{key}_{id[0:8]}"
         new_input = {
             "label": serializer.validated_data.get("label"),
+            "id": id,
             "key": key,
             "description": serializer.validated_data.get("description", ""),
             "data_type": serializer.validated_data.get("data_type"),
             "default_value": serializer.validated_data.get("default_value", {}),
             "required": serializer.validated_data.get("required", False),
         }
-        workflow_inputs[key] = new_input
+        workflow_inputs[id] = new_input
         workflow_definition["inputs"] = workflow_inputs
         workflow.set_json_definition(workflow_definition)
 
-        return Response(workflow_serializers.WorkflowInputSerializer().data)
+        return Response(workflow_serializers.WorkflowInputSerializer(new_input).data)
 
     def retrieve(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
@@ -138,22 +140,49 @@ class WorkflowInputsViewset(ViewSet):
         
     
     def update(self, request, *args, **kwargs):
-        item = self.get_object()
-        serializer = self.get_serializer(item, data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        workflow_id = serializer.validated_data.get("workflow_id", None)
 
-        workflow = Workflow.objects.get(id=serializer.validated_data.get("workflow_id"))
+        workflow = Workflow.objects.get(id=workflow_id)
+        workflow_definition = workflow.get_json_definition()
+        workflow_inputs = workflow_definition.get("inputs", {})
+        
+        instance = workflow_inputs.get(kwargs.get("pk"), None)
+        if not instance:
+            raise Exception("Input not found")        
+
         key = serializer.validated_data.get("key")
-        has_key_changed = key != item.key
+        has_key_changed = key != instance["key"]
         if has_key_changed:
-            if WorkflowInput.objects.filter(workflow=workflow, key=key).exists():
-                key = f"{key}_{str(uuid.uuid4())[0:8]}"       
+            if workflow_inputs.get(key, None):
+                key = f"{key}_{str(uuid.uuid4())[0:8]}"
+                instance["key"] = key
+        
+        instance["label"] = serializer.validated_data.get("label")
+        instance["description"] = serializer.validated_data.get("description", "")
+        instance["data_type"] = serializer.validated_data.get("data_type")
+        instance["default_value"] = serializer.validated_data.get("default_value", {})
+        instance["required"] = serializer.validated_data.get("required", False)
+        workflow_inputs[instance["id"]] = instance
 
-        return super().update(request, *args, **kwargs)
+        workflow.set_json_definition(workflow_definition)
+        return Response(workflow_serializers.WorkflowInputSerializer(instance).data)
+
     
     def destroy(self, request, *args, **kwargs):
-        # TODO: make sure to update componentes relying on this key
-        return super().destroy(request, *args, **kwargs)
+        workflow_id = request.query_params.get("workflow_id", None)
+
+        workflow = Workflow.objects.get(id=workflow_id)
+        workflow_definition = workflow.get_json_definition()
+        workflow_inputs = workflow_definition.get("inputs", {})
+        
+        instance = workflow_inputs.get(kwargs.get("pk"), None)
+        if not instance:
+            raise Exception("Input not found")
+        workflow_inputs.pop(kwargs.get("pk"), None)
+        workflow.set_json_definition(workflow_definition)
+        return Response("Input removed")
 
 
 class WorkflowVariablesViewset(ModelViewSet):

@@ -32,6 +32,7 @@ class CreateWorkflowInputSerializer(serializers.Serializer):
 
 
 class WorkflowInputSerializer(serializers.Serializer):
+    id = serializers.CharField(max_length=100)
     label = serializers.CharField(max_length=255)
     key = serializers.CharField(max_length=255)
     description = serializers.CharField(max_length=1000, required=False)
