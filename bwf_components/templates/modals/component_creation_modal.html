@@ -23,12 +23,22 @@
       </div>
       <div class="modal-body">
         <form id="inputs-form">
-          <div id="component-route" style="display: none">
+          <p class="my-2">
+            Select a component definition to create a new component.
+          </p>
+          <div class="row" id="definitions"></div>
+          <div
+            id="component-route"
+            class="mt-2"
+            style="display: none; border-top: 1px solid #ccc"
+          >
             <label class="form-label">Insert after</label>
             <div id="components-list"></div>
           </div>
-          <p class="my-2">Select a component definition to create a new component.</p>
-          <div class="row" id="definitions"></div>
+          <div class="mb-3">
+            <label for="component-name" class="form-label">Node Name</label>
+            <input type="text" class="form-control" id="component-name" />
+          </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -56,60 +66,77 @@
     },
   };
   $(() => {
-    const { markup } = utils;
-    const _ = workflow_components;
-    $("#definitions").empty();
-    _.fetchPluginDefinitions().then((data) => {
-      data.forEach((d, index) => {
-        $("#definitions").append(
-          markup(
-            "div",
-            [
-              {
-                tag: "input",
-                class: "list-group-item-check pe-none",
-                type: "radio",
-                name: "definition-radio",
-                id: `listGroupCheckableRadios${index}`,
-                value: d.id,
-              },
-
-              {
-                tag: "label",
-                content: [
-                  {
-                    tag: "i",
-                    class: [d.icon_class ?? "bi bi-gear", "me-2"].join(" "),
-                  },
-                  d.name,
-                  {
-                    tag: "span",
-                    content: d.description,
-                    class: "d-block small opacity-50",
-                  },
-                ],
-                class: "list-group-item rounded-3 py-1 my-1",
-                for: `listGroupCheckableRadios${index}`,
-              },
-            ],
-            { class: "col-6" }
-          )
-        );
-      });
-    });
-
     $("#component-creation-modal").on("show.bs.modal", function (e) {
+      const _ = workflow_components;
       $(`#components-list`).empty();
+      $("#definitions").empty();
+
+      _.fetchPluginDefinitions().then((data) => {
+        const { markup } = utils;
+        const _ = workflow_components;
+        _.var.definitions = data;
+        data.forEach((d, index) => {
+          $("#definitions").append(
+            markup(
+              "div",
+              [
+                {
+                  tag: "input",
+                  class: "list-group-item-check pe-none",
+                  type: "radio",
+                  name: "definition-radio",
+                  id: `listGroupCheckableRadios${index}`,
+                  value: d.id,
+                },
+
+                {
+                  tag: "label",
+                  content: [
+                    {
+                      tag: "i",
+                      class: [d.icon_class ?? "bi bi-gear", "me-2"].join(" "),
+                    },
+                    d.name,
+                    {
+                      tag: "span",
+                      content: d.description,
+                      class: "d-block small opacity-50",
+                    },
+                  ],
+                  class: "list-group-item rounded-3 py-1 my-1",
+                  for: `listGroupCheckableRadios${index}`,
+                },
+              ],
+              { class: "col-6" }
+            )
+          );
+          $("#definitions input[type='radio']").on("change", function (event) {
+            const componentId = $("#definitions input:checked").val();
+            const component = workflow_components.var.definitions.find(
+              (definition) => definition.id == componentId
+            );
+            if(component){
+              $("#component-name").val(component.name);
+            }
+          });
+        });
+      });
+
       const { markup } = utils;
-      const _ = workflow_components.var.components;
-      const hasComponents = workflow_components.var.components.length > 0;
+      const hasComponents = _.var.components.length > 0;
       if (hasComponents) {
         $("#component-route").show();
         const selectComponents = markup(
           "select",
           [
-            { tag: "option", value: "", content: "Select a component", disabled: true, selected: true },
-            ..._.map((c) => {
+            {
+              tag: "option",
+              value: "",
+              content: "Select a component",
+              disabled: true,
+              selected: true,
+            },
+            ..._.var.components.map((c) => {
               return { tag: "option", value: c.id, content: c.name };
             }),
           ],
@@ -121,11 +148,10 @@
         $("#component-route").hide();
       }
     });
+
     $("#component-creation-modal").on("hidden.bs.modal", function (e) {
-      const value = $("#definitions input[type='radio']").prop(
-        "checked",
-        false
-      );
+      $("#definitions input[type='radio']").prop("checked", false);
+      $("#component-name").val("");
     });
 
     $("#component-creation-modal .close-button").on("click", function () {
@@ -138,19 +164,20 @@
         const value = $("#definitions input:checked").val();
         const hasComponents = _.var.components.length > 0;
 
-        if (hasComponents && $('#components-list select').val() == "") {
+        if (hasComponents && $("#components-list select").val() == "") {
           alert("Please select a component to insert after.");
           return;
         }
         if (value) {
           $(".create-component-button").prop("disabled", true);
           const definition = _.pluginDefinitions.find((d) => d.id == value);
+          const name = $("#component-name").val() ?? definition.name;
 
           const data = {
             plugin_id: definition.id,
             index: 0,
-            name: definition.name,
-            route: hasComponents ? $('#components-list select').val() : null,
+            name: name,
+            route: hasComponents ? $("#components-list select").val() : null,
           };
           _.api
             .addComponent(data)

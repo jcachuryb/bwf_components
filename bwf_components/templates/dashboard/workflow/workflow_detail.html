@@ -7,24 +7,26 @@
   <h1>{{workflow.name}}</h1>
   <p>{{workflow.description}}</p>
   <!-- {% include 'fragments/text_editor_sandbox.html' %} -->
+  <div class="row">
+ <div class="col-auto">
   <div
-    id="variables-container"
-    class="row gap-1 py-md-2 align-items-center justify-content-center width-md-30"
-  >
-    <div id="variables"></div>
-    <label class="d-grid mt-2">
-      <button class="btn btn-outline-primary add-variable">
-        <i class="bi bi-plus me-2"></i>
-        Add Variable
-      </button>
-    </label>
-  </div>
-
-  <div
+  id="variables-container"
+  class="row gap-1 py-md-2 align-items-center justify-content-center width-md-30"
+>
+  <div id="variables"></div>
+  <label class="d-grid mt-2">
+    <button class="btn btn-outline-primary add-variable">
+      <i class="bi bi-plus me-2"></i>
+      Add Variable
+    </button>
+  </label>
+</div>
+ </div>
+ <div class="col-auto"><div
     id="inputs-node"
     class="row gap-4 py-md-2 align-items-center justify-content-center"
   >
-    <div class="card p-0" style="width: 30%">
+    <div class="card p-0">
       <div class="card-header">
         <i class="bi bi-gear"></i>
         Workflow input values
@@ -40,10 +42,13 @@
         </button>
       </label>
     </div>
+  </div></div>
+
+  
   </div>
 
   <div
-    class="row justify-content-center align-items-center"
+    class=""
     id="components-flow"
   ></div>
   <div
@@ -78,13 +83,13 @@
     document.addEventListener("variables:change", () => {
       if (!workflow_components.has_init) {
         workflow_components.init(workflow_id, "components-flow");
+        
       }
     });
 
     $("button.main-add-component").on("click", function () {
       $("#component-creation-modal").modal("show");
     });
-
   });
 </script>
 {% endblock %}

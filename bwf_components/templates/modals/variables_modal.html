@@ -181,7 +181,8 @@
   $(() => {
     $("#variables-modal").on("show.bs.modal", function (e) {
       const _ = workflow_variables;
-      const data = _.selectedVar;
+      const data = _.selectedVariable;
+      
       variables_data.selectedVar.isNew = !data;
       variables_data.selectedVar.data = data;
       console.log(data);

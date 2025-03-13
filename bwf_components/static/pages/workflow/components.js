@@ -1,4 +1,3 @@
-
 var workflow_components = {
   workflow_id: null,
   has_init: false,
@@ -10,6 +9,7 @@ var workflow_components = {
   var: {
     base_url: "/bwf/api/workflow-components/",
     components: [],
+    definitions: []
   },
   pluginDefinitions: [],
 
@@ -44,21 +44,42 @@ var workflow_components = {
   renderComponents: function () {
     const _ = workflow_components;
     const components = _.var.components;
-    // if (components.length === 0) $(".main-add-component").show();
-    // if (components.length > 0) $(".main-add-component").hide();
     // entry point
     if (components.length === 0) {
-
-      return
+      return;
     }
 
-    const entry_point = components.find((component) => component.conditions.is_entry);
+    const entry_point = components.find(
+      (component) => component.conditions.is_entry
+    );
     if (!entry_point) {
       throw new Error("Workflow doesn't have an entry point.");
     }
     for (let i = 0; i < components.length; i++) {
       const component = components[i];
       _.appendComponent(component);
+      $(".component-node").draggable({});
+    }
+    for (let i = 0; i < components.length; i++) {
+      const component = components[i];
+      if (component.conditions.route) {
+        console.log("route", component.conditions.route);
+        const route = component.conditions.route;
+        console.log(`Draw route from to node-${route}`);
+        const start = $(`#node_${component.id}`);
+        const end = $(`#node_${route}`);
+        const line = new LeaderLine(start[0], end[0], {
+          color: '#0d6efd',
+          size: 2,
+          middleLabel: '`Route`'
+        });
+        $(`#node_${component.id}, #node_${route}`).on(
+          "drag",
+          function (event, ui) {
+            line.position();
+          }
+        );
+      }
     }
   },
   appendComponent: function (component) {
@@ -88,12 +109,11 @@ var workflow_components = {
         elementId: divElementId,
       });
       $(`#${elementId}`).find(".list-group.input").append(inputElement);
-      
-        $(`#${divElementId}.input-value`).valueSelector({
-          input: input,
-          component: component,
-        });
-      
+
+      $(`#${divElementId}.input-value`).valueSelector({
+        input: input,
+        component: component,
+      });
     }
 
     // Delete Component
@@ -105,6 +125,7 @@ var workflow_components = {
         const data = { id: id, workflow_id: _.workflow_id };
         _.api.deleteComponent(data, function (data) {
           $(`#${elementId}`).remove();
+          workflow_components.removeComponent(id);
         });
       });
     // END: Delete Component
@@ -214,16 +235,29 @@ var workflow_components = {
   api: {
     addComponent: function (data, success_callback, error_callback) {
       const _ = workflow_components;
+      const component_route = data.route;
 
       return new Promise((resolve, reject) => {
         $.ajax({
           url: _.var.base_url,
           type: "POST",
-          headers: { "X-CSRFToken": $("#csrf_token").val()},
+          headers: { "X-CSRFToken": $("#csrf_token").val() },
           contentType: "application/json",
           data: JSON.stringify({ ...data, workflow_id: _.workflow_id }),
           success: function (data) {
+            _.var.components.push(data);
             _.appendComponent(data);
+            if (component_route) {
+              const source_component = _.var.components.find(
+                (component) => component.id === component_route
+              );
+              if (source_component) {
+                console.log(
+                  `Draw route from node_${source_component.id} to node_${data.id}`
+                );
+                source_component.conditions.route = data.id;
+              }
+            }
             resolve(data);
           },
           error: function (error) {
@@ -237,19 +271,23 @@ var workflow_components = {
       $.ajax({
         url: _.var.base_url + data.id + "/",
         type: "PUT",
-        headers: { "X-CSRFToken": $("#csrf_token").val()},
+        headers: { "X-CSRFToken": $("#csrf_token").val() },
         contentType: "application/json",
         data: JSON.stringify({ ...data, workflow_id: _.workflow_id }),
         success: success_callback,
         error: error_callback,
       });
     },
-    updateComponentInputValue: function (data, success_callback, error_callback) {
+    updateComponentInputValue: function (
+      data,
+      success_callback,
+      error_callback
+    ) {
       const _ = workflow_components;
       $.ajax({
         url: _.var.base_url + data.component_id + "/update_input_value/",
         type: "PUT",
-        headers: { "X-CSRFToken": $("#csrf_token").val()},
+        headers: { "X-CSRFToken": $("#csrf_token").val() },
         contentType: "application/json",
         data: JSON.stringify({ ...data, workflow_id: _.workflow_id }),
         success: success_callback,
@@ -267,7 +305,7 @@ var workflow_components = {
       $.ajax({
         url: _.var.base_url + id + "/?" + queryParams,
         type: "DELETE",
-        headers: { "X-CSRFToken": $("#csrf_token").val()},
+        headers: { "X-CSRFToken": $("#csrf_token").val() },
         contentType: "application/json",
         success: success_callback,
         error: error_callback,
@@ -297,11 +335,21 @@ var workflow_components = {
 
   updateInputValue: function (componentId, key, value, json_value) {
     const _ = workflow_components;
-    const component =_.var.components.find(
+    const component = _.var.components.find(
       (component) => component.id === componentId
     );
     const input = component.config.inputs.find((input) => input.key === key);
     input.value = value;
-    input.json_value = json_value;    
+    input.json_value = json_value;
+  },
+  removeComponent: function (id) {
+    const _ = workflow_components;
+    const index = _.var.components.findIndex(
+      (component) => component.id === id
+    );
+    if (index === -1) {
+      return;
+    }
+    _.var.components.splice(index, 1);
   },
 };
