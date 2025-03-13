@@ -21,7 +21,9 @@ class ContextVariableMenu {
     _.component = component;
     _.input = input;
 
-    _.elementId = `context-menu-${component.id}-${input.key}${showInPopover ? "-popover" : ""}`;
+    _.elementId = `context-menu-${component.id}-${input.key}${
+      showInPopover ? "-popover" : ""
+    }`;
 
     _.initials = {
       present: true,
@@ -105,10 +107,6 @@ class ContextVariableMenu {
     const _ = this;
   }
 
-  rerenderMenu() {
-    console.log("Rerendering menu");
-  }
-
   setupMenu(container) {
     const _ = this;
     const { markup } = utils;
@@ -153,13 +151,12 @@ class ContextVariableMenu {
       //outputs
     ]);
 
-    // if (!input.value_ref) {
-    //   menuElements.appendChild(
-    //     markup("li", { tag: "div", content: "Editor" }, { class: "editor-btn" })
-    //   );
-    // }
     container.empty();
     container.append(menuElements.children);
+    if (container.attr("role")) {
+      container.menu("destroy");
+      container.show();
+    }
     container.menu();
     container.show();
     container.find("li").on("click", _, function (event) {

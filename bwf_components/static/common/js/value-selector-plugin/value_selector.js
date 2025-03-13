@@ -115,14 +115,9 @@ class ValueSelector {
           $(event.target).find("option:selected").data("name") ?? "undefined";
         const key = $(event.target).find("option:selected").data("key");
         selector.saveValue({
-          value: null,
+          value: selectedValue,
           is_expression: false,
-          value_ref: {
-            context: context,
-            id: selectedValue,
-            key: key,
-            name: name,
-          },
+          value_ref: null,
         });
       });
     } else if (options) {
@@ -185,9 +180,6 @@ class ValueSelector {
         _.editor.setValue(`$${value_ref.context}['${value_ref.key}']`);
       }
     }
-    // $(`#context-menu-${input.key}`).menu();
-    // $(`#context-menu-${input.key}`).show();
-    // $(`#context-menu-${input.key}`).contextMenu("rerenderMenu");
   }
 
   renderPopover() {
@@ -223,10 +215,10 @@ class ValueSelector {
     // _.$resetButton.hide();
     // _.$editButton.hide();
     const popoverContent = $('[data-name="popover-content"]').clone();
-    
+
     _.$content.addClass("value-selector");
     _.$saveButton = popoverContent.find(".btn-save");
-    
+
     popoverContent.attr("data-name", null);
     popoverContent.attr("id", `popover-content-${component.id}-${input.key}`);
     popoverContent
@@ -398,8 +390,13 @@ class ValueSelector {
         const selector = this;
         const { key, value, json_value } = data;
         selector.input = data;
-        workflow_components.updateInputValue(selector.component.id, key, value, json_value);
-        
+        workflow_components.updateInputValue(
+          selector.component.id,
+          key,
+          value,
+          json_value
+        );
+
         selector.updateHtml();
         if (popover) popover.hide();
         console.log("updated", data);
@@ -415,8 +412,6 @@ class ValueSelector {
     _.input.value = value;
     _.input.json_value = json_value;
     _.updateHtml();
-    _.render
-
   }
 
   updateHtml() {

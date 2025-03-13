@@ -71,7 +71,7 @@ var workflow_components = {
         const line = new LeaderLine(start[0], end[0], {
           color: '#0d6efd',
           size: 2,
-          middleLabel: '`Route`'
+          middleLabel: 'Route'
         });
         $(`#node_${component.id}, #node_${route}`).on(
           "drag",
