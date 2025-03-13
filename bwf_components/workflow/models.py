@@ -208,23 +208,26 @@ class ComponentInstance(models.Model):
 class WorkflowInstanceFactory:
 
     @staticmethod
-    def create_instance(workflow, input_params={}):
-
+    def create_instance(workflow: Workflow, input_params={}):
+        # TODO: Check if workflow is active and version is correct
         instance = WorkFlowInstance(workflow=workflow)
+        workflow_definition = workflow.get_json_definition()
+
         # collect variables
-        local_variables = workflow.variables.filter(context_name=ContextTypesEnum.LOCAL)
-        input_values = workflow.input.all()
+        input_values = workflow_definition.get("inputs", {})
+        local_variables = workflow_definition.get("variables", {})
         context = {
-            'inputs': {},
-            'global': {},
-            'local': {},
+            '$inputs': {},
+            '$global': {},
+            '$local': {},
         }
 
-        for local_variable in local_variables:
-            context['local'][local_variable.key] = None
+        for variable in local_variables:
+            context[variable['context']][variable.key] = None
 
         for input in input_values:
-            context['inputs'][input.key] = WorkflowInstanceFactory.__get_input_value(input, input_params.get(input.key))
+            context['$inputs'][input.id] = WorkflowInstanceFactory.__get_input_value(input, input_params.get(input.key))
+            context['$inputs'][input.key] = WorkflowInstanceFactory.__get_input_value(input, input_params.get(input.key))
         instance.variables = context
         
         instance.save()
@@ -232,11 +235,11 @@ class WorkflowInstanceFactory:
 
     @staticmethod
     def __get_input_value(input_value: WorkflowInput, param_value=None):
-        input_type = input_value.data_type
-        json_default = input_value.default_value
-        json_value = input_value.value
+        input_type = input_value["data_type"]
+        json_default = input_value["default_value"] # TODO: get default type for data type
+        json_value = input_value["value"]
 
-        if param_value is None and input_value.required:
+        if param_value is None and input_value['required'] == True and (json_default is None or json_default['value'] is None):
             raise ValueError(f"Required input {input_value.key} is missing")
         if param_value is None:
             return json_default['value']
