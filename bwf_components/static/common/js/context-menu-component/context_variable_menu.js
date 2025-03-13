@@ -144,7 +144,7 @@ class ContextVariableMenu {
               content: el.name,
               class: "",
               "data-context": "variables",
-              "data-value": el.id,
+              "data-id": el.id,
               "data-key": el.key,
             }))
           ),

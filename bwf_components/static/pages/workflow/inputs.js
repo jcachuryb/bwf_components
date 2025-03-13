@@ -3,7 +3,6 @@ var workflow_inputs = {
     add_input_btn: null,
     containerId: null,
     container: null,
-    csrf_token: null,
 
     selectedInput: null,
     progressBar: null,

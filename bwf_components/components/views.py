@@ -1,4 +1,5 @@
 import uuid
+from django.http import JsonResponse
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -130,15 +131,16 @@ class WorkflowComponentViewset(ViewSet):
             if component.get("plugin_id") != plugin_id:
                 raise Exception("Plugin ID does not match")
             # TODO: Check plugin version
-
+            input_instance = {}
             inputs = component['config']['inputs']
             for input_item in inputs:
                 if input_item['key'] == key:
                     input_item['value'] = value
+                    input_instance = input_item
                     break
 
             workflow.set_json_definition(workflow_definition)
-            return Response("Value updated")
+            return JsonResponse(input_instance)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

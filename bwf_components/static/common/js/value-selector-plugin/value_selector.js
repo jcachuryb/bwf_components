@@ -384,17 +384,23 @@ class ValueSelector {
 
   saveValue(value) {
     const { input, component, $element, popover } = this;
-    const data = {
-      id: component.id,
+    const body = {
+      component_id: component.id,
       plugin_id: component.plugin_id,
       plugin_version: component.plugin_version,
+      id: input.id,
       key: input.key,
       value: value,
     };
     workflow_components.api.updateComponentInputValue(
-      data,
+      body,
       (data) => {
-        this.updateHtml();
+        const selector = this;
+        const { key, value, json_value } = data;
+        selector.input = data;
+        workflow_components.updateInputValue(selector.component.id, key, value, json_value);
+        
+        selector.updateHtml();
         if (popover) popover.hide();
         console.log("updated", data);
       },
@@ -402,6 +408,15 @@ class ValueSelector {
         console.error(error);
       }
     );
+  }
+
+  updateValue(value, json_value) {
+    const _ = this;
+    _.input.value = value;
+    _.input.json_value = json_value;
+    _.updateHtml();
+    _.render
+
   }
 
   updateHtml() {

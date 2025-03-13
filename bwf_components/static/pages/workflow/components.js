@@ -9,7 +9,6 @@ var workflow_components = {
   selectedComponent: null,
   var: {
     base_url: "/bwf/api/workflow-components/",
-    csrf_token: null,
     components: [],
   },
   pluginDefinitions: [],
@@ -47,6 +46,16 @@ var workflow_components = {
     const components = _.var.components;
     // if (components.length === 0) $(".main-add-component").show();
     // if (components.length > 0) $(".main-add-component").hide();
+    // entry point
+    if (components.length === 0) {
+
+      return
+    }
+
+    const entry_point = components.find((component) => component.conditions.is_entry);
+    if (!entry_point) {
+      throw new Error("Workflow doesn't have an entry point.");
+    }
     for (let i = 0; i < components.length; i++) {
       const component = components[i];
       _.appendComponent(component);
@@ -195,9 +204,9 @@ var workflow_components = {
           { class: "col-auto" }
         ),
 
-        markup("div", element, { class: "col-auto" }),
+        markup("div", element, { class: "col-9" }),
       ],
-      { class: "row g-3 d-flex justify-content-between mb-1" }
+      { class: "row g-2 d-flex justify-content-between mb-1" }
     );
 
     return container;
@@ -238,7 +247,7 @@ var workflow_components = {
     updateComponentInputValue: function (data, success_callback, error_callback) {
       const _ = workflow_components;
       $.ajax({
-        url: _.var.base_url + data.id + "/update_input_value/",
+        url: _.var.base_url + data.component_id + "/update_input_value/",
         type: "PUT",
         headers: { "X-CSRFToken": $("#csrf_token").val()},
         contentType: "application/json",
@@ -286,5 +295,13 @@ var workflow_components = {
     return promise;
   },
 
-  updateInputValue: function (elementId, value) {},
+  updateInputValue: function (componentId, key, value, json_value) {
+    const _ = workflow_components;
+    const component =_.var.components.find(
+      (component) => component.id === componentId
+    );
+    const input = component.config.inputs.find((input) => input.key === key);
+    input.value = value;
+    input.json_value = json_value;    
+  },
 };

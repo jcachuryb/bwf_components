@@ -3,7 +3,6 @@ var workflow_variables = {
     add_variable_btn: null,
     containerId: null,
     container: null,
-    csrf_token: null,
 
     selectedVariable: null,
     progressBar: null,

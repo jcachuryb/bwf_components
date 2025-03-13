@@ -176,10 +176,23 @@ class WorkflowInputsViewset(ViewSet):
         workflow = Workflow.objects.get(id=workflow_id)
         workflow_definition = workflow.get_json_definition()
         workflow_inputs = workflow_definition.get("inputs", {})
-        
-        instance = workflow_inputs.get(kwargs.get("pk"), None)
+        instance_id = kwargs.get("pk")
+        instance = workflow_inputs.get(instance_id, None)
         if not instance:
             raise Exception("Input not found")
+        
+        is_entry = instance["conditions"]["is_entry"]
+        next_component_id = instance["conditions"]["route"]
+        if is_entry:
+            if next_component_id:
+                next_component = workflow_definition["workflow"][next_component_id]
+                next_component['conditions']['is_entry'] = True
+            else:
+                for key, component in workflow_definition["workflow"].items():
+                    if not component['conditions']['is_entry'] and key != instance_id:
+                        component['conditions']['is_entry'] = True
+                        break
+
         workflow_inputs.pop(kwargs.get("pk"), None)
         workflow.set_json_definition(workflow_definition)
         return Response("Input removed")

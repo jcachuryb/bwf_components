@@ -1,8 +1,5 @@
 
-import urllib3.util
-from django.http import JsonResponse
-from django.db.models import Q, Prefetch
-from django.core.paginator import Paginator
+from django.db.models import Prefetch
 from django.views import View
 from django.shortcuts import render
 

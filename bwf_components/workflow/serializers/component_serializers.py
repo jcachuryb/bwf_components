@@ -15,7 +15,7 @@ class CreateComponentSerializer(serializers.Serializer):
     plugin_id = serializers.CharField(max_length=500)
     plugin_version = serializers.IntegerField(default=1)
     index = serializers.IntegerField(default=1)
-    route = serializers.CharField(max_length=50, required=False)
+    route = serializers.CharField(max_length=50, required=False, allow_null=True)
     # conditions = 
 
 
