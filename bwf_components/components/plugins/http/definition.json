@@ -60,7 +60,6 @@
       "label": "Response",
       "type": "object",
       "data": {
-        "response": {
           "status": {
             "label": "Status",
             "key": "status",
@@ -71,7 +70,6 @@
             "label": "Body",
             "type": "object"
           }
-        }
       }
     }
   ]

@@ -79,9 +79,7 @@ class WorkflowComponentViewset(ViewSet):
                     'name': output_item.get("label"),
                     'key': output_item.get("key"),
                     'data_type': output_item.get("type"),
-                    'data': {
-                        output_item.get("key"): output_item.get("data", {})
-                    },
+                    'data': output_item.get("data", {}),
                 })                
                 output_index += 1
 

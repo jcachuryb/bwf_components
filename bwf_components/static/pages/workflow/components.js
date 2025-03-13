@@ -9,7 +9,8 @@ var workflow_components = {
   var: {
     base_url: "/bwf/api/workflow-components/",
     components: [],
-    definitions: []
+    definitions: [],
+    incoming: [],
   },
   pluginDefinitions: [],
 
@@ -65,13 +66,12 @@ var workflow_components = {
       if (component.conditions.route) {
         console.log("route", component.conditions.route);
         const route = component.conditions.route;
-        console.log(`Draw route from to node-${route}`);
         const start = $(`#node_${component.id}`);
         const end = $(`#node_${route}`);
         const line = new LeaderLine(start[0], end[0], {
-          color: '#0d6efd',
+          color: "#0d6efd",
           size: 2,
-          middleLabel: 'Route'
+          middleLabel: "Route",
         });
         $(`#node_${component.id}, #node_${route}`).on(
           "drag",
@@ -115,6 +115,18 @@ var workflow_components = {
         component: component,
       });
     }
+    if(outputArray.length >  0){
+      $(`#${elementId}`).find(".list-group.output").show() 
+    }
+    for (let i = 0; i < outputArray.length; i++) {
+      const output = outputArray[i];
+      const divElementId = `${elementId}_${output.key}`;
+      const inputElement = _.getComponentOutputElement({
+        ...output
+      });
+      $(`#${elementId}`).find(".list-group.output").append(inputElement);
+
+    }
 
     // Delete Component
     $(`#${elementId}`)
@@ -129,6 +141,17 @@ var workflow_components = {
         });
       });
     // END: Delete Component
+
+    $(`#${elementId}`)
+      .find(".print-component")
+      .on("click", component, function (event) {
+        const _ = workflow_components;
+        const { id } = event.data;
+        const component = _.var.components.find(
+          (component) => component.id === id
+        );
+        console.log({component});
+      });
   },
   getComponentInputElement: function (input) {
     const { markup } = utils;
@@ -232,6 +255,44 @@ var workflow_components = {
 
     return container;
   },
+
+  getComponentOutputElement: function (output) {
+    const extractObject = (obj) => {
+      const { markup } = utils;
+      const { label, key: obj_key, type, data } = obj;
+      const container = markup(
+        "div",
+        [
+          {
+            tag: "span",
+            content: label,
+            class: ["tag", `tag-${type}`].join(" "),
+          },
+        ],
+        { class: "output-value" }
+      );
+      if (type === "object" && data) {
+        for (const data_key in data) {
+          const obj = data[data_key];
+          container.append(extractObject(obj));
+        }
+      }
+      return container;
+    };
+    const { markup } = utils;
+    const { name, key, data_type, data } = output;
+    const container = markup("div", "", { id: key, class: "" });
+    container.append(
+      extractObject({
+        label: name,
+        key: key,
+        type: data_type,
+        data: data,
+      })
+    );
+
+    return container;
+  },
   api: {
     addComponent: function (data, success_callback, error_callback) {
       const _ = workflow_components;
@@ -252,9 +313,6 @@ var workflow_components = {
                 (component) => component.id === component_route
               );
               if (source_component) {
-                console.log(
-                  `Draw route from node_${source_component.id} to node_${data.id}`
-                );
                 source_component.conditions.route = data.id;
               }
             }
