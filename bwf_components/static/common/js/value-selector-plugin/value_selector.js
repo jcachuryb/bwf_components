@@ -45,13 +45,13 @@ class ValueSelector {
 
     const content = markup("div", "", {
       "data-id": `${component.id}-${input.key}`,
-      class: "value-selector-content",
+      class: "value-selector-content me-1",
     });
     const resetButton = markup("button", [{ tag: "i", class: "bi bi-trash" }], {
-      class: "btn btn-sm btn-outline-danger value-selector-reset",
+      class: "btn btn-sm btn-outline-secondary value-selector-reset",
     });
     const editButton = markup("button", [{ tag: "i", class: "bi bi-pencil" }], {
-      class: "btn btn-sm btn-primary value-selector-edit",
+      class: "btn btn-sm btn-primary value-selector-edit me-1",
     });
     _.$element.append(content);
     _.$element.append(editButton);
@@ -255,7 +255,7 @@ class ValueSelector {
     // POPOVER
     const popoverOptions = {
       html: true,
-      title: "",
+      title: `${component.name}: ${input.name}`,
       content: popoverContent,
       placement: "top",
     };
