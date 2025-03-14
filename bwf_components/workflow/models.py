@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 
 from bwf_components.components.models import WorkflowComponent
+from bwf_components.components.dto.component_dto import ComponentDto
 
 upload_storage = FileSystemStorage(location=settings.PRIVATE_MEDIA_ROOT)
 
@@ -14,6 +15,7 @@ class WorkflowStatusEnum(models.TextChoices):
     PENDING = "PENDING", "initial"
     RUNNING = "RUNNING", "running"
     COMPLETED = "COMPLETED", "completed"
+    AWAITING_ACTION = "AWAITING_ACTION", "awaiting_action"
     ERROR = "ERROR",  "error"
 
 
@@ -169,11 +171,13 @@ class WorkFlowInstance(models.Model):
 
 
 class ComponentInstance(models.Model):
+    component_id = models.CharField(max_length=100)
     workflow = models.ForeignKey(WorkFlowInstance, on_delete=models.CASCADE, related_name="child_actions")
-    component = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE)
+    parent_node = models.ForeignKey(to="ComponentInstance", on_delete=models.CASCADE, related_name="children_nodes", null=True, blank=True)
     component_definition = models.JSONField(null=True, blank=True)
     plugin_id = models.CharField(max_length=500, null=True, blank=True)
     plugin_version = models.CharField(max_length=15, null=True, blank=True)
+
     options = models.JSONField(null=True, blank=True) 
 
     output = models.JSONField(null=True, blank=True)
@@ -190,6 +194,10 @@ class ComponentInstance(models.Model):
 
     def set_status_running(self):
         self.status = WorkflowStatusEnum.RUNNING
+        self.save()
+    
+    def set_status_awaiting_action(self):
+        self.status = WorkflowStatusEnum.AWAITING_ACTION
         self.save()
     
     def set_status_error(self, message=""):
@@ -217,17 +225,21 @@ class WorkflowInstanceFactory:
         input_values = workflow_definition.get("inputs", {})
         local_variables = workflow_definition.get("variables", {})
         context = {
-            '$inputs': {},
+            'inputs': {},
             '$global': {},
             '$local': {},
         }
 
-        for variable in local_variables:
-            context[variable['context']][variable.key] = None
+        for key  in local_variables:
+            variable = local_variables[key]
 
-        for input in input_values:
-            context['$inputs'][input.id] = WorkflowInstanceFactory.__get_input_value(input, input_params.get(input.key))
-            context['$inputs'][input.key] = WorkflowInstanceFactory.__get_input_value(input, input_params.get(input.key))
+            context[variable['context']][key] = None
+
+        for key in input_values:
+            input = input_values[key]
+            input_value = WorkflowInstanceFactory.__get_input_value(input, input_params.get(input["key"]))
+            context['inputs'][input["id"]] = input_value
+            context['inputs'][input["key"]] = input_value
         instance.variables = context
         
         instance.save()
@@ -235,9 +247,9 @@ class WorkflowInstanceFactory:
 
     @staticmethod
     def __get_input_value(input_value: WorkflowInput, param_value=None):
-        input_type = input_value["data_type"]
-        json_default = input_value["default_value"] # TODO: get default type for data type
-        json_value = input_value["value"]
+        input_type = input_value.get("data_type", None)
+        json_default = input_value.get("default_value", None) # TODO: get default type for data type
+        json_value = input_value.get("value", {})
 
         if param_value is None and input_value['required'] == True and (json_default is None or json_default['value'] is None):
             raise ValueError(f"Required input {input_value.key} is missing")
@@ -247,7 +259,7 @@ class WorkflowInstanceFactory:
             if input_type in [WorkflowInputTypesEnum.SELECT, WorkflowInputTypesEnum.MULTI_SELECT]:
                 values = []
                 param_value = param_value if isinstance(param_value, collections.abc.Sequence) else [param_value]
-                options = json_value.value['options']
+                options = json_value.get("value", {})['options']
                 for option in options:
                     if option['key'] in param_value:
                         values.append(option['key'])
@@ -280,10 +292,22 @@ class ActionLogRecord(models.Model):
 
 class WorkflowComponentInstanceFactory:
 
+
     @staticmethod
-    def create_component_instance(workflow_instance: WorkFlowInstance, component: WorkflowComponent, input_params={}):
-        input_values = component.get_input_values(input_params)
-        instance = ComponentInstance.objects.create(workflow=workflow_instance, component=component, input=input_values)
+    def create_component_instance(workflow_instance: WorkFlowInstance, component, input_params={}):
+        component_dto = ComponentDto(workflow_context=input_params,
+                                     id=component['id'], 
+                                     name=component['name'],
+                                     plugin_id=component['plugin_id'],
+                                     version_number=component['version_number'],
+                                     config=component['config'],
+                                     conditions=component['conditions'])
+
+        input_values = component_dto.get_inputs()
+        instance = ComponentInstance.objects.create(workflow=workflow_instance, component_id=component['id'], 
+                                                    plugin_id=component_dto.plugin_id, 
+                                                    plugin_version=component_dto.version_number, 
+                                                    input=input_values)
         # collect variables
         return instance
 

@@ -6,6 +6,7 @@
   "editable": false,
   "icon_class": "bi bi-box-arrow-in-up-right",
   "icon_png": "icon.png",
+  "type":"node",
   "base_input": [
     {
       "key": "url",

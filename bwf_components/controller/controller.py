@@ -6,7 +6,7 @@ from importlib.machinery import SourceFileLoader
 
 
 BASE_PLUGIN_ROUTE = os.path.join(settings.BASE_DIR, 'bwf_components', 'components', 'plugins')
-
+IGNORE_DIRS = ['__pycache__']
 class BWFPluginController:
     _instance = None
 
@@ -24,7 +24,7 @@ class BWFPluginController:
     def load_plugins(self):
         for plugin in os.listdir(BASE_PLUGIN_ROUTE):
             plugin_path = os.path.join(BASE_PLUGIN_ROUTE, plugin)
-            if os.path.isdir(plugin_path):
+            if os.path.isdir(plugin_path) and not plugin_path in IGNORE_DIRS:
                 try:
                     new_plugin = self.__load_bwf_plugin(plugin_path)
                     if not new_plugin:
@@ -99,7 +99,7 @@ class BWFPluginController:
             }                
         return None
 
-    def get_plugin_module(self, plugin_id):
+    def get_plugin_module(self, plugin_id, version_number='1'):
         plugin = self.plugins.get(plugin_id, None)
         if plugin:
             plugin_path = plugin.get('plugin_path')
@@ -107,3 +107,8 @@ class BWFPluginController:
             component_module = SourceFileLoader("component", component_path).load_module()
             return component_module
         return None
+    
+
+
+class WorkflowController:
+    pass

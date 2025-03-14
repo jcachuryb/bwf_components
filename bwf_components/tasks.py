@@ -1,6 +1,7 @@
-import json
+from bwf_components.components.plugins.base_plugin import PluginWrapperFactory
 from bwf_components.workflow.models import Workflow, WorkFlowInstance, WorkflowInstanceFactory, WorkflowComponentInstanceFactory, ComponentInstance, ActionLogRecord
 from bwf_components.components.models import WorkflowComponent, FailureHandleTypesEnum
+from bwf_components.components.dto.component_dto import ComponentDto
 from bwf_components.controller.controller import BWFPluginController
 
 import logging
@@ -21,13 +22,28 @@ def start_workflow(workflow_id, payload={}):
         raise e
 
 
-def register_workflow_step(workflow_instance: WorkFlowInstance, step=0, output_prev_component={}):
+def register_workflow_step(workflow_instance: WorkFlowInstance, step=None, output_prev_component={}):
     try:
         workflow = workflow_instance.workflow
-        step_component = workflow.main_cluster.components.filter(step__index__gt=step).order_by("step__index").prefetch_related("input").first()
+        definition = workflow.get_json_definition()
+        components = definition.get("workflow", {})
+        step_component = None
+        if step:
+            step_component = components.get(step, None)
+        else:
+            for key, component in components.items():
+                if component['conditions'].get('is_entry', False):
+                    step_component = component
+                    break
+            if step_component is None:
+                err = "Workflow doesn't have an entry point"
+                workflow_instance.set_status_error(err)
+                raise Exception(err)
+            
         if step_component is None:
             workflow_instance.set_status_completed()
             return
+        
         input_params = workflow_instance.variables
         input_params['incoming'] = output_prev_component
         component_instance = WorkflowComponentInstanceFactory.create_component_instance(workflow_instance, step_component, input_params)
@@ -41,32 +57,38 @@ def register_workflow_step(workflow_instance: WorkFlowInstance, step=0, output_p
         workflow_instance.set_status_error(str(e))
     return None
 
-def start_pending_component(current_component: ComponentInstance):
-    base_component = current_component.component
+def start_pending_component(current_component: ComponentInstance, parent=None):
     workflow_instance = current_component.workflow
+    workflow_definition = workflow_instance.workflow.get_json_definition()
+
     try:
         current_component.set_status_running()
         controller = BWFPluginController.get_instance()
-        plugin_module = controller.get_plugin_module(base_component.plugin_id)
+        plugin_module = controller.get_plugin_module(current_component.plugin_id, current_component.plugin_version)
         if not plugin_module:
-            current_component.set_status_error("Plugin not found")
-            workflow_instance.set_status_error("Plugin not found")
-            raise Exception("Component instance could not be created")
+            err = f"Plugin {current_component.plugin_id} not found"
+            current_component.set_status_error(err)
+            workflow_instance.set_status_error(err)
+            raise Exception(err)
         
         # TODO: Get Global variables
         # get secrets and globals
-        plugin_instance = plugin_module.execute(component_instance=current_component, workflow_instance=current_component.workflow, context={
-            "global": {},
-            "local": current_component.workflow.variables.get("local", {}),
-            "inputs": current_component.workflow.variables.get("inputs", {}),
-        })
-        
-        output = plugin_instance.output
-        if not output.get("success", False):
-            initiate_fallback_component_action(current_component)
-        else:
-            current_component.set_status_completed()
-            register_workflow_step(current_component.workflow, current_component.component.step.index, output.get("data", {}))
+        # node | loop | branch | switch
+        plugin_wrapper_class = PluginWrapperFactory.wrapper("node")
+        plugin_wrapper_instance = plugin_wrapper_class(current_component, workflow_instance, context={
+                                                    "global": {},
+                                                    "local": current_component.workflow.variables.get("local", {}),
+                                                    "inputs": current_component.workflow.variables.get("inputs", {}),
+                                                })
+        try:
+            # calls execute but should call any method that is defined in the plugin that receives a plugin_wrapper_instance
+            plugin_module.execute(plugin_wrapper_instance)
+        except Exception as e:
+            logger.error(f"Error while executing component {current_component.id}")
+            logger.error(e)
+            if plugin_wrapper_instance:
+                plugin_wrapper_instance.on_failure(e)
+
     except Exception as e:
         logger.error(f"Error while executing component {current_component.id}")
         logger.error(e)

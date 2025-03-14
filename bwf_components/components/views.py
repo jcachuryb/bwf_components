@@ -105,6 +105,7 @@ class WorkflowComponentViewset(ViewSet):
         workflow_components[instance_id] = instance
         if route:
             workflow_components[route]['conditions']['route'] = instance_id
+            
         
         workflow_definition['workflow'] = workflow_components
         workflow.set_json_definition(workflow_definition)
