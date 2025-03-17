@@ -25,10 +25,10 @@ class Command(base.BaseCommand):
         self.stdout.write("Processing pending components...")
         # ProcessPendingComponents().run()
         start_workflow('1', {
-                            "Input_1": {"key": "Input_1", "value": "hola mundo",},
-                            "saludoMisPerritos": {"key": "saludoMisPerritos", "value": "Un saludo para el email",},
-                            "otro_input": {"key": "otro_input", "value": "123",},
-                            "has_registered": {"key": "has_registered", "value": True,},
-                            "endpoint": {"key": "endpoint", "value": "http://localhost:9196/",},
-        })
+                            "Input_1": "hola mundo",
+                            "saludoMisPerritos": "Un saludo para el email",
+                            "otro_input": "123",
+                            "has_registered": True,
+                            "endpoint": "http://localhost:9196/"}
+        )
 

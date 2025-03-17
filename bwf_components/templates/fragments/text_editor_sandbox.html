@@ -117,7 +117,7 @@
           .map((v) => `${v.context}['${v.key}']`);
         const inputs = workflow_inputs.var.inputs
           .filter((v) => v.key.startsWith(word))
-          .map((v) => `$inputs['${v.key}']`);
+          .map((v) => `inputs['${v.key}']`);
         console.log({ vars, inputs });
         return accept({
           list: vars.concat(inputs),

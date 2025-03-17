@@ -177,7 +177,7 @@ class ValueSelector {
       }
       if (value) _.editor.setValue(value);
       if (!value && value_ref) {
-        _.editor.setValue(`$${value_ref.context}['${value_ref.key}']`);
+        _.editor.setValue(`${value_ref.context}['${value_ref.key}']`);
       }
     }
   }
@@ -272,7 +272,7 @@ class ValueSelector {
           if (_.initials.showEditor && _.editor) {
             const doc = _.editor.getDoc();
             const cursor = doc.getCursor();
-            doc.replaceRange(`$${value?.context}['${value?.key}']`, cursor);
+            doc.replaceRange(`${value?.context}['${value?.key}']`, cursor);
           } else {
             _.saveValue({
               value: null,
@@ -323,7 +323,7 @@ class ValueSelector {
       });
       if (value) _.editor.setValue(value);
       if (!value && value_ref) {
-        _.editor.setValue(`$${value_ref.context}['${value_ref.key}']`);
+        _.editor.setValue(`${value_ref.context}['${value_ref.key}']`);
       }
 
       _.editor.setOption("extraKeys", {
@@ -356,7 +356,7 @@ class ValueSelector {
 
           const inputs = workflow_inputs.var.inputs
             .filter((v) => v.key.startsWith(word))
-            .map((v) => `$inputs['${v.key}']`);
+            .map((v) => `inputs['${v.key}']`);
           const local = [];
 
           // TODO: Get values from output
@@ -428,7 +428,7 @@ class ValueSelector {
     _.$content.empty();
     if (value && value.value_ref) {
       const { context: ref_context, key: ref_key } = value.value_ref;
-      _.$content.html(`$${ref_context}['${ref_key}']`);
+      _.$content.html(`${ref_context}['${ref_key}']`);
     } else {
       _.$content.html(value.is_expression ? "Editor" : "");
     }

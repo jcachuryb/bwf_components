@@ -226,8 +226,8 @@ class WorkflowInstanceFactory:
         local_variables = workflow_definition.get("variables", {})
         context = {
             'inputs': {},
-            '$global': {},
-            '$local': {},
+            'global': {},
+            'local': {},
         }
 
         for key  in local_variables:

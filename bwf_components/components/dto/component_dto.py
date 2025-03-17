@@ -1,12 +1,15 @@
 
+import logging
+logger = logging.getLogger(__name__)
+
 class ComponentDto:
     def __init__(self, id, name, plugin_id, version_number, config, conditions, workflow_context={}):
         self.id = id
         self.name = name
         self.plugin_id = plugin_id
         self.version_number = version_number
-        self.inputs = None
-        self.outputs = None
+        self.inputs = {}
+        self.outputs = {}
         self.config = config
         self.conditions = conditions
         self.workflow_context = workflow_context
@@ -24,11 +27,17 @@ class ComponentDto:
                 "value": None,
             }
             if input['value']['is_expression']:
-                expression = input['value']['value']
-                eval(self.expression, None, {"context": workflow_context})
-                pass
+                expression = input['value'].get("value", "")
+                new_input["value"] = eval(expression, None, workflow_context)
             elif input['value']['value_ref']:
-                pass
-            elif input['value']['value']:
-                pass
+                value_ref = input['value']['value_ref']
+                # TODO: validate context value
+                id = value_ref.get('id', None)
+                key = value_ref.get('key', None)
+                param = id if id else key if key else None
+                if not param:
+                    raise Exception("Invalid value reference")
+                new_input["value"] = workflow_context[value_ref['context']].get(param, None)
+            else:
+                new_input["value"] = input['value']['value']
             self.inputs[new_input['key']] = new_input['value']
