@@ -64,28 +64,8 @@ def get_unique_id():
 def upload_to_path(instance, filename):
     return f"bwf/workflows/{instance.id}/{instance.version_number}/{filename}"
 
-# TODO: Context Class
-
-
-class VariableValue(models.Model):
-    label = models.CharField(max_length=100)
-    key = models.CharField(max_length=100)
-    data_type = models.CharField(max_length=50, default=VariableTypesEnum.STRING, choices=VariableTypesEnum.choices)
-    value = models.JSONField(null=True, blank=True) # {type, value, options? }
-    context_name = models.CharField(max_length=10, default=ContextTypesEnum.LOCAL, choices=ContextTypesEnum.choices)
-    workflow = models.ForeignKey(to="Workflow", on_delete=models.CASCADE, related_name="variables")
-
-
-class WorkflowInput(models.Model):
-    label = models.CharField(max_length=100)
-    key = models.CharField(max_length=100)
-    description = models.CharField(max_length=1000)
-    data_type = models.CharField(max_length=50, default=WorkflowInputTypesEnum.STRING, choices=WorkflowInputTypesEnum.choices)
-    default_value = models.JSONField(null=True, blank=True) # type, value
-    value = models.JSONField(null=True, blank=True) # {type, value, options? } TODO: Remove
-    required = models.BooleanField(default=False)
-    workflow = models.ForeignKey(to="Workflow", on_delete=models.CASCADE, related_name="input")
-
+def updaload_to_workflow_edition_path(instance, filename):
+    return f"bwf/workflows/{instance.id}/edition/{instance.version_number}/{filename}"
 
     
 class WorkflowCluster(models.Model):
@@ -115,15 +95,7 @@ class Workflow(models.Model):
     workflow_file = models.FileField(max_length=1000, upload_to=upload_to_path, null=True, blank=True, storage=upload_storage)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    # if we make this DB only
     version_number = models.IntegerField(default=1)
-    # Deprecated
-    main_cluster = models.ForeignKey(WorkflowCluster, on_delete=models.CASCADE, related_name="parent_workflow",
-                                     null=True, blank=True)
-    # entrypoint = models.ForeignKey(WorkflowComponent, on_delete=models.CASCADE, related_name="workflows")
-
-    # input: related field
 
     def set_json_definition(self, definition):
         with open(self.workflow_file.path, 'w') as json_file:
@@ -146,6 +118,16 @@ class Workflow(models.Model):
     def __str__(self):
         return f"{self.name} - {self.current_active_version}"
 
+
+class WorkflowVersion(models.Model):
+    workflow = models.ForeignKey(to=Workflow, on_delete=models.CASCADE, related_name="versions")
+    version_number = models.CharField(max_length=15)
+    version_name = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_edition = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    workflow_file = models.FileField(max_length=1000, upload_to=updaload_to_workflow_edition_path, null=True, blank=True, storage=upload_storage)
 
 class WorkFlowInstance(models.Model):
     workflow = models.ForeignKey(to=Workflow, on_delete=models.CASCADE, related_name="instances")
@@ -246,7 +228,7 @@ class WorkflowInstanceFactory:
         return instance
 
     @staticmethod
-    def __get_input_value(input_value: WorkflowInput, param_value=None):
+    def __get_input_value(input_value, param_value=None):
         input_type = input_value.get("data_type", None)
         json_default = input_value.get("default_value", None) # TODO: get default type for data type
         json_value = input_value.get("value", {})
@@ -312,7 +294,7 @@ class WorkflowComponentInstanceFactory:
         return instance
 
     @staticmethod
-    def __get_input_value(input_value: WorkflowInput, param_value=None):
+    def __get_input_value(input_value, param_value=None):
         input_type = input_value.data_type
         json_default = json.load(input_value.default_value)
         json_value = json.load(input_value.default_value)

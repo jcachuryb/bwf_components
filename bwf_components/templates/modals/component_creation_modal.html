@@ -143,6 +143,9 @@
           { class: "form-select" }
         );
         $(`#components-list`).append(selectComponents);
+        if(new_component_data.selectedComponent.data) {
+          $(`#components-list select`).val(new_component_data.selectedComponent.data.id);
+        }
       } else {
         $("#component-route").empty();
         $("#component-route").hide();
@@ -152,6 +155,7 @@
     $("#component-creation-modal").on("hidden.bs.modal", function (e) {
       $("#definitions input[type='radio']").prop("checked", false);
       $("#component-name").val("");
+      new_component_data.selectedComponent.data = null;
     });
 
     $("#component-creation-modal .close-button").on("click", function () {

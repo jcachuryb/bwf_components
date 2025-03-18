@@ -8,7 +8,6 @@ component: WorkflowComponent
 context: Dict 
         - global
         - local
-        - cluster
         - output
 
  """

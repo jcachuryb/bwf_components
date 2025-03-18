@@ -43,15 +43,15 @@
     {
       "key": "headers",
       "label": "Headers",
-      "type": "array",
-      "value": [],
+      "type": "object",
+      "value": {},
       "required": false
     },
     {
       "key": "body",
       "label": "Body",
-      "type": "string",
-      "value": "",
+      "type": "object",
+      "value": {},
       "required": false
     }
   ],

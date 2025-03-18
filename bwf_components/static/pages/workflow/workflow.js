@@ -6,9 +6,10 @@ var bwf_workflow = {
     componentsController: null,
     var: {
       workflow: null,
+      base_url: "/bwf/api/workflow/",
       components: [],
       variables: [],
-      inputs: []
+      inputs: [],
     },
   
     init: function () {
@@ -21,6 +22,31 @@ var bwf_workflow = {
     //   _.enableSyncButton();
     //   _.renderDataTable();
     },
+
+    api: {
+      createWorkflow: function (data) {
+        const _ = bwf_workflow;
+        
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            url: _.var.base_url,
+            type: "POST",
+            headers: { "X-CSRFToken": $("#csrf_token").val() },
+            contentType: "application/json",
+            data: JSON.stringify({ ...data }),
+            success: function (data) {
+              window.location= `/bwf/workflow/${data.id}/edit`;
+              resolve(data);
+            },
+            error: function (error) {
+              alert("Error creating workflow");
+              reject(error);
+            },
+          });
+        });
+
+      }
+    }
 
   };
   

@@ -1,4 +1,4 @@
-{% extends 'govapp/bwf_base.html' %} 
+{% extends 'govapp/bwf_base.html' %}
 {% block content %}
 
 <div class="container-sm">
@@ -8,49 +8,49 @@
   <p>{{workflow.description}}</p>
   <!-- {% include 'fragments/text_editor_sandbox.html' %} -->
   <div class="row">
- <div class="col-auto">
-  <div
-  id="variables-container"
-  class="row gap-1 py-md-2 align-items-center justify-content-center width-md-30"
->
-  <div id="variables"></div>
-  <label class="d-grid mt-2">
-    <button class="btn btn-outline-primary add-variable">
-      <i class="bi bi-plus me-2"></i>
-      Add Variable
-    </button>
-  </label>
-</div>
- </div>
- <div class="col-auto"><div
-    id="inputs-node"
-    class="row gap-4 py-md-2 align-items-center justify-content-center"
-  >
-    <div class="card p-0">
-      <div class="card-header">
-        <i class="bi bi-gear"></i>
-        Workflow input values
+    <div class="col-3">
+      <div
+        id="variables-container"
+        class="row gap-1 py-md-2 align-items-center justify-content-center width-md-30"
+      >
+      <div class="card p-0">
+        <div class="card-header">
+          <i class="bi bi-clipboard2-pulse-fill"></i>
+          Workflow variables
+        </div>
+        <div id="variables"></div>
+        <label class="d-grid mt-2">
+          <button class="btn btn-outline-primary add-variable">
+            <i class="bi bi-plus me-2"></i>
+            Add Variable
+          </button>
+        </label>
       </div>
+      </div>
+      <div
+        id="inputs-node"
+        class="row gap-4 py-md-2 align-items-center justify-content-center"
+      >
+        <div class="card p-0">
+          <div class="card-header">
+            <i class="bi bi-gear"></i>
+            Workflow input values
+          </div>
 
-      <div class="card-body p-1">
-        <div class="list-group" id="inputs"></div>
+          <div class="card-body p-1">
+            <div class="list-group" id="inputs"></div>
+          </div>
+          <label class="d-grid mt-2">
+            <button class="btn btn-outline-primary add-input">
+              <i class="bi bi-plus me-2"></i>
+              Add Input
+            </button>
+          </label>
+        </div>
       </div>
-      <label class="d-grid mt-2">
-        <button class="btn btn-outline-primary add-input">
-          <i class="bi bi-plus me-2"></i>
-          Add Input
-        </button>
-      </label>
     </div>
-  </div></div>
-
-  
-  </div>
-
-  <div
-    class=""
-    id="components-flow"
-  ></div>
+    <div class="col-9">
+      <div class="" id="components-flow"></div>
   <div
     class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center"
   >
@@ -59,6 +59,10 @@
       Add Component
     </button>
   </div>
+    </div>
+  </div>
+
+  
 </div>
 <script src="/static/pages/workflow/workflow.js"></script>
 <script src="/static/pages/workflow/inputs.js"></script>
@@ -66,11 +70,11 @@
 <script src="/static/pages/workflow/components.js"></script>
 
 <!-- Fragments -->
-{% include 'fragments/component_node.html' %}
+{% include 'fragments/component_node.html' %} 
 {% include 'fragments/value_popover.html' %}
 <!-- END: Fragments -->
 <!-- Modals -->
-{% include 'modals/inputs_modal.html' %}
+{% include 'modals/inputs_modal.html' %} 
 {% include 'modals/variables_modal.html' %}
 {% include 'modals/component_creation_modal.html' %}
 <!-- END: Modals -->
@@ -83,7 +87,6 @@
     document.addEventListener("variables:change", () => {
       if (!workflow_components.has_init) {
         workflow_components.init(workflow_id, "components-flow");
-        
       }
     });
 

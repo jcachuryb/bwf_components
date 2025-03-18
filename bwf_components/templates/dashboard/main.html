@@ -1,70 +1,47 @@
-{% extends 'govapp/bwf_base.html' %}
-
-
-{% block content %}
+{% extends 'govapp/bwf_base.html' %} {% block content %}
 <div class="container-sm">
-    <h1>BWF Components</h1>
-    <p>
-      Customize your business workflows here.
-    </p>
-    <a href="#" class="btn btn-primary">
-        <i class="bi bi-plus"></i>
-        New Workflow
-    </a>
-    
-    {% for workflow in workflows %}
+  <h1>BWF Components</h1>
+  <p>Customize your business workflows here.</p>
+  <input type="hidden" id="csrf_token" value="{{ csrf_token }}" />
+  <button class="btn btn-primary" id="add-workflow" type="button">
+    <i class="bi bi-plus"></i>
+    New Workflow
+  </button>
 
-    <div class="card mt-3">
-        <div class="card-header">
-          <a href="workflow/{{workflow.id}}/" class="btn btn-link">
-            <h5>{{ workflow.name }}</h5>
+  {% for workflow in workflows %}
+
+  <div class="card mt-3">
+    <div class="card-header">
+      <div class="justify-content-between d-flex">
+        <a href="workflow/{{workflow.id}}/" class="btn btn-link">
+          <h5>{{ workflow.name }}</h5>
         </a>
-
+        <div>
+          <button
+            class="btn btn-outline-primary btn-sm"
+            data-workflow-id="{{workflow.id}}"
+            type="button"
+          >
+            Edit new version
+          </button>
         </div>
-        <div class="card-body">
-            <p>{{ workflow.description }}</p>
-            
-        </div>
+      </div>
     </div>
-    {% endfor %}
-    
+    <div class="card-body">
+      <p>{{ workflow.description }}</p>
+    </div>
   </div>
+  {% endfor %}
+</div>
+<script src="/static/pages/workflow/workflow.js"></script>
+<!-- Modals -->
+{% include 'modals/new_workflow_modal.html' %}
 
-  <script>
-    $(() => {
-      console.log("Document ready");
-      const urlDiv = document.getElementById("url-field");
-
-      const addBtn = document.querySelector("a.btn-primary");
-      const removeBtn = document.querySelector("button.btn-outline-danger");
-
-      addBtn.addEventListener("click", function () {
-        const urlDiv = document.getElementById("url-field");
-        const nodeId = `url-${new Date().getTime()}`;
-
-        const node = urlDiv.cloneNode(true);
-        $(node).attr("id", nodeId);
-        $(node).find("input").val("");
-        $(node).find("button").attr("data-id", nodeId);
-        urlDiv.parentNode.append(node);
-        $(node)
-          .find("button")
-          .click(function () {
-            const id = $(this).attr("data-id");
-            $(`#${id}`).remove();
-          });
-      });
-
-      $(urlDiv)
-        .find("button")
-        .on("click", function () {
-          const urlInput = document.querySelector("input[name='layer_url']");
-          urlInput.value = "";
-        });
-        $('button[type="submit"]').on('submit', (e)=> {
-          $(this).attr('disabled', 'disabled');
-
-        })
+<script>
+  $(() => {
+    $("#add-workflow").on("click", function () {
+      $("#workflow-creation-modal").modal("show");
     });
-  </script>
+  });
+</script>
 {% endblock %}

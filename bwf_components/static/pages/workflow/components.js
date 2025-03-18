@@ -56,30 +56,103 @@ var workflow_components = {
     if (!entry_point) {
       throw new Error("Workflow doesn't have an entry point.");
     }
-    for (let i = 0; i < components.length; i++) {
-      const component = components[i];
-      _.appendComponent(component);
-      $(".component-node").draggable({});
-    }
-    for (let i = 0; i < components.length; i++) {
-      const component = components[i];
+    // Build COmponents graph
+    let component = entry_point;
+    const nodeIds = {};
+    components.forEach((component) => {
+      nodeIds[component.id] = component;
+    });
+    do {
+      if (Object.keys(nodeIds).length === 0 || !component) {
+        break;
+      }
+      if (nodeIds[component.id]) {
+        _.appendComponent(component);
+        $(".component-node").draggable({});
+
+        delete nodeIds[component.id];
+      }
       if (component.conditions.route) {
-        console.log("route", component.conditions.route);
         const route = component.conditions.route;
-        const start = $(`#node_${component.id}`);
-        const end = $(`#node_${route}`);
+        const next_component = components.find(
+          (component) => component.id === route
+        );
+        if (!next_component) {
+          console.error("Route not found", route);
+          component = nodeIds[Object.keys(nodeIds)[0]];
+          continue;
+          // break;
+        }
+        component = next_component;
+      } else {
+        component = null;
+      }
+    } while (component);
+
+    for (let i = 0; i < components.length; i++) {
+      const component = components[i];
+      _.renderRouteLine(component);
+    }
+    const container = $("body");
+
+    var scrollTo = $("#components-flow");
+    var position =
+      scrollTo.offset().top - container.offset().top + container.scrollTop();
+    container.scrollTop(position);
+  },
+  renderRouteLine: function (component) {
+    const _ = workflow_components;
+    if (component.conditions.route) {
+      console.log("route", component.conditions.route);
+      const route = component.conditions.route;
+      const start = $(`#node_${component.id}`);
+      const end = $(`#node_${route}`);
+      if (start.length > 0 && end.length > 0) {
+        const components = _.var.components;
+        const destination = components.find(
+          (component) => component.id === route
+        );
         const line = new LeaderLine(start[0], end[0], {
           color: "#0d6efd",
           size: 2,
           middleLabel: "Route",
         });
-        $(`#node_${component.id}, #node_${route}`).on(
-          "drag",
-          function (event, ui) {
-            line.position();
-          }
+
+        component.diagram = component.diagram || {};
+        component.diagram.line_out = line;
+        if (destination) {
+          destination.diagram = destination.diagram || {};
+          destination.diagram.line_in = line;
+        }
+        $(`#node_${component.id}`).on(
+          "drag.line_out",
+          { isSource: true, id: component.id },
+          _.handleLineDrag
+        );
+        $(`#node_${route}`).on(
+          "drag.line_in",
+          { isSource: false, id: route },
+          _.handleLineDrag
         );
       }
+    }
+  },
+  handleLineDrag: function (event, ui) {
+    const components = workflow_components.var.components;
+    const isSource = event.data.isSource;
+    const componentId = event.data.id;
+    const component = components.find(
+      (component) => component.id === componentId
+    );
+
+    if (isSource) {
+      try {
+        component.diagram.line_out?.position();
+      } catch (e) {}
+    } else {
+      try {
+        component.diagram.line_in?.position();
+      } catch (e) {}
     }
   },
   appendComponent: function (component) {
@@ -110,22 +183,23 @@ var workflow_components = {
       });
       $(`#${elementId}`).find(".list-group.input").append(inputElement);
 
-      $(`#${divElementId}.input-value`).valueSelector({
+      $(
+        `#${divElementId}.input-value, #${divElementId}_array .input-value`
+      ).valueSelector({
         input: input,
         component: component,
       });
     }
-    if(outputArray.length >  0){
-      $(`#${elementId}`).find(".list-group.output").show() 
+    if (outputArray.length > 0) {
+      $(`#${elementId}`).find(".list-group.output").show();
     }
     for (let i = 0; i < outputArray.length; i++) {
       const output = outputArray[i];
       const divElementId = `${elementId}_${output.key}`;
       const inputElement = _.getComponentOutputElement({
-        ...output
+        ...output,
       });
       $(`#${elementId}`).find(".list-group.output").append(inputElement);
-
     }
 
     // Delete Component
@@ -150,10 +224,17 @@ var workflow_components = {
         const component = _.var.components.find(
           (component) => component.id === id
         );
-        console.log({component});
+        console.log({ component });
+      });
+    $(`#${elementId}`)
+      .find(".add-next-component")
+      .on("click", component, function (event) {
+        new_component_data.selectedComponent.data = event.data;
+        $("#component-creation-modal").modal("show");
       });
   },
   getComponentInputElement: function (input) {
+    const _ = this;
     const { markup } = utils;
     const {
       id,
@@ -172,6 +253,7 @@ var workflow_components = {
     const options = json_value?.options || [];
     const default_value = json_value?.default_value || "";
     const value_rules = json_value?.value_rules;
+    const structure = json_value?.structure;
 
     let element = markup("div", "", {
       id: elementId,
@@ -179,66 +261,42 @@ var workflow_components = {
       class: "input-value",
     });
 
-    // if (value_rules && value_rules.variable_only) {
-    //   element = markup(
-    //     "select",
-    //     [
-    //       markup("option", "Select Variable", { value: "" }),
-    //       workflow_variables.var.variables.map((variable) => {
-    //         return markup("option", variable.label, { value: variable.key });
-    //       }),
-    //     ],
-    //     {
-    //       id: elementId,
-    //       name: key,
-    //       class: "form-select form-select-sm",
-    //     }
-    //   );
-    // }
+    if (multi) {
+      if (structure) {
+        const input_structures = [];
+        for (const structure_key in structure) {
+          const structure_input = structure[structure_key];
+          const divElementId = `${elementId}_${structure_input.key}`;
+          const inputElement = _.getComponentInputElement({
+            ...structure_input,
+            elementId: `${elementId}_${structure_input.key}`,
+          });
+          input_structures.push(inputElement);
+        }
 
-    // if (data_type === "string") {
-    //   element = markup("input", null, {
-    //     type: "text",
-    //     class: "form-control form-control-sm",
-    //     id: elementId,
-    //     name: key,
-    //     value: default_value,
-    //   });
-    // } else if (data_type === "number") {
-    //   element = markup("input", null, {
-    //     type: "number",
-    //     class: "form-control form-control-sm",
-    //     id: elementId,
-    //     name: key,
-    //     value: default_value,
-    //   });
-    // } else if (data_type === "boolean") {
-    //   element = markup("input", null, {
-    //     type: "checkbox",
-    //     class: "form-check-input",
-    //     id: elementId,
-    //     name: key,
-    //     value: default_value,
-    //   });
-    // } else if (data_type === "array") {
-    //   element = markup("input", null, {
-    //     type: "text",
-    //     class: "form-control form-control-sm",
-    //     id: elementId,
-    //     name: key,
-    //     value: default_value,
-    //   });
-    // } else if (data_type === "object") {
-    //   element = markup("input", null, {
-    //     type: "text",
-    //     class: "form-control form-control-sm",
-    //     id: elementId,
-    //     name: key,
-    //     value: default_value,
-    //   });
+        const container = markup(
+          "div",
+          [
+            markup(
+              "div",
+              markup("label", name, { for: key, class: "form-label" }),
+              { class: "col-auto" }
+            ),
 
-    // }
+            markup(
+              "div",
+              markup("div", input_structures, { id: `${elementId}_array` }),
+              {
+                class: "col-12",
+              }
+            ),
+          ],
+          { id: elementId, class: "row g-2  justify-content-between mb-1" }
+        );
 
+        return container;
+      }
+    }
     const container = markup(
       "div",
       [
@@ -308,12 +366,15 @@ var workflow_components = {
           success: function (data) {
             _.var.components.push(data);
             _.appendComponent(data);
+            $(".component-node").draggable({});
+            _.renderRouteLine(data);
             if (component_route) {
               const source_component = _.var.components.find(
                 (component) => component.id === component_route
               );
               if (source_component) {
                 source_component.conditions.route = data.id;
+                _.renderRouteLine(source_component);
               }
             }
             resolve(data);
@@ -402,12 +463,58 @@ var workflow_components = {
   },
   removeComponent: function (id) {
     const _ = workflow_components;
+    const components = _.var.components;
     const index = _.var.components.findIndex(
       (component) => component.id === id
     );
     if (index === -1) {
       return;
     }
-    _.var.components.splice(index, 1);
+    const component = components[index];
+    if (component && component.diagram) {
+      component.diagram.line_out?.remove();
+      component.diagram.line_in?.remove();
+    }
+    $(`#node_${component.id}`).off("drag.line_out");
+    $(`#node_${component.id}`).off("drag.line_in");
+    const nextComponent = components.find(
+      (c) => c.id === component.conditions.route
+    );
+    const prevComponent = components.find(
+      (c) => c.conditions.route === component.id
+    );
+    if (prevComponent) {
+      prevComponent.conditions.route = nextComponent ? nextComponent.id : null;
+      if (prevComponent.diagram?.line_out) {
+        prevComponent.diagram.line_out = null;
+        $(`#node_${prevComponent.id}`).off("drag.line_out");
+        if (prevComponent.diagram.line_in) {
+          $(`#node_${prevComponent.id}`).on(
+            "drag.line_in",
+            { isSource: false, id: prevComponent.id },
+            _.handleLineDrag
+          );
+        }
+      }
+      if (prevComponent.conditions.route) {
+        _.renderRouteLine(prevComponent);
+      }
+    }
+    if (nextComponent) {
+      if (nextComponent.diagram?.line_out) {
+        nextComponent.diagram.line_out = null;
+        $(`#node_${nextComponent.id}`).off("drag.line_out");
+        if (nextComponent.diagram.line_out) {
+          $(`#node_${nextComponent.id}`).on(
+            "drag.line_out",
+            { isSource: true, id: nextComponent.id },
+            _.handleLineDrag
+          );
+        }
+      } 
+      
+    }
+
+    components.splice(index, 1);
   },
 };

@@ -8,6 +8,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.viewsets import ViewSet
 
 from .models import ComponentInput
+from .utils import process_base_input_definition
 from bwf_components.workflow.serializers import component_serializers
 from bwf_components.workflow.models import Workflow
 from bwf_components.controller.controller import BWFPluginController
@@ -57,19 +58,7 @@ class WorkflowComponentViewset(ViewSet):
         if base_input:
             input_index = 0
             for input_item in base_input:
-                inputs.append({
-                    'name': input_item.get("label"),
-                    'key': input_item.get("key"),
-                    'data_type': input_item.get("type"),
-                    'value': "",
-                    'json_value': {
-                        "type": input_item.get("type"),
-                        "options": input_item.get("options", None),
-                        "value_rules": input_item.get("value_rules"),
-                    },
-                    'order': input_index,
-                    'required': input_item.get("required", False)
-                })                
+                inputs.append(process_base_input_definition(input_item, input_index))
                 input_index += 1
         
         if base_output:
@@ -104,8 +93,10 @@ class WorkflowComponentViewset(ViewSet):
 
         workflow_components[instance_id] = instance
         if route:
+            oririginal_route = workflow_components[route]['conditions']['route']
             workflow_components[route]['conditions']['route'] = instance_id
-            
+            if oririginal_route:
+                instance['conditions']['route'] = oririginal_route            
         
         workflow_definition['workflow'] = workflow_components
         workflow.set_json_definition(workflow_definition)
@@ -149,11 +140,19 @@ class WorkflowComponentViewset(ViewSet):
     def destroy(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
         try:
-            workflow = Workflow.objects.get(id=workflow_id)            
+            workflow = Workflow.objects.get(id=workflow_id)
+            if len(kwargs.get("pk", None)) > 5:
+                return Response("Component removed")
             workflow_definition = workflow.get_json_definition()
             workflow_components = workflow_definition.get("workflow", {})
 
-            workflow_components.pop(kwargs.get("pk", None), None)
+            instance = workflow_components.pop(kwargs.get("pk", None), None)
+            route = instance['conditions']['route']
+            for key, component in workflow_components.items():
+                if component['conditions']['route'] == kwargs.get("pk", None):
+                    component['conditions']['route'] = route
+
+            workflow_definition['workflow'] = workflow_components
             workflow.set_json_definition(workflow_definition)
             return Response("Component removed")
         except Exception as e:

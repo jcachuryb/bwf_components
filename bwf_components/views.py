@@ -23,14 +23,11 @@ class WorkflowView(View):
 
     def get(self, request, *args, **kwargs):
         workflow_id = kwargs.get('workflow_id')
-        components_qs = WorkflowComponent.objects.filter(parent_workflow=workflow_id).prefetch_related('input', 'output')
+        components_qs = WorkflowComponent.objects.filter(parent_workflow=workflow_id)
         
-        workflow = Workflow.objects.filter(pk=workflow_id).prefetch_related('input', 
-                                            Prefetch('main_cluster__components', queryset=components_qs)).first()
+        workflow = Workflow.objects.filter(pk=workflow_id).first()
         context = {
             "workflow": workflow,
-            "inputs": workflow.input.all(),
-            "main_cluster": workflow.main_cluster
         }
 
         return render(request, self.template_name, context=context)

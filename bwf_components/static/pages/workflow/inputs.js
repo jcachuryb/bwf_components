@@ -66,7 +66,6 @@ var workflow_inputs = {
             <span>
               ${input.label}
               <small class="d-block text-body-secondary">${input.description}</small>
-              <span class="badge rounded-pill text-bg-info">${input.data_type}</span>
             </span>
             <div class="form-check form-switch">
               <button class="btn btn-ghost add-input"data-input-id="${input.id}">

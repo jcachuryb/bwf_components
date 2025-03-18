@@ -19,7 +19,19 @@
       "label": "To",
       "type": "array",
       "value": [],
-      "required": true
+      "required": true,
+      "value_rules": {
+        "dynamic": true,
+        "structure": {
+          "email": {
+            "key": "email",
+            "label": "Email",
+            "type": "string",
+            "value": "",
+            "required": true
+          }
+        }
+      }
     },
     {
       "key": "subject",
