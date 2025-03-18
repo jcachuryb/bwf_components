@@ -16,19 +16,56 @@
         <a href="workflow/{{workflow.id}}/" class="btn btn-link">
           <h5>{{ workflow.name }}</h5>
         </a>
-        <div>
-          <button
-            class="btn btn-outline-primary btn-sm"
-            data-workflow-id="{{workflow.id}}"
-            type="button"
-          >
-            Edit new version
-          </button>
-        </div>
       </div>
     </div>
     <div class="card-body">
+      <h6 class="">Description</h6>
       <p>{{ workflow.description }}</p>
+      <div>
+        <div class="row">
+          <div class="col-6">
+            <div class="justify-content-between d-flex">
+              <h6 class="">Versions</h6>
+              
+              <button
+                id="new-version-btn"
+                class="btn btn-outline-primary btn-sm"
+                data-workflow-id="{{workflow.id}}"
+                type="button"
+              >
+              <i class="bi bi-plus"></i>
+                New version
+              </button>
+            </div>
+            {% for version in workflow.versions.all %}
+
+            <div class="row mb-2 pb-2">
+              <div class="col-6">
+                <a href="{% url 'workflow-edition' workflow.id version.id %}">{{ version.version_name }} - {{ version.created_at }}</a>
+              </div>
+              <div class="col-6">
+                <!-- <button
+                  class="btn btn-outline-secondary btn-sm edit-version-btn"
+                  data-workflow-id="{{workflow.id}}"
+                  data-version="{{version.id}}"
+                  type="button"
+                >
+                  Edit
+                </button> -->
+              </div>
+            </div>
+            {% endfor %}
+            <!-- if versions empty -->
+            {% if workflow.versions.all|length == 0 %}
+            <div class="row mb-2">
+              <div class="col-6 text-secondary">
+                <p>No versions available</p>
+              </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   {% endfor %}
@@ -41,6 +78,29 @@
   $(() => {
     $("#add-workflow").on("click", function () {
       $("#workflow-creation-modal").modal("show");
+    });
+    $(".edit-version-btn").on("click", function () {
+
+    })
+    $("#new-version-btn").on("click", function () {
+      const _ = bwf_workflow;
+      const button = $(this);
+      const workflow_id = $(this).data("workflow-id");
+      button.attr("disabled", true);
+      const data = {
+        name: `Untitled`,
+        workflow_id,
+      };
+      _.api
+        .createWorkflowVersion(data)
+        .then((response) => {
+          button.attr("disabled", false);
+          window.location = `/bwf/workflow/${data.workflow.id}/edit/${data.id}`;
+        })
+        .catch((error) => {
+          button.attr("disabled", false);
+          console.error(error);
+        });
     });
   });
 </script>

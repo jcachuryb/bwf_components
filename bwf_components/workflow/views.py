@@ -7,10 +7,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db import transaction
+from django.db.models import Max
 from django.http import JsonResponse, HttpResponse
-from django.shortcuts import render,get_object_or_404
-from .models import Workflow
+from django.shortcuts import render, get_object_or_404
+from .models import Workflow, WorkflowVersion
 from .models import upload_to_path, updaload_to_workflow_edition_path
 from .serializers import workflow_serializers
 from .utils import generate_workflow_definition
@@ -45,15 +45,13 @@ class WorkflowViewset(ModelViewSet):
         file_name = f"workflow_{temp_name}.json"
         instance.workflow_file.save(file_name, ContentFile(json_data))
 
-        # edition_instance = WorkflowVersion.objects.create(
-        #     workflow=instance,version_number=instance.version_number, version_name='Initial version',workflow_file=instance.workflow_file
-        # )
+        edition_instance = WorkflowVersion.objects.create(
+            workflow=instance, version_number=instance.version_number, version_name='Untitled',workflow_file=instance.workflow_file
+        )
         return Response({"error": "Error creating workflow"}, status=status.HTTP_400_BAD_REQUEST)
     def update(self, request, *args, **kwargs):
 
         return super().update(request, *args, **kwargs)
-    
-
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def trigger_workflow(self, request):
@@ -66,12 +64,54 @@ class WorkflowViewset(ModelViewSet):
         except Exception as e:
             return JsonResponse({"success": False, "message": str(e)})
 
+class WorkflowVersionViewset(ModelViewSet):
+    queryset = WorkflowVersion.objects.all()
+    serializer_class = workflow_serializers.WorkflowSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'create' or self.action == 'update':
+            return workflow_serializers.CreateWorkflowVersionSerializer
+        return super().get_serializer_class()
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        instance = get_object_or_404(Workflow, id=serializer.validated_data.get("workflow_id"))
+        workflow_definition = instance.get_json_definition()
+        version_definition = generate_workflow_definition(instance.name, instance.description)
+        version_definition['edition'] = True
+        version_definition['workflow'] = workflow_definition['workflow']
+        version_definition['inputs'] = workflow_definition['inputs']
+        version_definition['variables'] = workflow_definition['variables']
+        
+        json_data = json.dumps(version_definition)
+        temp_name = str(uuid.uuid4())
+        file_name = f"workflow_edition_{temp_name}.json"
+        version_number = instance.versions.aggregate(version_number=Max('version_number')).get('version_number', 0)
+        version_number = version_number + 1 if version_number else 1
+        instance_edition = WorkflowVersion.objects.create(
+            workflow=instance, version_number=version_number, 
+            version_name=serializer.validated_data.get("name", "Untitled")
+        )
+        instance_edition.workflow_file.save(file_name, ContentFile(json_data))
+        return Response(workflow_serializers.WorkflowVersionSerializer(instance_edition).data)
+        
+    def update(self, request, *args, **kwargs):
+
+        return super().update(request, *args, **kwargs)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_workflow_file(request, id, version):
     workflow = get_object_or_404(Workflow, id=id)
-    file = workflow.workflow_file
+    file = workflow.workflow_file    
+    if version:
+        workflow = get_object_or_404(Workflow, id=id)
+        version = get_object_or_404(WorkflowVersion, workflow=workflow, id=version)
+        file = version.workflow_file
+
     if file is None:
         return HttpResponse("File doesn't exist", status=status.HTTP_404_NOT_FOUND)
 
@@ -85,8 +125,6 @@ def get_workflow_file(request, id, version):
     return HttpResponse(file_data, content_type=mimetypes.types_map['.json'])
 
  
-
-
 class WorkflowInputsViewset(ViewSet):
 
     def get_serializer(self, *args, **kwargs):

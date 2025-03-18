@@ -65,7 +65,7 @@ def upload_to_path(instance, filename):
     return f"bwf/workflows/{instance.id}/{instance.version_number}/{filename}"
 
 def updaload_to_workflow_edition_path(instance, filename):
-    return f"bwf/workflows/{instance.id}/edition/{instance.version_number}/{filename}"
+    return f"bwf/workflows/{instance.workflow.id}/edition/{instance.id}/{filename}"
 
     
 class WorkflowCluster(models.Model):
@@ -128,6 +128,26 @@ class WorkflowVersion(models.Model):
     is_edition = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     workflow_file = models.FileField(max_length=1000, upload_to=updaload_to_workflow_edition_path, null=True, blank=True, storage=upload_storage)
+    
+    def set_json_definition(self, definition):
+        with open(self.workflow_file.path, 'w') as json_file:
+            json.dump(definition, json_file)
+        self.save()
+
+
+    def get_json_definition(self):
+        workflow_json = {}
+        if self.workflow_file:
+            with open(self.workflow_file.path) as json_file:
+                workflow_json = json.load(json_file)
+        return workflow_json
+
+    def get_workflow_definition(self):
+        definition = self.get_json_definition()
+        return definition.get('workflow', {})
+
+    def __str__(self):
+        return f"{self.workflow}, {self.version_name} -  {self.version_number}"
 
 class WorkFlowInstance(models.Model):
     workflow = models.ForeignKey(to=Workflow, on_delete=models.CASCADE, related_name="instances")

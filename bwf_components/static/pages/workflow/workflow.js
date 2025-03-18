@@ -7,6 +7,7 @@ var bwf_workflow = {
     var: {
       workflow: null,
       base_url: "/bwf/api/workflow/",
+      base_versions_url: "/bwf/api/workflow-version/",
       components: [],
       variables: [],
       inputs: [],
@@ -40,6 +41,27 @@ var bwf_workflow = {
             },
             error: function (error) {
               alert("Error creating workflow");
+              reject(error);
+            },
+          });
+        });
+
+      },
+      createWorkflowVersion: function (data) {
+        const _ = bwf_workflow;
+        
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            url: _.var.base_versions_url,
+            type: "POST",
+            headers: { "X-CSRFToken": $("#csrf_token").val() },
+            contentType: "application/json",
+            data: JSON.stringify({ ...data }),
+            success: function (data) {
+              resolve(data);
+            },
+            error: function (error) {
+              alert("Error creating workflow version");
               reject(error);
             },
           });

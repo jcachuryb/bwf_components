@@ -2,19 +2,35 @@ from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
-from ..models import Workflow
+from ..models import Workflow, WorkflowVersion
 
 class ListWorkflowSerializer(serializers.Serializer):
-    pass
+    pass  
 
 
 class CreateWorkflowSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     description = serializers.CharField(max_length=1000, required=False, default="", allow_blank=True)
 
+class CreateWorkflowVersionSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255)
+    workflow_id = serializers.IntegerField()
+    
+
 class WorkflowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Workflow
+        fields = "__all__"
+
+class WorkflowBasicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Workflow
+        fields = ['id', 'name', 'description']
+
+class WorkflowVersionSerializer(serializers.ModelSerializer):
+    workflow = WorkflowBasicSerializer()
+    class Meta:
+        model = WorkflowVersion
         fields = "__all__"
 
 

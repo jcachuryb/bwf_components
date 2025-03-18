@@ -3,16 +3,16 @@ from django.db.models import Prefetch
 from django.views import View
 from django.shortcuts import render
 
-from bwf_components.workflow.models import Workflow
-from bwf_components.components.models import WorkflowComponent
+from bwf_components.workflow.models import Workflow, WorkflowVersion
 # Create your views here.
 class HomeView(View):
     template_name = 'dashboard/main.html'
 
     def get(self, request, *args, **kwargs):
-        workflows = Workflow.objects.all().only('name', 'description', 'current_active_version', 'created_at')
+        wf_versions_queryset = WorkflowVersion.objects.filter(is_active=True).only('workflow_id', 'version_number', 'version_name', 'created_at', 'updated_at')
+        workflows = Workflow.objects.all().prefetch_related(Prefetch('versions', queryset=wf_versions_queryset))
         context = {
-            "workflows": workflows
+            "workflows": workflows,
         }
 
         return render(request, self.template_name, context=context)
@@ -23,9 +23,23 @@ class WorkflowView(View):
 
     def get(self, request, *args, **kwargs):
         workflow_id = kwargs.get('workflow_id')
-        components_qs = WorkflowComponent.objects.filter(parent_workflow=workflow_id)
         
         workflow = Workflow.objects.filter(pk=workflow_id).first()
+        context = {
+            "workflow": workflow,
+        }
+
+        return render(request, self.template_name, context=context)
+
+
+class WorkflowEditionView(View):
+    template_name = 'dashboard/workflow/workflow_edition.html'
+
+    def get(self, request, *args, **kwargs):
+        workflow_id = kwargs.get('workflow_id')
+        version_id = kwargs.get('version_id')       
+        
+        workflow = WorkflowVersion.objects.filter(pk=version_id, workflow__id=workflow_id).first()
         context = {
             "workflow": workflow,
         }
