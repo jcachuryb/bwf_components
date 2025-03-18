@@ -1,6 +1,7 @@
 var workflow_inputs = {
     workflow_id: null,
     version_id: null,
+    is_edition: false,
     add_input_btn: null,
     containerId: null,
     container: null,
@@ -16,9 +17,10 @@ var workflow_inputs = {
       inputs: []
     },
   
-    init: function (workflow_id, version_id, containerId) {
+    init: function (options, containerId) {
       const _ = workflow_inputs
-      if(!workflow_id || !version_id || !containerId){
+    const {workflow_id, version_id, is_edition} = options;
+    if(!workflow_id || !version_id || !containerId){
         console.error("workflow_id and containerId are required")
         console.error("workflow_id is required")
         return

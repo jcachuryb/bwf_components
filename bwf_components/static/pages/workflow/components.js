@@ -1,6 +1,7 @@
 var workflow_components = {
   workflow_id: null,
   version_id: null,
+  is_edition: true,
   has_init: false,
   add_component_btn: null,
   containerId: null,
@@ -15,7 +16,8 @@ var workflow_components = {
   },
   pluginDefinitions: [],
 
-  init: function (workflow_id, version_id, containerId) {
+  init: function (options, containerId) {
+    const {workflow_id, version_id, is_edition} = options;
     const _ = workflow_components;
     if (!workflow_id || !version_id || !containerId) {
       console.error("workflow_id and containerId are required");

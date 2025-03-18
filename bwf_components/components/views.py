@@ -141,8 +141,6 @@ class WorkflowComponentViewset(ViewSet):
         workflow_id = request.query_params.get("workflow_id", None)
         try:
             workflow = Workflow.objects.get(id=workflow_id)
-            if len(kwargs.get("pk", None)) > 5:
-                return Response("Component removed")
             workflow_definition = workflow.get_json_definition()
             workflow_components = workflow_definition.get("workflow", {})
 

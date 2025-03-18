@@ -1,6 +1,7 @@
 var workflow_variables = {
     workflow_id: null,
     version_id: null,
+    is_edition: true,
     add_variable_btn: null,
     containerId: null,
     container: null,
@@ -16,10 +17,9 @@ var workflow_variables = {
       variables: []
     },
   
-    init: function (workflow_id, version_id, containerId) {
+    init: function (options, containerId) {
       const eventVariablesChange = new Event(EVENT_VARIABLES_CHANGE);
-
-
+      const {workflow_id, version_id, is_edition} = options;
       const _ = workflow_variables
       if(!workflow_id || !version_id || !containerId){
         console.error("workflow_id and containerId are required")

@@ -3,6 +3,7 @@
 
 <div class="container-sm">
   <input type="hidden" id="workflow_id" value="{{workflow.id}}" />
+  <input type="hidden" id="version_id" value="{{workflow.version_number}}" />
   <input type="hidden" id="csrf_token" value="{{ csrf_token }}" />
   <h1>{{workflow.name}}</h1>
   <p>{{workflow.description}}</p>
@@ -82,11 +83,17 @@
 <script>
   $(() => {
     const workflow_id = $("#workflow_id").val();
-    workflow_inputs.init(workflow_id, "inputs-node");
-    workflow_variables.init(workflow_id, "variables-container");
+    const version_id = $("#version_id").val();
+    const options = {
+      workflow_id, 
+      version_id,
+      is_edition: false
+    }
+    workflow_inputs.init(options, "inputs-node");
+    workflow_variables.init(options, "variables-container");
     document.addEventListener("variables:change", () => {
       if (!workflow_components.has_init) {
-        workflow_components.init(workflow_id, "components-flow");
+        workflow_components.init(options, "components-flow");
       }
     });
 

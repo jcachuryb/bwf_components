@@ -1,34 +1,48 @@
-{% extends 'govapp/bwf_base.html' %}
-{% block content %}
+{% extends 'govapp/bwf_base.html' %} {% block content %}
 
 <div class="container-sm">
   <input type="hidden" id="workflow_id" value="{{workflow.id}}" />
   <input type="hidden" id="version_id" value="{{version.id}}" />
   <input type="hidden" id="csrf_token" value="{{ csrf_token }}" />
-  <h1>Version Name: {{version.version_name}}</h1>
-  <h2>Version: {{version.version_number}}</h2>
-  <h3>{{workflow.name}}</h3>
-  <p>{{workflow.description}}</p>
-  <!-- {% include 'fragments/text_editor_sandbox.html' %} -->
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">{{workflow.name}}
+
+
+      </h5>
+      <hr />
+      <h6 class="card-subtitle mb-2 text-body-secondary">Description</h6>
+      <p class="card-text">{{workflow.description}}</p>
+      <h6 class="card-subtitle mb-2 text-body-secondary">Edition Data</h6>
+      <p class="card-text">
+        <span class="text-bold">Version Name:&nbsp;</span>{{version.version_name}}
+        <br />
+        <span class="font-weight-bold">Number:&nbsp;</span>{{version.version_number}}
+      </p>
+      <!-- <a href="#" class="card-link">Card link</a> -->
+      <!-- <a href="#" class="card-link">Another link</a> -->
+    </div>
+  </div>
+
   <div class="row">
     <div class="col-3">
       <div
         id="variables-container"
         class="row gap-1 py-md-2 align-items-center justify-content-center width-md-30"
       >
-      <div class="card p-0">
-        <div class="card-header">
-          <i class="bi bi-clipboard2-pulse-fill"></i>
-          Workflow variables
+        <div class="card p-0">
+          <div class="card-header">
+            <i class="bi bi-clipboard2-pulse-fill"></i>
+            Workflow variables
+          </div>
+          <div id="variables"></div>
+          <label class="d-grid mt-2">
+            <button class="btn btn-outline-primary add-variable">
+              <i class="bi bi-plus me-2"></i>
+              Add Variable
+            </button>
+          </label>
         </div>
-        <div id="variables"></div>
-        <label class="d-grid mt-2">
-          <button class="btn btn-outline-primary add-variable">
-            <i class="bi bi-plus me-2"></i>
-            Add Variable
-          </button>
-        </label>
-      </div>
       </div>
       <div
         id="inputs-node"
@@ -54,18 +68,16 @@
     </div>
     <div class="col-9">
       <div class="" id="components-flow"></div>
-  <div
-    class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center"
-  >
-    <button class="btn btn-outline-primary main-add-component">
-      <i class="bi bi-plus me-2"></i>
-      Add Component
-    </button>
-  </div>
+      <div
+        class="d-flex flex-column flex-md-row p-4 gap-4 py-md-5 align-items-center justify-content-center"
+      >
+        <button class="btn btn-outline-primary main-add-component">
+          <i class="bi bi-plus me-2"></i>
+          Add Component
+        </button>
+      </div>
     </div>
   </div>
-
-  
 </div>
 <script src="/static/pages/workflow/workflow.js"></script>
 <script src="/static/pages/workflow/inputs.js"></script>
@@ -78,7 +90,7 @@
 <!-- END: Fragments -->
 <!-- Modals -->
 {% include 'modals/inputs_modal.html' %} 
-{% include 'modals/variables_modal.html' %}
+{% include 'modals/variables_modal.html' %} 
 {% include 'modals/component_creation_modal.html' %}
 <!-- END: Modals -->
 
@@ -86,11 +98,16 @@
   $(() => {
     const workflow_id = $("#workflow_id").val();
     const version_id = $("#version_id").val();
-    workflow_inputs.init(workflow_id, version_id, "inputs-node");
-    workflow_variables.init(workflow_id, version_id, "variables-container");
+    const options = {
+      workflow_id, 
+      version_id,
+      is_edition: true
+    }
+    workflow_inputs.init(options, "inputs-node");
+    workflow_variables.init(options, "variables-container");
     document.addEventListener("variables:change", () => {
       if (!workflow_components.has_init) {
-        workflow_components.init(workflow_id, version_id, "components-flow");
+        workflow_components.init(options, "components-flow");
       }
     });
 

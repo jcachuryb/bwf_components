@@ -16,6 +16,7 @@
         <a href="workflow/{{workflow.id}}/" class="btn btn-link">
           <h5>{{ workflow.name }}</h5>
         </a>
+        <span class="text-secondary">Version number: {{workflow.version_number}}</span>
       </div>
     </div>
     <div class="card-body">
@@ -24,23 +25,26 @@
       <div>
         <div class="row">
           <div class="col-6">
-            <div class="justify-content-between d-flex">
-              <h6 class="">Versions</h6>
-              
-              <button
-                class="btn btn-outline-primary btn-sm new-version-btn"
-                data-workflow-id="{{workflow.id}}"
-                type="button"
-              >
-              <i class="bi bi-plus"></i>
-                New version
-              </button>
+            <div class="row mb-4">
+              <div class="col-3">
+                  <h6 class="">Versions</h6>
+              </div>
+              <div class="col-9">
+                  <button
+                    class="btn btn-outline-primary btn-sm new-version-btn"
+                    data-workflow-id="{{workflow.id}}"
+                    type="button"
+                  >
+                  <i class="bi bi-plus"></i>
+                    New version
+                  </button>
+              </div>
             </div>
             {% for version in workflow.versions.all %}
 
             <div class="row mb-2 pb-2">
               <div class="col-6">
-                <a href="{% url 'workflow-edition' workflow.id version.id %}">{{ version.version_name }} - {{ version.created_at }}</a>
+                <a href="{% url 'workflow-edition' workflow.id version.id %}">#{{ version.version_number }} - {{ version.version_name }} - {{ version.created_at }}</a>
               </div>
               <div class="col-6">
                 <!-- <button
