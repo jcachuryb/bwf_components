@@ -106,7 +106,6 @@ var workflow_components = {
   renderRouteLine: function (component) {
     const _ = workflow_components;
     if (component.conditions.route) {
-      console.log("route", component.conditions.route);
       const route = component.conditions.route;
       const start = $(`#node_${component.id}`);
       const end = $(`#node_${route}`);
@@ -115,18 +114,21 @@ var workflow_components = {
         const destination = components.find(
           (component) => component.id === route
         );
+
+        try {
+          destination.diagram?.line_in?.remove();
+        } catch (error) {}
+
         const line = new LeaderLine(start[0], end[0], {
           color: "#0d6efd",
           size: 2,
-          middleLabel: "Route",
+          middleLabel: `${component.name} -> ${destination.name}`,
         });
 
         component.diagram = component.diagram || {};
         component.diagram.line_out = line;
-        if (destination) {
-          destination.diagram = destination.diagram || {};
-          destination.diagram.line_in = line;
-        }
+        destination.diagram = destination.diagram || {};
+        destination.diagram.line_in = line;
         $(`#node_${component.id}`).on(
           "drag.line_out",
           { isSource: true, id: component.id },
@@ -158,7 +160,7 @@ var workflow_components = {
       } catch (e) {}
     }
   },
-  appendComponent: function (component) {
+  appendComponent: function (component, appendAfter) {
     const template = document.querySelector("#component-node-template");
     const { markup } = utils;
 
@@ -175,7 +177,12 @@ var workflow_components = {
       .querySelector(".component-node")
       .setAttribute("data-component-id", id);
 
-    _.container.append(clone);
+    if (appendAfter) {
+      appendAfter.after(clone);
+    } else {
+      _.container.append(clone);
+    }
+
     $(`#${elementId}`).find(".component-label").html(name);
     for (let i = 0; i < inputArray.length; i++) {
       const input = inputArray[i];
@@ -211,7 +218,11 @@ var workflow_components = {
       .on("click", component, function (event) {
         const _ = workflow_components;
         const { id } = event.data;
-        const data = { id: id, workflow_id: _.workflow_id, version_id: _.version_id };
+        const data = {
+          id: id,
+          workflow_id: _.workflow_id,
+          version_id: _.version_id,
+        };
         _.api.deleteComponent(data, function (data) {
           $(`#${elementId}`).remove();
           workflow_components.removeComponent(id);
@@ -365,10 +376,17 @@ var workflow_components = {
           type: "POST",
           headers: { "X-CSRFToken": $("#csrf_token").val() },
           contentType: "application/json",
-          data: JSON.stringify({ ...data, workflow_id: _.workflow_id, version_id: _.version_id }),
+          data: JSON.stringify({
+            ...data,
+            workflow_id: _.workflow_id,
+            version_id: _.version_id,
+          }),
           success: function (data) {
             _.var.components.push(data);
-            _.appendComponent(data);
+            const after = component_route
+              ? $(`#node_${component_route}`)
+              : null;
+            _.appendComponent(data, after);
             $(".component-node").draggable({});
             _.renderRouteLine(data);
             if (component_route) {
@@ -380,6 +398,7 @@ var workflow_components = {
                 _.renderRouteLine(source_component);
               }
             }
+            _.updateLines();
             resolve(data);
           },
           error: function (error) {
@@ -395,7 +414,11 @@ var workflow_components = {
         type: "PUT",
         headers: { "X-CSRFToken": $("#csrf_token").val() },
         contentType: "application/json",
-        data: JSON.stringify({ ...data, workflow_id: _.workflow_id, version_id: _.version_id }),
+        data: JSON.stringify({
+          ...data,
+          workflow_id: _.workflow_id,
+          version_id: _.version_id,
+        }),
         success: success_callback,
         error: error_callback,
       });
@@ -411,7 +434,11 @@ var workflow_components = {
         type: "PUT",
         headers: { "X-CSRFToken": $("#csrf_token").val() },
         contentType: "application/json",
-        data: JSON.stringify({ ...data, workflow_id: _.workflow_id, version_id: _.version_id }),
+        data: JSON.stringify({
+          ...data,
+          workflow_id: _.workflow_id,
+          version_id: _.version_id,
+        }),
         success: success_callback,
         error: error_callback,
       });
@@ -466,6 +493,7 @@ var workflow_components = {
     input.json_value = json_value;
   },
   removeComponent: function (id) {
+    debugger
     const _ = workflow_components;
     const components = _.var.components;
     const index = _.var.components.findIndex(
@@ -506,7 +534,7 @@ var workflow_components = {
     }
     if (nextComponent) {
       if (nextComponent.diagram?.line_out) {
-        nextComponent.diagram.line_out = null;
+        // nextComponent.diagram.line_out = null;
         $(`#node_${nextComponent.id}`).off("drag.line_out");
         if (nextComponent.diagram.line_out) {
           $(`#node_${nextComponent.id}`).on(
@@ -515,10 +543,21 @@ var workflow_components = {
             _.handleLineDrag
           );
         }
-      } 
-      
+      }
     }
 
     components.splice(index, 1);
+    _.updateLines();
+  },
+  updateLines: function () {
+    const _ = workflow_components;
+    _.var.components.forEach((component) => {
+      if (component.diagram?.line_in) {
+        component.diagram.line_in.position();
+      }
+      if (component.diagram?.line_out) {
+        component.diagram.line_out.position();
+      }
+    });
   },
 };
