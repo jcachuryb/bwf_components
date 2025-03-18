@@ -134,7 +134,6 @@ class WorkflowVersion(models.Model):
             json.dump(definition, json_file)
         self.save()
 
-
     def get_json_definition(self):
         workflow_json = {}
         if self.workflow_file:

@@ -1,5 +1,6 @@
 var workflow_inputs = {
     workflow_id: null,
+    version_id: null,
     add_input_btn: null,
     containerId: null,
     container: null,
@@ -15,20 +16,22 @@ var workflow_inputs = {
       inputs: []
     },
   
-    init: function (workflow_id, containerId) {
+    init: function (workflow_id, version_id, containerId) {
       const _ = workflow_inputs
-      if(!workflow_id || !containerId){
+      if(!workflow_id || !version_id || !containerId){
         console.error("workflow_id and containerId are required")
         console.error("workflow_id is required")
         return
       }
       _.workflow_id = workflow_id
+      _.version_id = version_id
       _.containerId = containerId
       _.container = $(`#${containerId} #inputs`)
       _.add_input_btn = $(`#${containerId} button.add-input`)
       // Add + Buttton
       const _params = {
-        workflow_id: _.workflow_id
+        workflow_id: _.workflow_id,
+        version_id: _.version_id
       };
       const queryParams = utils.make_query_params(_params);
       $.ajax({
@@ -99,7 +102,7 @@ var workflow_inputs = {
           type: "POST",
           headers: {'X-CSRFToken' : $("#csrf_token").val()},
           contentType: "application/json",
-          data: JSON.stringify({...input, workflow_id: _.workflow_id}),
+          data: JSON.stringify({...input, workflow_id: _.workflow_id, version_id: _.version_id}),
           success: success_callback,
           error: error_callback,
         });
@@ -111,15 +114,20 @@ var workflow_inputs = {
           type: "PUT",
           headers: {'X-CSRFToken' : $("#csrf_token").val()},
           contentType: "application/json",
-          data: JSON.stringify({...input, workflow_id: _.workflow_id}),
+          data: JSON.stringify({...input, workflow_id: _.workflow_id, version_id: _.version_id}),
           success: success_callback,
           error: error_callback,
         });
       },
       deleteInput: function (input, success_callback, error_callback) {
         const _ = workflow_inputs
+        const _params = {
+          workflow_id: _.workflow_id,
+          version_id: _.version_id
+        };
+        const queryParams = utils.make_query_params(_params);
         $.ajax({
-          url: _.var.base_url + input.id + "/?workflow_id=" + _.workflow_id,
+          url: _.var.base_url + input.id + "?" + queryParams,
           type: "DELETE",
           headers: {'X-CSRFToken' : $("#csrf_token").val()},
           contentType: "application/json",

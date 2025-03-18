@@ -1,5 +1,6 @@
 var workflow_components = {
   workflow_id: null,
+  version_id: null,
   has_init: false,
   add_component_btn: null,
   containerId: null,
@@ -14,19 +15,21 @@ var workflow_components = {
   },
   pluginDefinitions: [],
 
-  init: function (workflow_id, containerId) {
+  init: function (workflow_id, version_id, containerId) {
     const _ = workflow_components;
-    if (!workflow_id || !containerId) {
+    if (!workflow_id || !version_id || !containerId) {
       console.error("workflow_id and containerId are required");
       console.error("workflow_id is required");
       return;
     }
     _.workflow_id = workflow_id;
+    _.version_id = version_id;
     _.containerId = containerId;
     _.container = $(`#${containerId}`);
     // Add + Buttton
     const _params = {
       workflow_id: _.workflow_id,
+      version_id: _.version_id,
     };
     const queryParams = utils.make_query_params(_params);
     $.ajax({
@@ -208,7 +211,7 @@ var workflow_components = {
       .on("click", component, function (event) {
         const _ = workflow_components;
         const { id } = event.data;
-        const data = { id: id, workflow_id: _.workflow_id };
+        const data = { id: id, workflow_id: _.workflow_id, version_id: _.version_id };
         _.api.deleteComponent(data, function (data) {
           $(`#${elementId}`).remove();
           workflow_components.removeComponent(id);
@@ -362,7 +365,7 @@ var workflow_components = {
           type: "POST",
           headers: { "X-CSRFToken": $("#csrf_token").val() },
           contentType: "application/json",
-          data: JSON.stringify({ ...data, workflow_id: _.workflow_id }),
+          data: JSON.stringify({ ...data, workflow_id: _.workflow_id, version_id: _.version_id }),
           success: function (data) {
             _.var.components.push(data);
             _.appendComponent(data);
@@ -392,7 +395,7 @@ var workflow_components = {
         type: "PUT",
         headers: { "X-CSRFToken": $("#csrf_token").val() },
         contentType: "application/json",
-        data: JSON.stringify({ ...data, workflow_id: _.workflow_id }),
+        data: JSON.stringify({ ...data, workflow_id: _.workflow_id, version_id: _.version_id }),
         success: success_callback,
         error: error_callback,
       });
@@ -408,7 +411,7 @@ var workflow_components = {
         type: "PUT",
         headers: { "X-CSRFToken": $("#csrf_token").val() },
         contentType: "application/json",
-        data: JSON.stringify({ ...data, workflow_id: _.workflow_id }),
+        data: JSON.stringify({ ...data, workflow_id: _.workflow_id, version_id: _.version_id }),
         success: success_callback,
         error: error_callback,
       });
@@ -418,6 +421,7 @@ var workflow_components = {
       const { id, workflow_id } = data;
       const _params = {
         workflow_id: workflow_id,
+        version_id: _.version_id,
       };
       const queryParams = utils.make_query_params(_params);
 

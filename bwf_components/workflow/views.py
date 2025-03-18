@@ -89,7 +89,7 @@ class WorkflowVersionViewset(ModelViewSet):
         temp_name = str(uuid.uuid4())
         file_name = f"workflow_edition_{temp_name}.json"
         version_number = instance.versions.aggregate(version_number=Max('version_number')).get('version_number', 0)
-        version_number = version_number + 1 if version_number else 1
+        version_number = int(version_number) + 1 if version_number else 1
         instance_edition = WorkflowVersion.objects.create(
             workflow=instance, version_number=version_number, 
             version_name=serializer.validated_data.get("name", "Untitled")
@@ -135,8 +135,9 @@ class WorkflowInputsViewset(ViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        workflow = Workflow.objects.get(id=serializer.validated_data.pop("workflow_id"))
+        workflow_id = serializer.validated_data.get("workflow_id", None)
+        version_id = serializer.validated_data.get("version_id", None)
+        workflow = WorkflowVersion.objects.get(id=version_id, workflow__id=workflow_id)
         workflow_definition = workflow.get_json_definition()
         workflow_inputs = workflow_definition.get("inputs", {})
         key = serializer.validated_data.get("key")
@@ -160,7 +161,8 @@ class WorkflowInputsViewset(ViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
-        workflow = Workflow.objects.get(id=workflow_id)
+        version_id = request.query_params.get("version_id", None)
+        workflow = WorkflowVersion.objects.get(id=version_id, workflow__id=workflow_id)
         workflow_definition = workflow.get_json_definition()
         workflow_inputs = workflow_definition.get("inputs", {})
         instance = workflow_inputs.get(kwargs.get("pk"), None)
@@ -168,8 +170,9 @@ class WorkflowInputsViewset(ViewSet):
     
     def list(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
+        version_id = request.query_params.get("version_id", None)
         try:
-            workflow = Workflow.objects.get(id=workflow_id)
+            workflow = WorkflowVersion.objects.get(id=version_id, workflow__id=workflow_id)
             workflow_definition = workflow.get_json_definition()
             workflow_inputs = workflow_definition.get("inputs", {})
             return Response(workflow_serializers.WorkflowInputSerializer(list(workflow_inputs.values()), many=True).data)
@@ -181,8 +184,9 @@ class WorkflowInputsViewset(ViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         workflow_id = serializer.validated_data.get("workflow_id", None)
+        version_id = serializer.validated_data.get("version_id", None)
 
-        workflow = Workflow.objects.get(id=workflow_id)
+        workflow = WorkflowVersion.objects.get(id=version_id, workflow__id=workflow_id)
         workflow_definition = workflow.get_json_definition()
         workflow_inputs = workflow_definition.get("inputs", {})
         
@@ -210,8 +214,9 @@ class WorkflowInputsViewset(ViewSet):
     
     def destroy(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
+        version_id = request.query_params.get("version_id", None)
 
-        workflow = Workflow.objects.get(id=workflow_id)
+        workflow = WorkflowVersion.objects.get(id=version_id, workflow__id=workflow_id)
         workflow_definition = workflow.get_json_definition()
         workflow_inputs = workflow_definition.get("inputs", {})
         instance_id = kwargs.get("pk")
@@ -247,8 +252,10 @@ class WorkflowVariablesViewset(ViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        workflow_id = serializer.validated_data.get("workflow_id", None)
+        version_id = serializer.validated_data.get("version_id", None)
 
-        workflow = Workflow.objects.get(id=serializer.validated_data.pop("workflow_id"))
+        workflow = WorkflowVersion.objects.get(id=version_id, workflow__id=workflow_id)
         workflow_definition = workflow.get_json_definition()
         workflow_variables = workflow_definition.get("variables", {})
         key = serializer.validated_data.get("key")
@@ -271,8 +278,9 @@ class WorkflowVariablesViewset(ViewSet):
     
     def list(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
+        version_id = request.query_params.get("version_id", None)
         try:
-            workflow = Workflow.objects.get(id=workflow_id)
+            workflow = WorkflowVersion.objects.get(id=version_id, workflow__id=workflow_id)
             workflow_definition = workflow.get_json_definition()
             workflow_variables = workflow_definition.get("variables", {})
             return Response(workflow_serializers.VariableValueSerializer(list(workflow_variables.values()), many=True).data)

@@ -1,5 +1,6 @@
 var workflow_variables = {
     workflow_id: null,
+    version_id: null,
     add_variable_btn: null,
     containerId: null,
     container: null,
@@ -15,23 +16,25 @@ var workflow_variables = {
       variables: []
     },
   
-    init: function (workflow_id, containerId) {
+    init: function (workflow_id, version_id, containerId) {
       const eventVariablesChange = new Event(EVENT_VARIABLES_CHANGE);
 
 
       const _ = workflow_variables
-      if(!workflow_id || !containerId){
+      if(!workflow_id || !version_id || !containerId){
         console.error("workflow_id and containerId are required")
         console.error("workflow_id is required")
         return
       }
       _.workflow_id = workflow_id
+      _.version_id = version_id
       _.containerId = containerId
       _.container = $(`#${containerId} #variables`)
       _.add_variable_btn = $(`#${containerId} button.add-variable`)
       // Add + Buttton
       const _params = {
-        workflow_id: _.workflow_id
+        workflow_id: _.workflow_id,
+        version_id: _.version_id
       };
       const queryParams = utils.make_query_params(_params);
       $.ajax({
@@ -105,7 +108,7 @@ var workflow_variables = {
           type: "POST",
           headers: {'X-CSRFToken' : $("#csrf_token").val() },
           contentType: "application/json",
-          data: JSON.stringify({...variable, workflow_id: _.workflow_id}),
+          data: JSON.stringify({...variable, workflow_id: _.workflow_id, version_id: _.version_id}),
           success: (data)=> {
             workflow_variables.var.variables.push(data);
             workflow_variables.appendVariable(data);
@@ -124,15 +127,21 @@ var workflow_variables = {
           type: "PUT",
           headers: {'X-CSRFToken' : $("#csrf_token").val() },
           contentType: "application/json",
-          data: JSON.stringify({...variable, workflow_id: _.workflow_id}),
+          data: JSON.stringify({...variable, workflow_id: _.workflow_id, version_id: _.version_id}),
           success: success_callback,
           error: error_callback,
         });
       },
       deleteVariable: function (variable, success_callback, error_callback) {
         const _ = workflow_variables
+        
+      const _params = {
+        workflow_id: _.workflow_id,
+        version_id: _.version_id
+      };
+      const queryParams = utils.make_query_params(_params);
         $.ajax({
-          url: _.var.base_url + variable.id + "/",
+          url: _.var.base_url + variable.id + "/" + "?" + queryParams,
           type: "DELETE",
           headers: {'X-CSRFToken' : $("#csrf_token").val() },
           contentType: "application/json",

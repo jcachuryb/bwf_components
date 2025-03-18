@@ -28,8 +28,7 @@
               <h6 class="">Versions</h6>
               
               <button
-                id="new-version-btn"
-                class="btn btn-outline-primary btn-sm"
+                class="btn btn-outline-primary btn-sm new-version-btn"
                 data-workflow-id="{{workflow.id}}"
                 type="button"
               >
@@ -82,7 +81,7 @@
     $(".edit-version-btn").on("click", function () {
 
     })
-    $("#new-version-btn").on("click", function () {
+    $(".new-version-btn").on("click", function () {
       const _ = bwf_workflow;
       const button = $(this);
       const workflow_id = $(this).data("workflow-id");
@@ -95,7 +94,7 @@
         .createWorkflowVersion(data)
         .then((response) => {
           button.attr("disabled", false);
-          window.location = `/bwf/workflow/${data.workflow.id}/edit/${data.id}`;
+          window.location = `/bwf/workflow/${response.workflow.id}/edit/${response.id}`;
         })
         .catch((error) => {
           button.attr("disabled", false);

@@ -37,10 +37,11 @@ class WorkflowEditionView(View):
 
     def get(self, request, *args, **kwargs):
         workflow_id = kwargs.get('workflow_id')
-        version_id = kwargs.get('version_id')       
-        
-        workflow = WorkflowVersion.objects.filter(pk=version_id, workflow__id=workflow_id).first()
+        version_id = kwargs.get('version_id')
+        workflow = Workflow.objects.filter(pk=workflow_id).first()
+        wf_version = WorkflowVersion.objects.filter(pk=version_id, workflow__id=workflow_id).first()
         context = {
+            "version": wf_version,
             "workflow": workflow,
         }
 

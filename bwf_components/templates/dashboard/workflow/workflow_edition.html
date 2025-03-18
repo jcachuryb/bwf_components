@@ -3,11 +3,12 @@
 
 <div class="container-sm">
   <input type="hidden" id="workflow_id" value="{{workflow.id}}" />
+  <input type="hidden" id="version_id" value="{{version.id}}" />
   <input type="hidden" id="csrf_token" value="{{ csrf_token }}" />
-  <h1>Version Name: {{workflow.version_name}}</h1>
-  <h2>Version: {{workflow.version_number}}</h2>
-  <h3>{{workflow.workflow.name}}</h3>
-  <p>{{workflow.workflow.description}}</p>
+  <h1>Version Name: {{version.version_name}}</h1>
+  <h2>Version: {{version.version_number}}</h2>
+  <h3>{{workflow.name}}</h3>
+  <p>{{workflow.description}}</p>
   <!-- {% include 'fragments/text_editor_sandbox.html' %} -->
   <div class="row">
     <div class="col-3">
@@ -84,11 +85,12 @@
 <script>
   $(() => {
     const workflow_id = $("#workflow_id").val();
-    workflow_inputs.init(workflow_id, "inputs-node");
-    workflow_variables.init(workflow_id, "variables-container");
+    const version_id = $("#version_id").val();
+    workflow_inputs.init(workflow_id, version_id, "inputs-node");
+    workflow_variables.init(workflow_id, version_id, "variables-container");
     document.addEventListener("variables:change", () => {
       if (!workflow_components.has_init) {
-        workflow_components.init(workflow_id, "components-flow");
+        workflow_components.init(workflow_id, version_id, "components-flow");
       }
     });
 
