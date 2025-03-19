@@ -91,11 +91,10 @@ class ClusterComponent(models.Model):
 class Workflow(models.Model):
     name = models.CharField(max_length=200)
     description = models.CharField(max_length=1000, null=True, blank=True)
-    current_active_version = models.CharField(max_length=15, default="0.0")
+    version_number = models.IntegerField(default=1)
     workflow_file = models.FileField(max_length=1000, upload_to=upload_to_path, null=True, blank=True, storage=upload_storage)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    version_number = models.IntegerField(default=1)
 
     def set_json_definition(self, definition):
         with open(self.workflow_file.path, 'w') as json_file:
@@ -116,19 +115,37 @@ class Workflow(models.Model):
 
 
     def __str__(self):
-        return f"{self.name} - {self.current_active_version}"
+        return f"{self.name} - {self.version_number}"
 
 
 class WorkflowVersion(models.Model):
     workflow = models.ForeignKey(to=Workflow, on_delete=models.CASCADE, related_name="versions")
     version_number = models.CharField(max_length=15)
     version_name = models.CharField(max_length=50)
+    applied_on = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_edition = models.BooleanField(default=True)
-    is_active = models.BooleanField(default=True)
+    is_disabled = models.BooleanField(default=False)
+    disabled_at = models.DateTimeField(null=True, blank=True)
+    parent_version = models.ForeignKey(to="WorkflowVersion", on_delete=models.CASCADE, related_name="child_versions", null=True, blank=True)
+
     workflow_file = models.FileField(max_length=1000, upload_to=updaload_to_workflow_edition_path, null=True, blank=True, storage=upload_storage)
-    
+
+    @property
+    def is_editable(self):
+        return self.is_edition and not self.is_active  and not self.is_disabled
+
+    def set_as_active_version(self):
+        self.workflow.versions.filter(is_active=True).update(is_active=False)
+        self.is_active = True
+        self.is_edition = False
+        self.applied_on = self.updated_at
+        self.save()
+        self.workflow.version_number = self.version_number
+        self.workflow.save()
+
     def set_json_definition(self, definition):
         with open(self.workflow_file.path, 'w') as json_file:
             json.dump(definition, json_file)

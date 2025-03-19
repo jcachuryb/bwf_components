@@ -17,7 +17,7 @@ var workflow_components = {
   pluginDefinitions: [],
 
   init: function (options, containerId) {
-    const {workflow_id, version_id, is_edition} = options;
+    const { workflow_id, version_id, is_edition } = options;
     const _ = workflow_components;
     if (!workflow_id || !version_id || !containerId) {
       console.error("workflow_id and containerId are required");
@@ -425,6 +425,27 @@ var workflow_components = {
         error: error_callback,
       });
     },
+    refreshComponentData: function (data, success_callback, error_callback) {
+      const _ = workflow_components;
+      const params = {
+        workflow_id: _.workflow_id,
+        version_id: _.version_id,
+      };
+      const queryParams = utils.make_query_params(params);
+      $.ajax({
+        url: _.var.base_url + data.id + "/?" + queryParams,
+        type: "GET",
+        headers: { "X-CSRFToken": $("#csrf_token").val() },
+        contentType: "application/json",
+        data: JSON.stringify({
+          ...data,
+          workflow_id: _.workflow_id,
+          version_id: _.version_id,
+        }),
+        success: success_callback,
+        error: error_callback,
+      });
+    },
     updateComponentInputValue: function (
       data,
       success_callback,
@@ -495,7 +516,6 @@ var workflow_components = {
     input.json_value = json_value;
   },
   removeComponent: function (id) {
-    debugger
     const _ = workflow_components;
     const components = _.var.components;
     const index = _.var.components.findIndex(

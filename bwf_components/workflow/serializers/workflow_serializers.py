@@ -15,6 +15,7 @@ class CreateWorkflowSerializer(serializers.Serializer):
 class CreateWorkflowVersionSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     workflow_id = serializers.IntegerField()
+    version_id = serializers.IntegerField(required=False)
     
 
 class WorkflowSerializer(serializers.ModelSerializer):

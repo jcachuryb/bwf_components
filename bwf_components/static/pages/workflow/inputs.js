@@ -25,6 +25,7 @@ var workflow_inputs = {
         console.error("workflow_id is required")
         return
       }
+      _.is_edition = is_edition
       _.workflow_id = workflow_id
       _.version_id = version_id
       _.containerId = containerId
@@ -48,11 +49,15 @@ var workflow_inputs = {
         },
       });
 
-      _.add_input_btn.on("click", function () {
-        const _ = workflow_inputs
-        _.selectedInput = null
-        $('#inputs-modal').modal('show')
-      })
+      if(_.is_edition ) {
+        _.add_input_btn.on("click", function () {
+          const _ = workflow_inputs
+          _.selectedInput = null
+          $('#inputs-modal').modal('show')
+        })
+      } else {
+        _.add_input_btn.remove()
+      }
     },
     renderInputs: function () {
       const _ = workflow_inputs
@@ -84,16 +89,21 @@ var workflow_inputs = {
           </label>
         `
         _.container.append(inputMarkup)
-        $(`#${elementId} button.add-input`).on("click", function () {
-          const _ = workflow_inputs
-          _.selectedInput = input
-          $('#inputs-modal').modal('show')
-        })
-        $(`#${elementId} button.remove-input`).on("click", function () {
-          const _ = workflow_inputs
-          _.selectedInput = input
-          console.log('remove',input)
-        })
+        if (_.is_edition) {
+          $(`#${elementId} button.add-input`).on("click", function () {
+            const _ = workflow_inputs
+            _.selectedInput = input
+            $('#inputs-modal').modal('show')
+          })
+          $(`#${elementId} button.remove-input`).on("click", function () {
+            const _ = workflow_inputs
+            _.selectedInput = input
+            console.log('remove',input)
+          })
+        } else {
+          $(`#${elementId} button.add-input`).remove()
+          $(`#${elementId} button.remove-input`).remove()
+        }
     },
     api: {
 

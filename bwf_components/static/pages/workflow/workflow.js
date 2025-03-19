@@ -23,7 +23,11 @@ var bwf_workflow = {
     //   _.enableSyncButton();
     //   _.renderDataTable();
     },
-
+    navigate: {
+      toVersionEdition: function (workflow_id, version_id) {
+        window.location = `/bwf/workflow/${workflow_id}/edit/${version_id}`;
+      }
+    },
     api: {
       createWorkflow: function (data) {
         const _ = bwf_workflow;
@@ -36,7 +40,6 @@ var bwf_workflow = {
             contentType: "application/json",
             data: JSON.stringify({ ...data }),
             success: function (data) {
-              window.location= `/bwf/workflow/${data.id}/edit`;
               resolve(data);
             },
             error: function (error) {
@@ -66,8 +69,25 @@ var bwf_workflow = {
             },
           });
         });
-
-      }
+      },
+      markVersionAsCurrent: function (version_id, workflow_id) {
+        const _ = bwf_workflow;
+        
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            url: `${_.var.base_versions_url}${version_id}/mark_workflow_active_version/?workflow_id=${workflow_id}`,
+            type: "POST",
+            headers: { "X-CSRFToken": $("#csrf_token").val() },
+            success: function (data) {
+              resolve(data);
+            },
+            error: function (error) {
+              alert("Error marking version as current");
+              reject(error);
+            },
+          });
+        });
+      },
     }
 
   };

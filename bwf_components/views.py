@@ -9,7 +9,7 @@ class HomeView(View):
     template_name = 'dashboard/main.html'
 
     def get(self, request, *args, **kwargs):
-        wf_versions_queryset = WorkflowVersion.objects.filter(is_active=True).only('workflow_id', 'version_number', 'version_name', 'created_at', 'updated_at')
+        wf_versions_queryset = WorkflowVersion.objects.filter(is_disabled=False).only('workflow_id', 'version_number', 'version_name', 'created_at', 'updated_at').order_by('is_active', '-updated_at')
         workflows = Workflow.objects.all().prefetch_related(Prefetch('versions', queryset=wf_versions_queryset))
         context = {
             "workflows": workflows,

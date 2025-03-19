@@ -42,7 +42,7 @@ urlpatterns = [
     path('workflow/<int:workflow_id>/edit/<int:version_id>', views.WorkflowEditionView.as_view(), name='workflow-edition'),
     path('api/plugin-definitions/', component_viewsets.PluginsCatalogueView.as_view()),
     urls.re_path(r'^workflows/(?P<id>\d+)/(?P<version>\d+)/(\w+|\-+|)+.json$', workflow_viewsets.get_workflow_file, name='get_workflow_file'),
-    urls.re_path(r'^workflows/(?P<id>\d+)/edition/(?P<version>\d+)/(\w+|\-+|)+.json$', workflow_viewsets.get_workflow_file, name='get_workflow_file'),
+    urls.re_path(r'^workflows/(?P<id>\d+)/edition/(?P<version>\d+)/(\w+|\-+|)+.json$', workflow_viewsets.get_workflow_file, name='get_version_file'),
 
     path("api/", include(router.urls)),
 ]

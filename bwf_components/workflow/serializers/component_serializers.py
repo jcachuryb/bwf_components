@@ -12,6 +12,7 @@ class WorkflowComponentSerializer(serializers.Serializer):
 
 class CreateComponentSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()
+    version_id = serializers.IntegerField()
     plugin_id = serializers.CharField(max_length=500)
     plugin_version = serializers.IntegerField(default=1)
     index = serializers.IntegerField(default=1)
@@ -22,6 +23,7 @@ class CreateComponentSerializer(serializers.Serializer):
 
 class UpdateComponentInputSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()
+    version_id = serializers.IntegerField()
     plugin_id = serializers.CharField(max_length=500)
     plugin_version = serializers.IntegerField(default=1)
     key = serializers.CharField(max_length=500)

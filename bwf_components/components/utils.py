@@ -27,3 +27,32 @@ def process_base_input_definition(input_item, input_index):
                 structure_index += 1
 
     return new_input
+
+
+def adjust_workflow_routing(workflow_components, instance_id, route):
+    instance = workflow_components[instance_id]
+    if route:
+        node_before = workflow_components[route]
+        oririginal_route = node_before['conditions']['route']
+        node_before['conditions']['route'] = instance_id
+        instance['config']['incoming'] = get_incoming_values(node_before['config']['outputs'])
+
+        if oririginal_route:
+            node_next = workflow_components[oririginal_route]
+            instance['conditions']['route'] = oririginal_route
+            node_next['config']['incoming'] = get_incoming_values(instance['config']['outputs'])
+
+def get_incoming_values(config_outputs):
+   if not config_outputs:
+       return []
+   incoming_values = []
+   for output in config_outputs:
+        incoming_values.append({
+            "name": output['name'],
+            "key": output['key'],
+            "data_type": output['data_type'],
+            "data": output.get("data", None)
+        })
+
+   return incoming_values
+        

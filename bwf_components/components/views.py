@@ -1,5 +1,6 @@
 import uuid
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -8,20 +9,32 @@ from rest_framework.generics import ListAPIView
 from rest_framework.viewsets import ViewSet
 
 from .models import ComponentInput
-from .utils import process_base_input_definition
+from .utils import process_base_input_definition, get_incoming_values, adjust_workflow_routing
 from bwf_components.workflow.serializers import component_serializers
-from bwf_components.workflow.models import Workflow
+from bwf_components.workflow.models import Workflow, WorkflowVersion
 from bwf_components.controller.controller import BWFPluginController
 from . import serializers
 # Create your views here.
 
 class WorkflowComponentViewset(ViewSet):
     def retrieve(self, request, *args, **kwargs):
-        pass
+        workflow_id = request.query_params.get("workflow_id", None)
+        version_id = request.query_params.get("version_id", None)
+        component_id = kwargs.get("pk", None)
+        workflow = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
+        workflow_definition = workflow.get_json_definition()
+        workflow_components = workflow_definition.get("workflow", {})
+        component = workflow_components.get(component_id, None)
+        if not component:
+            raise Exception("Component not found")
+        return Response(component_serializers.WorkflowComponentSerializer(component).data)
+        
+    
     
     def list(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
-        workflow = Workflow.objects.get(id=workflow_id)
+        version_id = request.query_params.get("version_id", None)
+        workflow = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
         workflow_definition = workflow.get_json_definition()
         workflow_components = workflow_definition.get("workflow", {})
         components_list = []
@@ -40,7 +53,13 @@ class WorkflowComponentViewset(ViewSet):
         serializer = component_serializers.CreateComponentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        workflow = Workflow.objects.get(id=serializer.validated_data.get("workflow_id"))
+        workflow_id = serializer.validated_data.get("workflow_id")
+        version_id = serializer.validated_data.get("version_id")
+        workflow = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
+
+        if not workflow.is_editable:
+            return Response({"error": "Workflow version cannot be edited"}, status=status.HTTP_400_BAD_REQUEST)
+
         workflow_definition = workflow.get_json_definition()
         workflow_components = workflow_definition.get("workflow", {})
 
@@ -92,12 +111,8 @@ class WorkflowComponentViewset(ViewSet):
         }
 
         workflow_components[instance_id] = instance
-        if route:
-            oririginal_route = workflow_components[route]['conditions']['route']
-            workflow_components[route]['conditions']['route'] = instance_id
-            if oririginal_route:
-                instance['conditions']['route'] = oririginal_route            
-        
+        adjust_workflow_routing(workflow_components, instance_id, route)
+                
         workflow_definition['workflow'] = workflow_components
         workflow.set_json_definition(workflow_definition)
         
@@ -110,12 +125,17 @@ class WorkflowComponentViewset(ViewSet):
             serializer.is_valid(raise_exception=True)
             component_id = kwargs.get("pk", None)
             workflow_id = serializer.validated_data.get("workflow_id")
+            version_id = serializer.validated_data.get("version_id")
             plugin_id = serializer.validated_data.get("plugin_id")
             key = serializer.validated_data.get("key")
             plugin_version = serializer.validated_data.get("plugin_version", None)
             value = serializer.validated_data.get("value", {'value': None, 'is_expression': False, 'value_ref': None})
 
-            workflow = Workflow.objects.get(id=workflow_id)
+            workflow = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
+
+            if not workflow.is_editable:
+                return Response({"error": "Workflow version cannot be edited"}, status=status.HTTP_400_BAD_REQUEST)
+        
             workflow_definition = workflow.get_json_definition()
             workflow_components = workflow_definition.get("workflow", {})
             component = workflow_components.get(component_id, None)
@@ -139,16 +159,27 @@ class WorkflowComponentViewset(ViewSet):
 
     def destroy(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
+        version_id = request.query_params.get("version_id", None)
         try:
-            workflow = Workflow.objects.get(id=workflow_id)
+            workflow = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
+
+            if not workflow.is_editable:
+                return Response({"error": "Workflow version cannot be edited"}, status=status.HTTP_400_BAD_REQUEST)
+        
             workflow_definition = workflow.get_json_definition()
             workflow_components = workflow_definition.get("workflow", {})
 
             instance = workflow_components.pop(kwargs.get("pk", None), None)
+            if not instance:
+                return Response("Component not found")
             route = instance['conditions']['route']
-            for key, component in workflow_components.items():
-                if component['conditions']['route'] == kwargs.get("pk", None):
-                    component['conditions']['route'] = route
+            if route:
+                node_next = workflow_components.get(route, None)
+                if node_next:
+                    for key, component in workflow_components.items():
+                        if component['conditions']['route'] == kwargs.get("pk", None):
+                            component['conditions']['route'] = route
+                            node_next['config']['incoming'] = get_incoming_values(component['config']['outputs'])
 
             workflow_definition['workflow'] = workflow_components
             workflow.set_json_definition(workflow_definition)
