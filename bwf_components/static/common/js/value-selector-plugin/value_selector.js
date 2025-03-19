@@ -10,7 +10,7 @@ class ValueSelector {
       theme: "default",
     };
 
-    const { input, component } = settings;
+    const { input, component, isEdition } = settings;
 
     if (!input || !component) {
       return;
@@ -22,6 +22,7 @@ class ValueSelector {
 
     _.component = component;
     _.input = input;
+    _.isEdition = isEdition;
 
     _.initials = {
       present: true,
@@ -162,7 +163,7 @@ class ValueSelector {
   onPopoverOpen() {
     const _ = this;
     console.log({ settings: _.initials });
-    const { input, component } = _;
+    const { input, component, isEdition } = _;
     const { value, value_ref, is_expression } = input.value ?? {};
     const { type, options, value_rules } = _.input?.json_value ?? {};
     if ((!value || value_ref) && !_.initials.showEditor) {
@@ -180,11 +181,18 @@ class ValueSelector {
         _.editor.setValue(`${value_ref.context}['${value_ref.key}']`);
       }
     }
+    if (!isEdition) {
+      _.$saveButton.hide();
+
+      if (_.editor) {
+        _.editor.setOption("readOnly", true);
+      }
+    }
   }
 
   renderPopover() {
     const _ = this;
-    const { input, component } = _;
+    const { input, component, isEdition } = _;
     const { markup } = utils;
     const $vars = workflow_variables;
     const $inputs = workflow_inputs;
@@ -212,8 +220,12 @@ class ValueSelector {
       _.initials.showEditor = true;
       selector.popover.show();
     });
-    // _.$resetButton.hide();
-    // _.$editButton.hide();
+
+    if (!isEdition) {
+      _.$editButton.hide();
+      _.$resetButton.hide();
+    }
+
     const popoverContent = $('[data-name="popover-content"]').clone();
 
     _.$content.addClass("value-selector");
@@ -266,9 +278,11 @@ class ValueSelector {
       $(`#context-menu-${component.id}-${input.key}`).contextMenu({
         input,
         component,
+        isEdition,
         showInPopover: !!is_expression || _.initials.showEditor,
         onSelectValue: (value) => {
           console.log("Selected value", value);
+          if (!isEdition) return;
           if (_.initials.showEditor && _.editor) {
             const doc = _.editor.getDoc();
             const cursor = doc.getCursor();
@@ -375,7 +389,8 @@ class ValueSelector {
   }
 
   saveValue(value) {
-    const { input, component, $element, popover } = this;
+    const { input, component, $element, popover, isEdition } = this;
+    if (!isEdition) return;
     const body = {
       component_id: component.id,
       plugin_id: component.plugin_id,

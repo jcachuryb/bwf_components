@@ -160,7 +160,7 @@
     const options = {
       workflow_id,
       version_id,
-      is_edition: isEditable,
+      is_edition: isEditable === "True",
     };
     workflow_inputs.init(options, "inputs-node");
     workflow_variables.init(options, "variables-container");

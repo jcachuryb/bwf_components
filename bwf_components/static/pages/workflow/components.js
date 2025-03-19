@@ -24,6 +24,7 @@ var workflow_components = {
       console.error("workflow_id is required");
       return;
     }
+    _.is_edition = is_edition;
     _.workflow_id = workflow_id;
     _.version_id = version_id;
     _.containerId = containerId;
@@ -185,6 +186,11 @@ var workflow_components = {
       _.container.append(clone);
     }
 
+    if (!_.is_edition) {
+      $(`#${elementId}`).find(".delete-component").remove();
+      $(`#${elementId}`).find(".add-next-component").remove();
+    }
+
     $(`#${elementId}`).find(".component-label").html(name);
     for (let i = 0; i < inputArray.length; i++) {
       const input = inputArray[i];
@@ -200,6 +206,7 @@ var workflow_components = {
       ).valueSelector({
         input: input,
         component: component,
+        isEdition: _.is_edition,
       });
     }
     if (outputArray.length > 0) {
@@ -217,7 +224,7 @@ var workflow_components = {
     // Delete Component
     $(`#${elementId}`)
       .find(".delete-component")
-      .on("click", component, function (event) {
+      ?.on("click", component, function (event) {
         const _ = workflow_components;
         const { id } = event.data;
         const data = {
@@ -244,7 +251,7 @@ var workflow_components = {
       });
     $(`#${elementId}`)
       .find(".add-next-component")
-      .on("click", component, function (event) {
+      ?.on("click", component, function (event) {
         new_component_data.selectedComponent.data = event.data;
         $("#component-creation-modal").modal("show");
       });

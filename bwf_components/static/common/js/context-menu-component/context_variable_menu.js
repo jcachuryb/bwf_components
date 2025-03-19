@@ -10,7 +10,7 @@ class ContextVariableMenu {
       theme: "default",
     };
 
-    const { input, component, onSelectValue, showInPopover } = settings;
+    const { input, component, onSelectValue, showInPopover, isEdition } = settings;
 
     if (!input || !component) {
       return;
@@ -20,6 +20,7 @@ class ContextVariableMenu {
 
     _.component = component;
     _.input = input;
+    _.isEdition = isEdition;
 
     _.elementId = `context-menu-${component.id}-${input.key}${
       showInPopover ? "-popover" : ""

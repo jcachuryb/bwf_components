@@ -26,6 +26,7 @@ var workflow_variables = {
         console.error("workflow_id is required")
         return
       }
+      _.is_edition = is_edition
       _.workflow_id = workflow_id
       _.version_id = version_id
       _.containerId = containerId
@@ -49,12 +50,15 @@ var workflow_variables = {
           console.error(error);
         },
       });
-
-      _.add_variable_btn.on("click", function () {
-        const _ = workflow_variables
-        _.selectedVariable = null
-        $('#variables-modal').modal('show')
-      })
+      if(_.is_edition ) {
+        _.add_variable_btn.on("click", function () {
+          const _ = workflow_variables
+          _.selectedVariable = null
+          $('#variables-modal').modal('show')
+        })
+      } else {
+        _.add_variable_btn.remove()
+      }
     },
     renderVariables: function () {
       const _ = workflow_variables
@@ -86,18 +90,23 @@ var workflow_variables = {
           </label>
         `
         _.container.append(variableMarkup)
-        $(`#${elementId} button.edit-variable`).on("click", function (event) {
-          const variableKey = $(event.currentTarget).data('variable-id')
-          const _ = workflow_variables
-          const variable = _.var.variables.find(v => v.key == variableKey)
-          _.selectedVariable = variable
-          $('#variables-modal').modal('show')
-        })
-        $(`#${elementId} button.remove-variable`).on("click", function () {
-          const _ = workflow_variables
-          _.selectedVariable = variable
-          console.log('remove',variable)
-        })
+        if (_.is_edition) {
+          $(`#${elementId} button.edit-variable`).on("click", function (event) {
+            const variableKey = $(event.currentTarget).data('variable-id')
+            const _ = workflow_variables
+            const variable = _.var.variables.find(v => v.key == variableKey)
+            _.selectedVariable = variable
+            $('#variables-modal').modal('show')
+          })
+          $(`#${elementId} button.remove-variable`).on("click", function () {
+            const _ = workflow_variables
+            _.selectedVariable = variable
+            console.log('remove',variable)
+          })
+        } else {
+          $(`#${elementId} button.edit-variable`).remove()
+          $(`#${elementId} button.remove-variable`).remove()
+        }
     },
     api: {
 
