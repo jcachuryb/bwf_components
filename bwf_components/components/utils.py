@@ -14,7 +14,7 @@ def process_base_input_definition(input_item, input_index):
     }
 
     if input_item.get("type") == "array":
-        structure = input_item.get("value_rules").get("structure", None)
+        structure = input_item.get("value_rules", {}).get("structure", None)
         if not structure:
             pass
         else:
