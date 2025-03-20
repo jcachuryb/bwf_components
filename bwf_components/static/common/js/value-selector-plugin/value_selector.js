@@ -427,7 +427,6 @@ class ValueSelector {
     });
     _.$content.on("show.bs.popover", _, function (event) {
       $(".popover.show").each(function () {
-        // hide any open popovers when the anywhere else in the body is clicked
         if (
           !$(this).is(_.$content) &&
           $(this).has(_.$content).length === 0 &&
@@ -439,6 +438,15 @@ class ValueSelector {
       const selector = event.data;
       selector.onPopoverOpen();
     });
+    _.$content.on("shown.bs.popover", _, function (event) {
+      const selector = event.data;
+      const addClass = _.editor ? 'big-popover' : 'small-popover';
+      const removeClass = _.editor ? 'small-popover' : 'big-popover';
+      _.popover._config.content.parent().parent().addClass(addClass)
+      _.popover._config.content.parent().parent().removeClass(removeClass)
+      
+    });
+
   }
 
   setUpEditor(editorId) {
@@ -473,6 +481,9 @@ class ValueSelector {
             value_ref: null,
           });
         },
+        "Esc": function (cm) {
+          _.popover.hide();
+        }
       });
     }
 
@@ -496,6 +507,7 @@ class ValueSelector {
             .filter((v) => v.key.startsWith(word))
             .map((v) => `inputs['${v.key}']`);
           const local = [];
+          const incoming = [];
 
           // TODO: Get values from output
           return accept({
