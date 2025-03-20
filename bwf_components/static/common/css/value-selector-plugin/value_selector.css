@@ -15,14 +15,16 @@
 /* end popover */
 
 .btn.value-selector-edit,
-.btn.value-selector-reset {
+.btn.value-selector-reset,
+.btn.value-item-remove {
   height: 25px;
   width: 25px;
   padding: 0px;
 }
 
 .btn.value-selector-edit i,
-.btn.value-selector-reset i {
+.btn.value-selector-reset i,
+.btn.value-item-remove i {
   font-size: 11px;
 }
 

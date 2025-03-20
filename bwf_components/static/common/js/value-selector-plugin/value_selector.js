@@ -164,13 +164,13 @@ class ValueSelector {
 
       const add_button = markup(
         "div",
-        markup("button", "+", {
+        markup("button", [{tag: "i", class: 'bi bi-plus'}, "Add field"], {
           class: "btn btn-primary btn-sm ",
         }),
-        { class: "row add-array-item" }
+        { class: "row add-array-item px-3" }
       );
       const fieldsElement = markup("div", "", {
-        class: "row fields",
+        class: "fields w-100",
       });
       _.$content.append(fieldsElement);
       fieldsElement.append(add_button);
@@ -182,24 +182,26 @@ class ValueSelector {
         _.renderMultiValueInput(item);
       }
 
-      $(add_button).find('button').on("click", _, function (event) {
-        const selector = event.data;
-        const { input, component } = selector;
-        const { value } = input;
-        const valueArray = value || [];
-        const newValue = {};
-        for (const structure_key in structure) {
-          newValue[structure_key] = {
-            ...structure[structure_key],
-            id: `${component.id}__${
-              input.key
-            }__${structure_key}__${new Date().getTime()}`,
-          };
-        }
-        selector.renderMultiValueInput(newValue);
-        valueArray.push(newValue);
-        selector.saveValue(valueArray);
-      });
+      $(add_button)
+        .find("button")
+        .on("click", _, function (event) {
+          const selector = event.data;
+          const { input, component } = selector;
+          const { value } = input;
+          const valueArray = value || [];
+          const newValue = {};
+          for (const structure_key in structure) {
+            newValue[structure_key] = {
+              ...structure[structure_key],
+              id: `${component.id}__${
+                input.key
+              }__${structure_key}__${new Date().getTime()}`,
+            };
+          }
+          selector.renderMultiValueInput(newValue);
+          valueArray.push(newValue);
+          selector.saveValue(valueArray);
+        });
     } else {
       _.renderPopover();
     }
@@ -210,6 +212,15 @@ class ValueSelector {
     const selector = this;
     const { input, component } = selector;
     const { value } = input;
+    const extraButtons = [markup(
+      "div",
+      [
+        markup("button", [{ tag: "i", class: "bi bi-trash" }], {
+          class: "btn btn-sm btn-outline-danger value-item-remove",
+        }),
+      ],
+      { class: "extra-buttons" }
+    )];
     for (const field in inputValue) {
       const field_input = inputValue[field];
       const elementId = `${field_input.id}`;
@@ -226,9 +237,9 @@ class ValueSelector {
             {
               class: "",
             }
-          ),
+          )
         ],
-        { id: elementId, class: "row justify-content-between single-field" }
+        { id: elementId, class: "row justify-content-between single-field " }
       );
       $(container).insertBefore(selector.$content.find(".add-array-item"));
       $(
@@ -239,7 +250,13 @@ class ValueSelector {
         parent: selector,
         isEdition: selector.isEdition,
       });
-      workflow_components.updateLines()
+      if(extraButtons.length > 0) {
+        $(
+          `#${elementId}.input-value, #${elementId}_array .input-value`
+        ).append(extraButtons.pop());
+
+      }
+      workflow_components.updateLines();
     }
     selector.$content.find(".fields > .single-field:last").addClass("mb-1");
   }
