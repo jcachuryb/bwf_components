@@ -328,11 +328,11 @@ var workflow_components = {
       return container;
     };
     const { markup } = utils;
-    const { name, key, data_type, data } = output;
+    const { label, key, data_type, data } = output;
     const container = markup("div", "", { id: key, class: "" });
     container.append(
       extractObject({
-        label: name,
+        label: label,
         key: key,
         type: data_type,
         data: data,

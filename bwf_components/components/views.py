@@ -84,7 +84,7 @@ class WorkflowComponentViewset(ViewSet):
             output_index = 0
             for output_item in base_output:
                 outputs.append({
-                    'name': output_item.get("label"),
+                    'label': output_item.get("label"),
                     'key': output_item.get("key"),
                     'data_type': output_item.get("type"),
                     'data': output_item.get("data", {}),

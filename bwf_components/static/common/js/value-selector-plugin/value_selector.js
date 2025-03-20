@@ -404,21 +404,21 @@ class ValueSelector {
         component,
         isEdition,
         showInPopover: !!is_expression || _.initials.showEditor,
-        onSelectValue: (value) => {
-          console.log("Selected value", value);
+        onSelectValue: (selectedValue) => {
+          console.log("Selected value", selectedValue);
           if (!isEdition) return;
           if (_.initials.showEditor && _.editor) {
             const doc = _.editor.getDoc();
             const cursor = doc.getCursor();
-            doc.replaceRange(`${value?.context}['${value?.key}']`, cursor);
+            doc.replaceRange(`${selectedValue?.context}['${selectedValue?.key}']`, cursor);
           } else {
             _.saveValue({
               value: null,
               is_expression: false,
               value_ref: {
-                context: value.context,
-                key: value.key,
-                id: value.id,
+                context: selectedValue.context,
+                key: selectedValue.key,
+                id: selectedValue.id,
               },
             });
           }
@@ -512,10 +512,6 @@ class ValueSelector {
     });
   }
 
-  saveChildValue(child_input, value) {
-    const { input, component, parent, $element, popover, isEdition } = this;
-  }
-
   saveValue(value) {
     const { input, component, parentInput, $element, popover, isEdition } =
       this;
@@ -533,7 +529,6 @@ class ValueSelector {
                 parentValue[i][key].value = value;
                 parentValue[i][key].is_expression = value.is_expression;
                 parentValue[i][key].value_ref = value.value_ref;
-                // parentInput.updateValue(parentValue, parentValue);
                 break;
               }
             }

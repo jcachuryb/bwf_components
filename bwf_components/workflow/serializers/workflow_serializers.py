@@ -37,6 +37,7 @@ class WorkflowVersionSerializer(serializers.ModelSerializer):
 
 class CreateWorkflowInputSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()
+    version_id = serializers.IntegerField()
     label = serializers.CharField(max_length=255)
     key = serializers.CharField(max_length=255)
     description = serializers.CharField(max_length=1000, required=False)
@@ -57,6 +58,7 @@ class WorkflowInputSerializer(serializers.Serializer):
 
 class CreateVariableValueSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()
+    version_id = serializers.IntegerField()
     name = serializers.CharField(max_length=255)
     key = serializers.CharField(max_length=255)
     data_type = serializers.CharField(max_length=255)

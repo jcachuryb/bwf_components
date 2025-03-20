@@ -48,7 +48,7 @@ def get_incoming_values(config_outputs):
    incoming_values = []
    for output in config_outputs:
         incoming_values.append({
-            "name": output['name'],
+            "label": output['label'],
             "key": output['key'],
             "data_type": output['data_type'],
             "data": output.get("data", None)

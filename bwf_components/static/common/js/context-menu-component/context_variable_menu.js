@@ -10,7 +10,8 @@ class ContextVariableMenu {
       theme: "default",
     };
 
-    const { input, component, onSelectValue, showInPopover, isEdition } = settings;
+    const { input, component, onSelectValue, showInPopover, isEdition } =
+      settings;
 
     if (!input || !component) {
       return;
@@ -149,8 +150,21 @@ class ContextVariableMenu {
           ),
         ],
       },
-      //outputs
     ]);
+    if (_.component.config?.incoming && _.component.config.incoming.length > 0) {
+      $(menuElements).append(
+        markup(
+          "li",
+          [
+            markup("div", "Incoming values"),
+            markup(
+              "ul",
+              _.getIncomingMenu(_.component.config.incoming, "incoming")
+            ),
+          ]
+        )
+      );
+    }
 
     container.empty();
     container.append(menuElements.children);
@@ -161,6 +175,7 @@ class ContextVariableMenu {
     container.menu();
     container.show();
     container.find("li").on("click", _, function (event) {
+      event.stopPropagation();
       const selector = event.data;
       const $this = $(this);
       const id = $this.data("id");
@@ -169,9 +184,51 @@ class ContextVariableMenu {
       if (!key || !context) {
         return;
       }
-      selector?.onSelectValue({ id, key, context });
+      let parentContext = $this.data("parent-context");
+      const contextList = [context];
+      while (parentContext) {
+        if (!parentContext) break;
+        const parent = $(`#${parentContext}`);
+        if (!parent) break;
+        contextList.push(parent.data("context"));
+        parentContext = parent.data("parent-context");
+      }
+      selector?.onSelectValue({
+        id,
+        key,
+        context: contextList.reverse().join("."),
+      });
       selector.popover?.hide();
     });
+  }
+
+  getIncomingMenu(incoming, context, parentContextId) {
+    const _ = this;
+    const items = [];
+    for (let i = 0; i < incoming.length; i++) {
+      const el = incoming[i];
+      const parentId = `ctx-incoming-${el.key}`;
+      const subItems = [];
+      if (el.data_type === "object" && el.data) {
+        const dataArray = Object.keys(el.data).map((key) => el.data[key]);
+        subItems.push(_.getIncomingMenu(dataArray, `${el.key}`, parentId));
+      }
+      items.push({
+        tag: "li",
+        content: [
+          { tag: "div", content: el.label },
+          subItems.length > 0 ? { tag: "ul", content: subItems } : "",
+        ],
+        class: "",
+        id: parentId,
+        "data-context": context,
+        "data-parent-context": parentContextId ?? "",
+        "data-value": el.id,
+        "data-key": el.key,
+      });
+    }
+
+    return items;
   }
 }
 
