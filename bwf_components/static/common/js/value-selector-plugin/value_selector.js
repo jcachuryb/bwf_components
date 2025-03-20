@@ -221,6 +221,7 @@ class ValueSelector {
       ],
       { class: "extra-buttons" }
     )];
+    const field_identifier = `${component.id}__${input.key}__fields__${`${Math.random()}`.substring(2, 8)}`;
     for (const field in inputValue) {
       const field_input = inputValue[field];
       const elementId = `${field_input.id}`;
@@ -239,7 +240,9 @@ class ValueSelector {
             }
           )
         ],
-        { id: elementId, class: "row justify-content-between single-field " }
+        { id: elementId, class: ["row justify-content-between single-field", 
+          field_identifier
+        ].join(" ") }
       );
       $(container).insertBefore(selector.$content.find(".add-array-item"));
       $(
@@ -251,14 +254,34 @@ class ValueSelector {
         isEdition: selector.isEdition,
       });
       if(extraButtons.length > 0) {
+        const elem = extraButtons.pop();
+        $(elem).find('button').attr("data-key", field);
+        $(elem).find('button').attr("data-id", field_input.id);
+        $(elem).find('button').attr("data-field-id", field_identifier);
         $(
           `#${elementId}.input-value, #${elementId}_array .input-value`
-        ).append(extraButtons.pop());
+        ).append($(elem));
 
       }
       workflow_components.updateLines();
     }
     selector.$content.find(".fields > .single-field:last").addClass("mb-1");
+    selector.$content.find(".fields button.value-item-remove").on("click", selector, function (event) {
+      const selector = event.data;
+      const key = $(this).data("key");
+      const id = $(this).data("id");
+      const field_id = $(this).data("field-id");
+      try {
+        const value = selector.input.value.filter((v) => v[key].id !== id);
+        selector.saveValue(value);
+        input.value = value;
+        $(`.${field_id}`).remove();
+        workflow_components.updateLines();
+      }
+      catch (error) {
+        console.error(error);
+      }
+    });
   }
 
   onPopoverOpen() {
