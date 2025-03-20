@@ -31,13 +31,13 @@ def process_base_input_definition(input_item, input_index):
 
 def adjust_workflow_routing(workflow_components, instance_id, route):
     instance = workflow_components[instance_id]
-    if route:
+    if route and route in workflow_components:
         node_before = workflow_components[route]
         oririginal_route = node_before['conditions']['route']
         node_before['conditions']['route'] = instance_id
         instance['config']['incoming'] = get_incoming_values(node_before['config']['outputs'])
 
-        if oririginal_route:
+        if oririginal_route and oririginal_route in workflow_components:
             node_next = workflow_components[oririginal_route]
             instance['conditions']['route'] = oririginal_route
             node_next['config']['incoming'] = get_incoming_values(instance['config']['outputs'])

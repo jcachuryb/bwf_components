@@ -10,7 +10,7 @@ class ValueSelector {
       theme: "default",
     };
 
-    const { input, component, isEdition } = settings;
+    const { input, parent, component, isEdition } = settings;
 
     if (!input || !component) {
       return;
@@ -22,6 +22,7 @@ class ValueSelector {
 
     _.component = component;
     _.input = input;
+    _.parentInput = parent;
     _.isEdition = isEdition;
 
     _.initials = {
@@ -71,8 +72,10 @@ class ValueSelector {
     const _ = this;
     const { markup } = utils;
     const $vars = workflow_variables;
+    const { input, component } = _;
 
-    const { type, options, value_rules } = _.input?.json_value ?? {};
+    const { type, options, value_rules, multi, structure } =
+      _.input?.json_value ?? {};
 
     if (value_rules && value_rules.variable_only) {
       _.$content.empty();
@@ -154,10 +157,91 @@ class ValueSelector {
           value_ref: null,
         });
       });
+    } else if (multi && structure) {
+      _.$content.empty();
+      _.$resetButton.hide();
+      _.$editButton.hide();
+
+      const add_button = markup(
+        "div",
+        markup("button", "+", {
+          class: "btn btn-primary btn-sm ",
+        }),
+        { class: "row add-array-item" }
+      );
+      const fieldsElement = markup("div", "", {
+        class: "row fields",
+      });
+      _.$content.append(fieldsElement);
+      fieldsElement.append(add_button);
+      // _.$content.parent()siblings('.add-btn').append(add_button);
+
+      const valueArray = _.input.value || [];
+      for (let i = 0; i < valueArray.length; i++) {
+        const item = valueArray[i];
+        _.renderMultiValueInput(item);
+      }
+
+      $(add_button).find('button').on("click", _, function (event) {
+        const selector = event.data;
+        const { input, component } = selector;
+        const { value } = input;
+        const valueArray = value || [];
+        const newValue = {};
+        for (const structure_key in structure) {
+          newValue[structure_key] = {
+            ...structure[structure_key],
+            id: `${component.id}__${
+              input.key
+            }__${structure_key}__${new Date().getTime()}`,
+          };
+        }
+        selector.renderMultiValueInput(newValue);
+        valueArray.push(newValue);
+        selector.saveValue(valueArray);
+      });
     } else {
-      // render popover
       _.renderPopover();
     }
+  }
+
+  renderMultiValueInput(inputValue) {
+    const { markup } = utils;
+    const selector = this;
+    const { input, component } = selector;
+    const { value } = input;
+    for (const field in inputValue) {
+      const field_input = inputValue[field];
+      const elementId = `${field_input.id}`;
+      const inputElement = workflow_components.getComponentInputElement({
+        ...field_input,
+        elementId: `${elementId}_${field}`,
+      });
+      const container = markup(
+        "div",
+        [
+          markup(
+            "div",
+            markup("div", inputElement, { id: `${elementId}_array` }),
+            {
+              class: "",
+            }
+          ),
+        ],
+        { id: elementId, class: "row justify-content-between single-field" }
+      );
+      $(container).insertBefore(selector.$content.find(".add-array-item"));
+      $(
+        `#${elementId}.input-value, #${elementId}_array .input-value`
+      ).valueSelector({
+        input: field_input,
+        component: component,
+        parent: selector,
+        isEdition: selector.isEdition,
+      });
+      workflow_components.updateLines()
+    }
+    selector.$content.find(".fields > .single-field:last").addClass("mb-1");
   }
 
   onPopoverOpen() {
@@ -388,9 +472,42 @@ class ValueSelector {
     });
   }
 
+  saveChildValue(child_input, value) {
+    const { input, component, parent, $element, popover, isEdition } = this;
+  }
+
   saveValue(value) {
-    const { input, component, $element, popover, isEdition } = this;
+    const { input, component, parentInput, $element, popover, isEdition } =
+      this;
     if (!isEdition) return;
+
+    if (parentInput && parentInput.input.json_value) {
+      const { input: parentInputObj } = parentInput;
+
+      if (parentInputObj.json_value.multi) {
+        const parentValue = parentInputObj.value;
+        if (parentValue && Array.isArray(parentValue)) {
+          for (let i = 0; i < parentValue.length; i++) {
+            for (const key in parentValue[i]) {
+              if (parentValue[i][key].id === input.id) {
+                parentValue[i][key].value = value;
+                parentValue[i][key].is_expression = value.is_expression;
+                parentValue[i][key].value_ref = value.value_ref;
+                // parentInput.updateValue(parentValue, parentValue);
+                break;
+              }
+            }
+          }
+          return parentInput.saveValue(parentValue).then((response) => {
+            const selector = this;
+            selector.updateHtml();
+            if (popover) popover.hide();
+            return response;
+          });
+        }
+      }
+    }
+
     const body = {
       component_id: component.id,
       plugin_id: component.plugin_id,
@@ -399,9 +516,9 @@ class ValueSelector {
       key: input.key,
       value: value,
     };
-    workflow_components.api.updateComponentInputValue(
-      body,
-      (data) => {
+    return workflow_components.api
+      .updateComponentInputValue(body)
+      .then((data) => {
         const selector = this;
         const { key, value, json_value } = data;
         selector.input = data;
@@ -415,11 +532,11 @@ class ValueSelector {
         selector.updateHtml();
         if (popover) popover.hide();
         console.log("updated", data);
-      },
-      (error) => {
+        return data;
+      })
+      .catch((error) => {
         console.error(error);
-      }
-    );
+      });
   }
 
   updateValue(value, json_value) {
@@ -433,7 +550,11 @@ class ValueSelector {
     const _ = this;
     const { input, component } = _;
     const { value, json_value } = input;
-    const { type, options, value_rules } = json_value ?? {};
+    const { type, options, value_rules, multi } = json_value ?? {};
+
+    if (multi) {
+      return;
+    }
 
     if ((value_rules && value_rules.variable_only) || options) {
       _.$resetButton.hide();

@@ -276,63 +276,30 @@ var workflow_components = {
     const options = json_value?.options || [];
     const default_value = json_value?.default_value || "";
     const value_rules = json_value?.value_rules;
-    const structure = json_value?.structure;
 
     let element = markup("div", "", {
       id: elementId,
       name: key,
       class: "input-value",
     });
-
-    if (multi) {
-      if (structure) {
-        const input_structures = [];
-        for (const structure_key in structure) {
-          const structure_input = structure[structure_key];
-          const divElementId = `${elementId}_${structure_input.key}`;
-          const inputElement = _.getComponentInputElement({
-            ...structure_input,
-            elementId: `${elementId}_${structure_input.key}`,
-          });
-          input_structures.push(inputElement);
-        }
-
-        const container = markup(
-          "div",
-          [
-            markup(
-              "div",
-              markup("label", name, { for: key, class: "form-label" }),
-              { class: "col-auto" }
-            ),
-
-            markup(
-              "div",
-              markup("div", input_structures, { id: `${elementId}_array` }),
-              {
-                class: "col-12",
-              }
-            ),
-          ],
-          { id: elementId, class: "row g-2  justify-content-between mb-1" }
-        );
-
-        return container;
-      }
-    }
+    const items = [];
     const container = markup(
       "div",
       [
-        markup(
+        multi?"": markup(
           "div",
           markup("label", name, { for: key, class: "form-label" }),
           { class: "col-auto" }
         ),
 
-        markup("div", element, { class: "col-9" }),
+        markup("div", element, { class: multi ? "col-12":"col-9" }),
       ],
       { class: "row g-2 d-flex justify-content-between mb-1" }
     );
+
+    if (multi) {
+      return markup('div', [container, {tag: "div", class: "add-btn"}], )
+    }
 
     return container;
   },
@@ -453,24 +420,26 @@ var workflow_components = {
         error: error_callback,
       });
     },
-    updateComponentInputValue: function (
-      data,
-      success_callback,
-      error_callback
-    ) {
+    updateComponentInputValue: function (data) {
       const _ = workflow_components;
-      $.ajax({
-        url: _.var.base_url + data.component_id + "/update_input_value/",
-        type: "PUT",
-        headers: { "X-CSRFToken": $("#csrf_token").val() },
-        contentType: "application/json",
-        data: JSON.stringify({
-          ...data,
-          workflow_id: _.workflow_id,
-          version_id: _.version_id,
-        }),
-        success: success_callback,
-        error: error_callback,
+      return new Promise((resolve, reject) => {
+        $.ajax({
+          url: _.var.base_url + data.component_id + "/update_input_value/",
+          type: "PUT",
+          headers: { "X-CSRFToken": $("#csrf_token").val() },
+          contentType: "application/json",
+          data: JSON.stringify({
+            ...data,
+            workflow_id: _.workflow_id,
+            version_id: _.version_id,
+          }),
+          success: function (response) {
+            resolve(response);
+          },
+          error: function (error) {
+            reject(error);
+          },
+        });
       });
     },
     deleteComponent: function (data, success_callback, error_callback) {
@@ -518,9 +487,9 @@ var workflow_components = {
     const component = _.var.components.find(
       (component) => component.id === componentId
     );
-    const input = component.config.inputs.find((input) => input.key === key);
-    input.value = value;
-    input.json_value = json_value;
+    // const input = component.config.inputs.find((input) => input.key === key);
+    // input.value = value;
+    // input.json_value = json_value;
   },
   removeComponent: function (id) {
     const _ = workflow_components;

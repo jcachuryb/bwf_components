@@ -52,7 +52,7 @@
               </li>
               {% else %}
               <li id="btn-create-version" class="dropdown-item">
-                Create a version
+                Create version out of this definition
               </li>
               {% endif %}
               <li class="dropdown-item" id="btn-view-definition">
@@ -199,7 +199,8 @@
       if ($(this).attr("disabled")) return;
       $(this).attr("disabled", true);
       const api_data = {
-        version_id, workflow_id
+        version_id, workflow_id,
+        name: `Untitled`,
       }
       bwf_workflow.api
         .createWorkflowVersion(api_data)

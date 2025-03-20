@@ -160,6 +160,7 @@ class WorkflowComponentViewset(ViewSet):
     def destroy(self, request, *args, **kwargs):
         workflow_id = request.query_params.get("workflow_id", None)
         version_id = request.query_params.get("version_id", None)
+        components_affected = []
         try:
             workflow = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
 
@@ -173,17 +174,21 @@ class WorkflowComponentViewset(ViewSet):
             if not instance:
                 return Response("Component not found")
             route = instance['conditions']['route']
+
             if route:
                 node_next = workflow_components.get(route, None)
                 if node_next:
+                    components_affected.append(node_next)
                     for key, component in workflow_components.items():
                         if component['conditions']['route'] == kwargs.get("pk", None):
                             component['conditions']['route'] = route
                             node_next['config']['incoming'] = get_incoming_values(component['config']['outputs'])
+                            components_affected.append(component)
+                            break
 
             workflow_definition['workflow'] = workflow_components
             workflow.set_json_definition(workflow_definition)
-            return Response("Component removed")
+            return Response(component_serializers.WorkflowComponentSerializer(components_affected, many=True).data)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
