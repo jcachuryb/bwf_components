@@ -1,9 +1,17 @@
+from rest_framework.decorators import action, permission_classes, api_view
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet
 
+from django.shortcuts import get_object_or_404
 from django.db.models import Prefetch
-from django.views import View
+from django.http import JsonResponse
 from django.shortcuts import render
+from django.views import View
 
-from bwf_components.workflow.models import Workflow, WorkflowVersion
+from bwf_components.workflow.models import Workflow, WorkflowVersion, WorkFlowInstance
+from bwf_components.workflow.serializers import workflow_api_serializers
+from bwf_components.tasks import start_workflow
 # Create your views here.
 class HomeView(View):
     template_name = 'dashboard/main.html'
@@ -46,3 +54,30 @@ class WorkflowEditionView(View):
         }
 
         return render(request, self.template_name, context=context)
+    
+# Workflow API
+
+class WorkflowAPIViewSet(ViewSet):
+    permission_classes = [AllowAny]
+    
+    serializer_class = workflow_api_serializers.WorkflowInstanceSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return workflow_api_serializers.CreateWorkflowInstanceSerializer
+        return super().get_serializer_class()
+    
+    def create(self, request, *args, **kwargs):
+        serializer = workflow_api_serializers.CreateWorkflowInstanceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        workflow_id = serializer.validated_data.get("workflow_id")
+        workflow = get_object_or_404(Workflow, pk=workflow_id)
+        instance = start_workflow(workflow_id, serializer.validated_data.get("input", {}))
+        return Response(workflow_api_serializers.WorkflowInstanceSerializer(instance).data)
+
+    def retrieve(self, request, pk=None):
+        instance = get_object_or_404(WorkFlowInstance, pk=pk)
+        serializer = workflow_api_serializers.WorkflowInstanceSerializer(instance)
+        return JsonResponse(serializer.data)
+    
+

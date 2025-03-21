@@ -39,22 +39,26 @@ class BasePlugin:
             "data": data
         }
         self.component.save()
+        if success:
+            self.on_complete()
+        else:
+            self.on_failure(message)
 
     def call_next_node(self):
         from bwf_components.tasks import register_workflow_step
 
-        workflow_definition = self.workflow_instance.workflow.get_json_definition()
+        workflow_definition = self.workflow_instance.get_json_definition()
         current_definition = None
         wf_components = workflow_definition.get("workflow", {})
         for key, value in wf_components.items():
-            if key == self.component.id:
+            if key == self.component.component_id:
                 current_definition = value
                 break
         if not current_definition:
-            raise Exception(f"Component {self.component.id} not found in workflow definition")
+            raise Exception(f"Component {self.component.component_id} not found in workflow definition")
         next_component_id = current_definition.get("conditions", {}).get("route", None)
         if next_component_id:
-            register_workflow_step(self.workflow_instance, step=next_component_id, output_prev_component=self.set_output.get("data", {}))
+            register_workflow_step(self.workflow_instance, step=next_component_id, output_prev_component=self.component.output.get("data", {}))
         else:
             self.workflow_instance.set_status_completed()
 
@@ -62,20 +66,27 @@ class BasePlugin:
         self.component.set_status_completed()
         self.call_next_node()
     
-    def on_failure(self):
-        pass    
+    def on_failure(self, error={}):
+        # TODO: Call process on Failure
+        self.component.set_status_error(error)
+        self.workflow_instance.set_status_error(error)
 
     def collect_context_data(self):
         context = self.context | {
-            "input": {},
+            "input": self.component.input,
         }
-        for key, value in self.component.input.items():
-            context["input"][key] = value["value"]
         return context
 
+    def update_workflow_variable(self, id, value):
+        workflow_variables = self.workflow_instance.get_json_definition().get('variables')
+        variable = None
+        for var_key in workflow_variables:
+            if workflow_variables[var_key].get('id') == id:
+                variable = workflow_variables[var_key]
+                break
 
-    def update_workflow_variable(self, context, key, value):
-        self.workflow_instance.variables['local'][key] = value
+        self.workflow_instance.variables['variables'][variable['id']] = value
+        self.workflow_instance.variables['variables'][variable['key']] = value
         self.workflow_instance.save()
 
 

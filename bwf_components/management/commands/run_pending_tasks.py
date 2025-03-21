@@ -23,12 +23,5 @@ class Command(base.BaseCommand):
         """Handles the management command functionality."""
         # Display information
         self.stdout.write("Processing pending components...")
-        # ProcessPendingComponents().run()
-        start_workflow('1', {
-                            "Input_1": "hola mundo",
-                            "saludoMisPerritos": "Un saludo para el email",
-                            "otro_input": "123",
-                            "has_registered": True,
-                            "endpoint": "http://localhost:9196/"}
-        )
+        ProcessPendingComponents().run()
 

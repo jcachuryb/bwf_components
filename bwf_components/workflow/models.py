@@ -101,7 +101,6 @@ class Workflow(models.Model):
             json.dump(definition, json_file)
         self.save()
 
-
     def get_json_definition(self):
         workflow_json = {}
         if self.workflow_file:
@@ -112,7 +111,9 @@ class Workflow(models.Model):
     def get_workflow_definition(self):
         definition = self.get_json_definition()
         return definition.get('workflow', {})
-
+    
+    def get_active_version(self):
+        return self.versions.filter(is_active=True).first()
 
     def __str__(self):
         return f"{self.name} - {self.version_number}"
@@ -163,17 +164,20 @@ class WorkflowVersion(models.Model):
         return definition.get('workflow', {})
 
     def __str__(self):
-        return f"{self.workflow}, {self.version_name} -  {self.version_number}"
+        return f"{self.workflow} | {self.version_number} | {self.version_name}"
 
 class WorkFlowInstance(models.Model):
-    workflow = models.ForeignKey(to=Workflow, on_delete=models.CASCADE, related_name="instances")
+    workflow_version = models.ForeignKey(to=WorkflowVersion, on_delete=models.CASCADE, related_name="instances", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     variables = models.JSONField(null=True, blank=True)
     status = models.CharField(max_length=50, choices=ComponentStepStatusEnum.choices, default=ComponentStepStatusEnum.PENDING)
     error_message = models.CharField(max_length=1000, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.workflow.name} - {self.id}"
+        return f"{self.workflow_version} - {self.id}"
+
+    def get_json_definition(self):
+        return self.workflow_version.get_json_definition()
 
     # Current task
     # start task
@@ -234,23 +238,22 @@ class ComponentInstance(models.Model):
 class WorkflowInstanceFactory:
 
     @staticmethod
-    def create_instance(workflow: Workflow, input_params={}):
+    def create_instance(workflow_version: WorkflowVersion, input_params={}):
         # TODO: Check if workflow is active and version is correct
-        instance = WorkFlowInstance(workflow=workflow)
-        workflow_definition = workflow.get_json_definition()
+        instance = WorkFlowInstance(workflow_version=workflow_version)
+        workflow_definition = workflow_version.get_json_definition()
 
         # collect variables
         input_values = workflow_definition.get("inputs", {})
         local_variables = workflow_definition.get("variables", {})
         context = {
             'inputs': {},
-            'global': {},
+            'variables': {},
             'local': {},
         }
 
         for key  in local_variables:
             variable = local_variables[key]
-
             context[variable['context']][key] = None
 
         for key in input_values:

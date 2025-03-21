@@ -36,7 +36,7 @@ class WorkflowVersionAdmin(admin.ModelAdmin):
 class ComponentInstanceInline(admin.TabularInline):
     model = ComponentInstance
     extra = 0
-    fields = ('component','created_at', 'updated_at', 'input', 'status',)
+    fields = ('component_id','created_at', 'updated_at', 'input', 'status',)
     ordering = ('-id',)
     readonly_fields = ('created_at','updated_at',)
 
@@ -44,7 +44,7 @@ class ComponentInstanceInline(admin.TabularInline):
 @admin.register(WorkFlowInstance)
 class WorkFlowInstanceAdmin(admin.ModelAdmin):
     list_display = [
-        'workflow',
+        'workflow_version',
         'status',
         'created_at',
     ]

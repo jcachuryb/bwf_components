@@ -6,7 +6,7 @@ var bwf_workflow = {
     componentsController: null,
     var: {
       workflow: null,
-      base_url: "/bwf/api/workflow/",
+      base_url: "/bwf/api/workflow-setup/",
       base_versions_url: "/bwf/api/workflow-version/",
       components: [],
       variables: [],
@@ -39,8 +39,8 @@ var bwf_workflow = {
             headers: { "X-CSRFToken": $("#csrf_token").val() },
             contentType: "application/json",
             data: JSON.stringify({ ...data }),
-            success: function (data) {
-              resolve(data);
+            success: function (response) {
+              resolve(response);
             },
             error: function (error) {
               alert("Error creating workflow");
@@ -60,8 +60,8 @@ var bwf_workflow = {
             headers: { "X-CSRFToken": $("#csrf_token").val() },
             contentType: "application/json",
             data: JSON.stringify({ ...data }),
-            success: function (data) {
-              resolve(data);
+            success: function (response) {
+              resolve(response);
             },
             error: function (error) {
               alert("Error creating workflow version");
@@ -78,8 +78,8 @@ var bwf_workflow = {
             url: `${_.var.base_versions_url}${version_id}/mark_workflow_active_version/?workflow_id=${workflow_id}`,
             type: "POST",
             headers: { "X-CSRFToken": $("#csrf_token").val() },
-            success: function (data) {
-              resolve(data);
+            success: function (response) {
+              resolve(response);
             },
             error: function (error) {
               alert("Error marking version as current");

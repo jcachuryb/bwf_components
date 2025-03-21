@@ -1,15 +1,19 @@
+import logging
 from bwf_components.workflow.models import WorkFlowInstance, ComponentInstance
 from bwf_components.components.plugins.base_plugin import BasePlugin
+logger = logging.getLogger(__name__)
 
-
-def execute(component_instance:ComponentInstance, workflow_instance: WorkFlowInstance, context={}):
-    plugin = BasePlugin(component_instance, workflow_instance, context) # Wrapper
-    context = plugin.collect_context_data()
-    component_input = context['input']
+def execute(plugin:BasePlugin):
+    inputs = plugin.collect_context_data()
+    component_input = inputs['input']
+    multi_variables = component_input.get("variables", [])
+    try:
+        for variable in multi_variables:
+            key = variable.get("local_variable_key")
+            value = variable.get("value")
+            plugin.update_workflow_variable(key, value)
+        plugin.set_output(True)
+    except Exception as e:
+        plugin.set_output(False, message=str(e))
+        logger.error(f"Error in Assign Multi Variable Plugin: {str(e)}")
     
-    key = component_input.get("local_variable_key")
-
-    plugin.update_workflow_variable(key, component_input.get("value"))
-    plugin.set_output(True)
-    
-    return plugin

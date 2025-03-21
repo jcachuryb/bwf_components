@@ -385,7 +385,7 @@ class ValueSelector {
       html: true,
       title: `${component.name}: ${input.name}`,
       content: popoverContent,
-      placement: "top",
+      placement: "right",
     };
     _.popover = new bootstrap.Popover(_.$content, popoverOptions);
 

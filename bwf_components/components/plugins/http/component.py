@@ -1,9 +1,8 @@
 import requests
 import json
-
-from bwf_components.workflow.models import WorkFlowInstance, ComponentInstance
+import logging
 from bwf_components.components.plugins.base_plugin import BasePlugin
-
+logger = logging.getLogger(__name__)
 
 def execute(plugin:BasePlugin):
     # plugin = BasePlugin(component_instance, workflow_instance, context) # Wrapper
@@ -12,9 +11,15 @@ def execute(plugin:BasePlugin):
     url = component_input.get("url")
     method = component_input.get("method", "GET")
     headers = component_input.get("headers", {})
-    body = json.load(component_input.get("body"))
+    body = component_input.get("body", {})
     response = requests.request(method, url, headers=headers, data=body)
-    plugin.set_output(True, data={"response": {"status_code": response.status_code, "body": json.loads(response.text)}})
-    
-    plugin.call_next_node()
-
+    output = {
+        "status": response.status_code,
+        "body": {}
+    }
+    try:
+        output["body"] = json.loads(response.text)
+        plugin.set_output(True, data=output)
+    except Exception as e:
+        plugin.set_output(False, message=str(e), data=output)
+        logger.error(f"Error in HTTP Plugin: {str(e)}")

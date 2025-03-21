@@ -92,10 +92,10 @@
       name,
       description,
     };
-    _.api.createWorkflow(data).then((data) => {
+    _.api.createWorkflow(data).then((response) => {
+      _.navigate.toVersionEdition(response.workflow.id, response.id);
       $(".create-workflow-button").prop("disabled", false);
       $("#workflow-creation-modal").modal("hide");
-      _.fetchWorkflows();
     }).catch((error) => {
       $(".create-workflow-button").prop("disabled", false);
     });

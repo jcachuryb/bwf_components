@@ -28,11 +28,13 @@ admin.site.index_title = conf.settings.PROJECT_TITLE
 admin.site.site_title = conf.settings.PROJECT_TITLE
 
 router = routers.DefaultRouter()
-router.register('workflow', workflow_viewsets.WorkflowViewset)
+router.register('workflow-setup', workflow_viewsets.WorkflowViewset)
 router.register('workflow-version', workflow_viewsets.WorkflowVersionViewset)
 router.register('workflow-inputs', workflow_viewsets.WorkflowInputsViewset, basename="workflow-inputs")
 router.register('workflow-variables', workflow_viewsets.WorkflowVariablesViewset, basename="workflow-variables")
 router.register('workflow-components', component_viewsets.WorkflowComponentViewset, basename="workflow-components")
+
+router.register('workflow-live', views.WorkflowAPIViewSet, basename="workflow-live")
 
 
 urlpatterns = [

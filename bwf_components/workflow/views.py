@@ -51,7 +51,9 @@ class WorkflowViewset(ModelViewSet):
         edition_instance = WorkflowVersion.objects.create(
             workflow=instance, version_number=instance.version_number, version_name='Untitled',workflow_file=instance.workflow_file
         )
-        return Response({"error": "Error creating workflow"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(workflow_serializers.WorkflowVersionSerializer(edition_instance).data)
+
     def update(self, request, *args, **kwargs):
 
         return super().update(request, *args, **kwargs)
@@ -306,7 +308,7 @@ class WorkflowVariablesViewset(ViewSet):
             "key": key,
             "value": serializer.validated_data.get("value", ""),
             "data_type": serializer.validated_data.get("data_type"),
-            "context": serializer.validated_data.get("context", "global"),
+            "context": serializer.validated_data.get("context", "variables"),
         }
         workflow_variables[key] = new_variable
         workflow_definition["variables"] = workflow_variables
@@ -355,7 +357,7 @@ class WorkflowVariablesViewset(ViewSet):
         instance["name"] = serializer.validated_data.get("name")
         instance["data_type"] = serializer.validated_data.get("data_type")
         instance["value"] = serializer.validated_data.get("value", "")
-        instance["context"] = serializer.validated_data.get("context", "global")
+        instance["context"] = serializer.validated_data.get("context", "variables")
         workflow_variables[instance["id"]] = instance
 
         workflow.set_json_definition(workflow_definition)

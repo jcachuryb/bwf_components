@@ -1,5 +1,5 @@
 from bwf_components.components.plugins.base_plugin import PluginWrapperFactory
-from bwf_components.workflow.models import Workflow, WorkFlowInstance, WorkflowInstanceFactory, WorkflowComponentInstanceFactory, ComponentInstance, ActionLogRecord
+from bwf_components.workflow.models import Workflow, WorkflowVersion, WorkFlowInstance, WorkflowInstanceFactory, WorkflowComponentInstanceFactory, ComponentInstance, ActionLogRecord
 from bwf_components.components.models import WorkflowComponent, FailureHandleTypesEnum
 from bwf_components.components.dto.component_dto import ComponentDto
 from bwf_components.controller.controller import BWFPluginController
@@ -13,7 +13,10 @@ def start_workflow(workflow_id, payload={}):
     instance = None
     try:
         workflow = Workflow.objects.get(id=workflow_id)
-        instance = WorkflowInstanceFactory.create_instance(workflow, payload)
+        workflow_version = workflow.get_active_version()
+        if not workflow_version:
+            raise Exception("Workflow doesn't have an active version")
+        instance = WorkflowInstanceFactory.create_instance(workflow_version, payload)
         register_workflow_step(instance)       
         return instance
     except Exception as e:
@@ -24,8 +27,7 @@ def start_workflow(workflow_id, payload={}):
 
 def register_workflow_step(workflow_instance: WorkFlowInstance, step=None, output_prev_component={}):
     try:
-        workflow = workflow_instance.workflow
-        definition = workflow.get_json_definition()
+        definition = workflow_instance.get_json_definition()
         components = definition.get("workflow", {})
         step_component = None
         if step:
@@ -59,8 +61,6 @@ def register_workflow_step(workflow_instance: WorkFlowInstance, step=None, outpu
 
 def start_pending_component(current_component: ComponentInstance, parent=None):
     workflow_instance = current_component.workflow
-    workflow_definition = workflow_instance.workflow.get_json_definition()
-
     try:
         current_component.set_status_running()
         controller = BWFPluginController.get_instance()
@@ -76,8 +76,7 @@ def start_pending_component(current_component: ComponentInstance, parent=None):
         # node | loop | branch | switch
         plugin_wrapper_class = PluginWrapperFactory.wrapper("node")
         plugin_wrapper_instance = plugin_wrapper_class(current_component, workflow_instance, context={
-                                                    "global": {},
-                                                    "local": current_component.workflow.variables.get("local", {}),
+                                                    "variables": current_component.workflow.variables.get("variables", {}),
                                                     "inputs": current_component.workflow.variables.get("inputs", {}),
                                                 })
         try:
@@ -89,8 +88,9 @@ def start_pending_component(current_component: ComponentInstance, parent=None):
             if plugin_wrapper_instance:
                 plugin_wrapper_instance.on_failure(e)
 
+
     except Exception as e:
-        logger.error(f"Error while executing component {current_component.id}")
+        logger.error(f"Error while starting pending component {current_component.id}")
         logger.error(e)
         initiate_fallback_component_action(current_component)
 
