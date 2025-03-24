@@ -351,7 +351,6 @@ class ValueSelector {
     }
 
     const popoverContent = $('[data-name="popover-content"]').clone();
-
     _.$content.addClass("value-selector");
     _.$saveButton = popoverContent.find(".btn-save");
 
@@ -383,7 +382,7 @@ class ValueSelector {
     // POPOVER
     const popoverOptions = {
       html: true,
-      title: `${component.name}: ${input.name}`,
+      title: `${input.name}`,
       content: popoverContent,
       placement: "right",
     };
@@ -595,6 +594,7 @@ class ValueSelector {
 
   updateHtml() {
     const _ = this;
+    const { markup } = utils;
     const { input, component } = _;
     const { value, json_value } = input;
     const { type, options, value_rules, multi } = json_value ?? {};
@@ -603,18 +603,56 @@ class ValueSelector {
       return;
     }
 
+
     if ((value_rules && value_rules.variable_only) || options) {
       _.$resetButton.hide();
       _.$editButton.hide();
       return;
+    } else if (['string', 'boolean', "number"].includes(type) && !value.value_ref && !value.is_expression) {
+      _.$resetButton.show();
+      _.$editButton.show();
+      _.$content.empty();
+      const element = _.getInputElement(type, value)
+      _.$content.append(element);
+      $(element).on("change", _, function (event) {
+        const selector = event.data;
+        const selectedValue = event.target.value;
+        
+        // selector.saveValue({
+        //   value: selectedValue,
+        //   is_expression: false,
+        //   value_ref: null,
+        // });
+
+        console.log({ selectedValue });
+      });
+      return 
     }
-    _.$content.empty();
     if (value && value.value_ref) {
+      _.$content.empty();
       const { context: ref_context, key: ref_key } = value.value_ref;
-      _.$content.html(`${ref_context}['${ref_key}']`);
+      _.$content.html(markup('code', `${ref_key}`));
     } else {
+      _.$content.empty();
       _.$content.html(value.is_expression ? "Editor" : "");
+      
     }
+  }
+
+  getInputElement(type) {
+    const _ = this;
+    const { markup } = utils;
+    const options = {}
+    if (type === 'boolean') {
+      return markup("input", "", { type: "checkbox", class: "form-check-input", checked: _.value?.value ?? false })
+    }
+    if (type === 'string') {
+      return markup("input", "", { type: "text", class: "form-control", value: _.value?.value ?? "" })
+    }
+    if (type === 'number') {
+      return markup("input", "", { type: "number", class: "form-control", value: _.value?.value ?? "" })
+    }
+    return markup("input", "", { type: "text", class: "form-control", value: _.value?.value ?? "" })
   }
 }
 

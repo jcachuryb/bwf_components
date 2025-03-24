@@ -300,17 +300,18 @@ class WorkflowVariablesViewset(ViewSet):
         workflow_definition = workflow.get_json_definition()
         workflow_variables = workflow_definition.get("variables", {})
         key = serializer.validated_data.get("key")
+        var_id = str(uuid.uuid4())
         if key in workflow_variables:
             key = f"{key}_{str(uuid.uuid4())[0:8]}"
         new_variable = {
-            "id": str(uuid.uuid4()),
+            "id": var_id,
             "name": serializer.validated_data.get("name"),
             "key": key,
             "value": serializer.validated_data.get("value", ""),
             "data_type": serializer.validated_data.get("data_type"),
             "context": serializer.validated_data.get("context", "variables"),
         }
-        workflow_variables[key] = new_variable
+        workflow_variables[var_id] = new_variable
         workflow_definition["variables"] = workflow_variables
         workflow.set_json_definition(workflow_definition)
         return Response(workflow_serializers.VariableValueSerializer(new_variable).data)
@@ -342,7 +343,6 @@ class WorkflowVariablesViewset(ViewSet):
 
         workflow_definition = workflow.get_json_definition()
         workflow_variables = workflow_definition.get("variables", {})
-        
         instance = workflow_variables.get(kwargs.get("pk"), None)
         if not instance:
             raise Exception("Variable not found")        
@@ -374,8 +374,7 @@ class WorkflowVariablesViewset(ViewSet):
         
         workflow_definition = workflow.get_json_definition()
         workflow_variables = workflow_definition.get("variables", {})
-        instance_id = kwargs.get("pk")
-        variable = workflow_variables.get(instance_id, None)
+        variable = workflow_variables.get(kwargs.get("pk"), None)
         if not variable:
             raise Exception("Variable not found")
         
