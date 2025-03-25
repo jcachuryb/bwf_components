@@ -14,6 +14,7 @@ from bwf_components.workflow.serializers import component_serializers
 from bwf_components.workflow.models import Workflow, WorkflowVersion
 from bwf_components.controller.controller import BWFPluginController
 from . import serializers
+from .tasks import create_component_definition_instance, insert_node_to_workflow, list_workflow_nodes
 # Create your views here.
 
 class WorkflowComponentViewset(ViewSet):
@@ -37,16 +38,7 @@ class WorkflowComponentViewset(ViewSet):
         workflow = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
         workflow_definition = workflow.get_json_definition()
         workflow_components = workflow_definition.get("workflow", {})
-        components_list = []
-        for key, component in workflow_components.items():
-            components_list.append({
-                "id": key,
-                "name": component.get("name", "Node"),
-                "plugin_id": component.get("plugin_id"),
-                "version_number": component.get("version_number", "1"),
-                "config": component.get("config", {}),
-                "conditions": component.get("conditions", {}),
-            })
+        components_list = list_workflow_nodes(workflow_components)        
         return Response(component_serializers.WorkflowComponentSerializer(components_list, many=True).data)
 
     def create(self, request, *args, **kwargs):
@@ -64,55 +56,16 @@ class WorkflowComponentViewset(ViewSet):
         workflow_components = workflow_definition.get("workflow", {})
 
         plugin_id = serializer.validated_data.get("plugin_id")
-        definition: BWFPluginController = BWFPluginController.get_plugin_definition(plugin_id)
-        if not definition:
-            raise Exception(f"Plugin {plugin_id} not found")
-        
-        is_empty = len(workflow_components.values()) == 0
-        
-        base_input = definition.get("base_input", [])
-        base_output = definition.get("base_output", [])
-        inputs = []
-        outputs = []
-        if base_input:
-            input_index = 0
-            for input_item in base_input:
-                inputs.append(process_base_input_definition(input_item, input_index))
-                input_index += 1
-        
-        if base_output:
-            output_index = 0
-            for output_item in base_output:
-                outputs.append({
-                    'label': output_item.get("label"),
-                    'key': output_item.get("key"),
-                    'data_type': output_item.get("type"),
-                    'data': output_item.get("data", {}),
-                })                
-                output_index += 1
-
-        index = serializer.validated_data.get("index", 0)                
+        name = serializer.validated_data.get("name", "Node")
         route = serializer.validated_data.get("route", None)
-        name = serializer.validated_data.get("name", definition.get("name", "Node"))
-        instance_id = str(uuid.uuid4())        
-        instance = {
-            "id": instance_id,
-            "name": name,  
-            "plugin_id": plugin_id,
-            "version_number": serializer.validated_data.get("version_number", "1"),
-            "config": {
-                "inputs": inputs,
-                "outputs": outputs,
-            },
-            "conditions": {
-                "is_entry": is_empty,
-                "route": None,
-            },
-        }
-
-        workflow_components[instance_id] = instance
-        adjust_workflow_routing(workflow_components, instance_id, route)
-                
+        version_number = serializer.validated_data.get("version_number", "1")
+        instance = create_component_definition_instance(plugin_id, name, route, version_number)
+        insert_node_to_workflow(workflow_components, instance, data={
+            'route': route,
+            'node_path': serializer.validated_data.get("path", None),
+            'parent_node_path': serializer.validated_data.get("parent_node_path", None),
+            'parent_id': serializer.validated_data.get("parent_id", None),
+        })
         workflow_definition['workflow'] = workflow_components
         workflow.set_json_definition(workflow_definition)
         

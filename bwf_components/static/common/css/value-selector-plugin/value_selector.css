@@ -1,4 +1,9 @@
 /*  */
+.workflow-center {
+  justify-items: center;
+  display: block;
+}
+
 .component-node {
   margin-top: 70px;
 }
@@ -6,6 +11,113 @@
   font-size: 13px;
   font-weight: bold;
   color: #61728c;
+}
+
+.component-dot-add {
+  height: 16px;
+  width: 16px;
+  background: transparent;
+  border: 1px solid #0d6efd;
+  border-radius: 10px;
+  margin: auto;
+  cursor: pointer;
+}
+.component-dot-add:hover {
+  border-color: #004ec4;
+}
+/* background: #000f2b;
+border: 2px solid #0d6efd; */
+
+#flow-start-node {
+  height: 2em;
+  width: 7em;
+  background: transparent;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 1em;
+  margin: 3em 0px;
+  align-content: center;
+  text-align: center;
+}
+#flow-start-node span {
+  font-size: 12px;
+  color: #6cb0be;
+}
+
+.diagram-node {
+  width: max-content;
+  max-width: 330px;
+  padding: 10px;
+  margin-bottom: 3em;
+  border-radius: 15px;
+  text-align: center;
+  border: 2px solid #0dcaf0;
+  cursor: pointer;
+}
+#flow-start-node,
+.diagram-node,
+.component-in,
+.component-out {
+  border-color: #0dcaf0 !important;
+  background-color: #f1f7f9;
+}
+
+.diagram-node .btn-dropdown,
+.diagram-node {
+  color: #2a2a2b;
+}
+.diagram-node .component-label {
+  align-self: center;
+  font-size: 12px;
+}
+.diagram-node .component-icon {
+  font-size: 1em;
+  /* color: #0dcaf0; */
+  color: #6cb0be;
+  align-self: center;
+  margin-right: 8px;
+}
+.diagram-node .component-icon:hover {
+  transform: rotate(90deg);
+  transition: ease-in 1s;
+}
+
+.component-superior,
+.component-inferior {
+  height: 0px;
+}
+
+.component-in {
+
+}
+.component-out {
+  height: 10px;
+  width: 10px;
+  border-bottom-width: 7px;
+  border-bottom-style: solid;
+  border-radius: 10px;
+  margin: auto;
+  cursor: pointer;
+  bottom: -6px;
+  position: relative;
+}
+
+.component-node .component-in {
+
+}
+.component-node .component-out {
+  height: 12px;
+  width: 12px;
+  border-bottom-width: 6px;
+  border-bottom-style: solid;
+  border-radius: 10px;
+  margin: auto;
+  cursor: pointer;
+  bottom: -5px;
+  position: relative;
+}
+.component-out:hover {
+  border-color: #004ec4;
 }
 
 /* popover */

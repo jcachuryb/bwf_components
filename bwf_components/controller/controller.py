@@ -6,7 +6,10 @@ from importlib.machinery import SourceFileLoader
 
 
 BASE_PLUGIN_ROUTE = os.path.join(settings.BASE_DIR, 'bwf_components', 'components', 'plugins')
+FLOW_NODES_ROUTE = os.path.join(settings.BASE_DIR, 'bwf_components', 'components', 'flow_nodes')
 IGNORE_DIRS = ['__pycache__']
+
+
 class BWFPluginController:
     _instance = None
 
@@ -22,18 +25,20 @@ class BWFPluginController:
         self.load_plugins()
     
     def load_plugins(self):
-        for plugin in os.listdir(BASE_PLUGIN_ROUTE):
-            plugin_path = os.path.join(BASE_PLUGIN_ROUTE, plugin)
-            if os.path.isdir(plugin_path) and not plugin_path in IGNORE_DIRS:
-                try:
-                    new_plugin = self.__load_bwf_plugin(plugin_path)
-                    if not new_plugin:
-                        continue
-                    
-                    new_plugin.get("settings")
-                    self.plugins[new_plugin.get('id')] = new_plugin
-                except Exception as e:
-                    print(f"Error loading plugin {plugin}: {e}")
+        PLUGIN_ROUTES = [BASE_PLUGIN_ROUTE, FLOW_NODES_ROUTE]
+        for route in PLUGIN_ROUTES:
+            for plugin in os.listdir(route):
+                plugin_path = os.path.join(route, plugin)
+                if os.path.isdir(plugin_path) and not plugin_path in IGNORE_DIRS:
+                    try:
+                        new_plugin = self.__load_bwf_plugin(plugin_path)
+                        if not new_plugin:
+                            continue
+                        
+                        new_plugin.get("settings")
+                        self.plugins[new_plugin.get('id')] = new_plugin
+                    except Exception as e:
+                        print(f"Error loading plugin {plugin}: {e}")
 
     
     def __load_bwf_plugin(self, plugin_path):
@@ -94,8 +99,9 @@ class BWFPluginController:
                 'version': plugin_definition.get('version'),
                 'name': plugin_definition.get('name'),
                 'description': plugin_definition.get('description'),
+                'node_type': plugin_definition.get('node_type', 'node'),
                 'base_input': base_inputs,
-                'base_output': base_outputs
+                'base_output': base_outputs,
             }                
         return None
 

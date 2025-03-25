@@ -121,7 +121,6 @@
           });
         });
       });
-
       const { markup } = utils;
       const hasComponents = _.var.components.length > 0;
       if (hasComponents) {
@@ -143,11 +142,12 @@
           { class: "form-select" }
         );
         $(`#components-list`).append(selectComponents);
-        if(new_component_data.selectedComponent.data) {
-          $(`#components-list select`).val(new_component_data.selectedComponent.data.id);
+        if (new_component_data.selectedComponent.data) {
+          $(`#components-list select`).val(
+            new_component_data.selectedComponent.data.id
+          );
         }
       } else {
-        $("#component-route").empty();
         $("#component-route").hide();
       }
     });
@@ -161,10 +161,9 @@
     $("#component-creation-modal .close-button").on("click", function () {
       $("#component-creation-modal").modal("hide");
     });
-    $("#component-creation-modal .create-component-button").on(
-      "click",
-      ()=> {$('#components-form').submit()}
-    );
+    $("#component-creation-modal .create-component-button").on("click", () => {
+      $("#components-form").submit();
+    });
   });
 
   $("#components-form").on("submit", function (e) {

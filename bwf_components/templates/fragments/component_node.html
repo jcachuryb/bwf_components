@@ -1,5 +1,9 @@
 <template id="component-node-template">
   <div class="card component-node p-0" style="width: 360px">
+    <div style="height: 0px">
+      <div class="component-route component-in"></div>
+    </div>
+
     <div class="card-header justify-content-between d-flex">
       <div>
         <i class="bi bi-gear"></i>
@@ -7,7 +11,7 @@
       </div>
 
       <button
-        class="btn btn-sm"
+        class="btn btn-sm btn-dropdown"
         type="button"
         data-bs-toggle="dropdown"
         aria-expanded="false"
@@ -17,7 +21,6 @@
       <ul class="dropdown-menu">
         <li class="dropdown-item btn add-next-component">Add next node</li>
         <li class="dropdown-item btn print-component">Print</li>
-        <li class="dropdown-item">Rename</li>
         <li><hr class="dropdown-divider" /></li>
         <li class="dropdown-item danger delete-component">Delete</li>
       </ul>
@@ -30,6 +33,50 @@
       <div class="list-group on-fail"></div>
       <div class="end-node"></div>
       <div class="conditions-btn"></div>
+    </div>
+    <div style="height: 0px">
+      <div class="component-route component-out"></div>
+    </div>
+  </div>
+</template>
+<template id="component-diagram-node-template">
+  <div class="diagram-node">
+    <div class="component-superior">
+      <div class="component-route component-in"></div>
+    </div>
+    <div class="component-content d-flex">
+      <div class="component-icon"></div>
+      <div class="component-label"></div>
+      <button
+        class="btn btn-sm ms-1 btn-dropdown"
+        type="button"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+      >
+        <i class="bi bi-three-dots"></i>
+      </button>
+      <ul class="dropdown-menu">
+        <li class="dropdown-item btn add-next-component">Add next node</li>
+        <li class="dropdown-item btn print-component">Print</li>
+        <li><hr class="dropdown-divider" /></li>
+        <li class="dropdown-item danger delete-component">Delete</li>
+      </ul>
+    </div>
+    <div style="height: 0px">
+      <div class="component-route component-out"></div>
+    </div>
+  </div>
+</template>
+
+<template id="component-branch-template">
+  <div class="branch-border mt-5">
+    <div class="row">
+      <div class="col-6 branch-true">
+        <div class="component-dot-add"></div>
+      </div>
+      <div class="col-6 branch-false">
+        <div class="component-dot-add"></div>
+      </div>
     </div>
   </div>
 </template>
