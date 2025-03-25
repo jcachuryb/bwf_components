@@ -2,13 +2,15 @@
 
 from rest_framework import serializers
 
+
+
 class WorkflowComponentSerializer(serializers.Serializer):
     id = serializers.CharField()
     name = serializers.CharField()
     plugin_id = serializers.CharField()
     config = serializers.JSONField()
     conditions = serializers.JSONField()
-
+    # children = serializers.JSONField()
 
 class CreateComponentSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()
@@ -19,6 +21,9 @@ class CreateComponentSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100, required=False, allow_null=True)
     route = serializers.CharField(max_length=50, required=False, allow_null=True)
     # conditions = 
+    path = serializers.CharField(max_length=500, required=False, allow_null=True)
+    parent_node_path = serializers.CharField(max_length=500, required=False, allow_null=True)
+    parent_id = serializers.CharField(max_length=500, required=False, allow_null=True)
 
 
 class UpdateComponentInputSerializer(serializers.Serializer):
