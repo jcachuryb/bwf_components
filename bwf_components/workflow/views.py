@@ -49,8 +49,8 @@ class WorkflowViewset(ModelViewSet):
         instance.workflow_file.save(file_name, ContentFile(json_data))
 
         edition_instance = WorkflowVersion.objects.create(
-            workflow=instance, version_number=instance.version_number, version_name='Untitled',workflow_file=instance.workflow_file
-        )
+            workflow=instance, version_number=instance.version_number, version_name='Untitled')
+        edition_instance.workflow_file.save(file_name, ContentFile(json_data))
         
         return Response(workflow_serializers.WorkflowVersionSerializer(edition_instance).data)
 
