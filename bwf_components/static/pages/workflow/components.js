@@ -87,7 +87,7 @@ var workflow_components = {
       }
       if (nodeIds[component.id]) {
         _.appendComponent(component);
-        $(".component-node, .diagram-node").draggable({});
+        $(".component-node, .diagram-node-parent").draggable({});
         if (component.config.branch) {
           // draw branch
           const branch = component.config.branch;
@@ -150,6 +150,10 @@ var workflow_components = {
       const component = components[i];
       if (i === 0) {
         _.renderFirstLine(component);
+      }
+      if (i === 2) {
+        $(`#node_${component.id}`)
+      .find(".btn-dropdown").trigger('click');
       }
       _.renderRouteLine(component);
     }
@@ -244,7 +248,7 @@ var workflow_components = {
     const clone = template.content.cloneNode(true);
     const _ = workflow_components;
     const elementId = `node_${id}`;
-    clone.querySelector(".diagram-node").setAttribute("id", elementId);
+    clone.querySelector(".diagram-node-parent").setAttribute("id", elementId);
     clone.querySelector(".diagram-node").setAttribute("data-component-id", id);
 
     if (appendAfter) {
@@ -256,7 +260,7 @@ var workflow_components = {
     $(`#${elementId}`)
       .find(".component-icon")
       .html(markup("i", "", { class: "bi bi-gear-fill" }));
-    $(`#${elementId}`).find(".component-label").html(name);
+    $(`#${elementId}`).find(".component-label span").html(name);
     if (!_.is_edition) {
       $(`#${elementId}`).find(".delete-component").remove();
       $(`#${elementId}`).find(".add-next-component").remove();
@@ -543,7 +547,7 @@ var workflow_components = {
               ? $(`#node_${component_route}`)
               : null;
             _.appendComponent(data, after);
-            $(".component-node, .diagram-node").draggable({});
+            $(".component-node, .diagram-node-parent").draggable({});
             if (_.var.components.length === 1) {
               _.renderFirstLine(data);
             }

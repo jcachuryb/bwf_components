@@ -40,19 +40,23 @@
   </div>
 </template>
 <template id="component-diagram-node-template">
-  <div class="diagram-node">
-    <div class="component-superior">
-      <div class="component-route component-in"></div>
+  <div class="diagram-node-parent">
+    <div class="diagram-node">
+      <div class="component-superior">
+        <div class="component-route component-in"></div>
+      </div>
+      <div class="component-content">
+        <div class="component-icon"></div>
+      </div>
     </div>
-    <div class="component-content d-flex">
-      <div class="component-icon"></div>
-      <div class="component-label"></div>
+    <div class="component-label">
+      <span></span>
       <button
-        class="btn btn-sm ms-1 btn-dropdown"
+        class="btn btn-sm btn-dropdown p-0"
         type="button"
         aria-expanded="false"
       >
-        <i class="bi bi-three-dots"></i>
+        <i class="bi bi-three-dots-vertical"></i>
       </button>
     </div>
     <div style="height: 0px">
@@ -61,7 +65,6 @@
   </div>
 </template>
 
-
 <template id="component-side-panel-template">
   <div class="card component-side-node p-0">
     <div class="card-header justify-content-between d-flex">
@@ -69,8 +72,6 @@
         <i class="bi bi-gear"></i>
         <span class="component-label"></span>
       </div>
-
-      
     </div>
     <div class="card-body">
       <div class="list-group input"></div>
@@ -83,7 +84,6 @@
     </div>
   </div>
 </template>
-
 
 <template id="component-branch-template">
   <div class="branch-border mt-5">
