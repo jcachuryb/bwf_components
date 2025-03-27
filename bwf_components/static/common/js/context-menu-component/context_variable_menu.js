@@ -80,8 +80,8 @@ class ContextVariableMenu {
     _.$element.append(
       markup(
         "span",
-        [{ tag: "i", class: "bi bi-braces-asterisk me-2" }, "Variables"],
-        { class: "btn btn-primary btn-sm menu-popover" }
+        [{ tag: "i", class: "bi bi-braces-asterisk me-2" }, "vars/inputs"],
+        { class: "btn btn-outline-secondary mb-2 btn-sm menu-popover" }
       )
     );
     const popoverButton = _.$element.find(".menu-popover");
@@ -90,7 +90,9 @@ class ContextVariableMenu {
       html: true,
       title: "",
       content: popoverContent,
-      placement: "top",
+      placement: "bottom",
+      container: "#component-side-panel > section",
+      customClass: "popover-value-selector",
     };
     _.popover = new bootstrap.Popover(popoverButton, popoverOptions);
 

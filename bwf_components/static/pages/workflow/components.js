@@ -8,6 +8,7 @@ var workflow_components = {
   containerId: null,
   container: null,
   firstLine: null,
+  sidePanel: null,
 
   selectedComponent: null,
   var: {
@@ -19,19 +20,23 @@ var workflow_components = {
   pluginDefinitions: [],
 
   init: function (options, containerId) {
-    const { workflow_id, version_id, is_edition, is_diagram } = options;
+    const { workflow_id, version_id, is_edition, is_diagram, sidePanel } =
+      options;
     const _ = workflow_components;
     if (!workflow_id || !version_id || !containerId) {
       console.error("workflow_id and containerId are required");
       console.error("workflow_id is required");
       return;
     }
-    _.is_edition = is_edition;
-    _.is_diagram = is_diagram;
     _.workflow_id = workflow_id;
     _.version_id = version_id;
     _.containerId = containerId;
+
+    _.is_edition = is_edition;
+    _.is_diagram = is_diagram;
+
     _.container = $(`#${containerId}`);
+    _.sidePanel = sidePanel;
     // Add + Buttton
     const _params = {
       workflow_id: _.workflow_id,
@@ -260,9 +265,9 @@ var workflow_components = {
   },
   appendComponent: function (component, appendAfter) {
     const _ = workflow_components;
-    if(_.is_diagram) {
+    if (_.is_diagram) {
       _.appendComponentToDiagram(component, appendAfter);
-      return 
+      return;
     }
     const template = document.querySelector("#component-node-template");
     const { markup } = utils;
@@ -306,6 +311,7 @@ var workflow_components = {
         input: input,
         component: component,
         isEdition: _.is_edition,
+        portal: $(body).find('.panel-value-edition')
       });
     }
     if (outputArray.length > 0) {
@@ -349,6 +355,17 @@ var workflow_components = {
           (component) => component.id === id
         );
         console.log({ component });
+      });
+    $(`#${elementId}`)
+      .find(".btn-dropdown")
+      .on("click", component, function (event) {
+        const _ = workflow_components;
+        const { id } = event.data;
+        const component = _.var.components.find(
+          (component) => component.id === id
+        );
+        if (!component) return;
+        _.renderComponentSidePanel(component);
       });
     $(`#${elementId}`)
       .find(".add-next-component, .component-route.component-out")
@@ -443,6 +460,65 @@ var workflow_components = {
     );
 
     return container;
+  },
+  renderComponentSidePanel: function (component) {
+    const { markup } = utils;
+    const _ = workflow_components;
+    _.sidePanel.open();
+
+    const body = _.sidePanel.find("section");
+    const header = _.sidePanel.find("header");
+    const footer = _.sidePanel.find("footer");
+    header.html('Component edition')
+    body.empty();
+
+    const { id, name } = component;
+    const { inputs, outputs } = component.config;
+    const inputArray = inputs || [];
+    const outputArray = outputs || [];
+
+    const template = document.querySelector("#component-side-panel-template");
+    const clone = template.content.cloneNode(true);
+    const elementId = `node_panel_${id}`;
+    clone.querySelector(".component-side-node").setAttribute("id", elementId);
+    clone
+      .querySelector(".component-side-node")
+      .setAttribute("data-component-id", id);
+    body.append(clone);
+    body.append(markup('div', [
+      {tag:'textarea', class:'editor', name:'editor', style:'display: none'},
+    ], { class: 'panel-value-edition' }));
+
+    $(`#${elementId}`).find(".component-label").html(name);
+    for (let i = 0; i < inputArray.length; i++) {
+      const input = inputArray[i];
+      const divElementId = `${elementId}_${input.key}`;
+      const inputElement = _.getComponentInputElement({
+        ...input,
+        elementId: divElementId,
+      });
+      $(`#${elementId}`).find(".list-group.input").append(inputElement);
+
+      $(
+        `#${divElementId}.input-value, #${divElementId}_array .input-value`
+      ).valueSelector({
+        input: input,
+        component: component,
+        isEdition: _.is_edition,
+        portal: $(body).find('.panel-value-edition')
+      });
+    }
+    if (outputArray.length > 0) {
+      $(`#${elementId}`).find(".list-group.output").show();
+    }
+    for (let i = 0; i < outputArray.length; i++) {
+      const output = outputArray[i];
+      const divElementId = `${elementId}_${output.key}`;
+      const outputElement = _.getComponentOutputElement({
+        ...output,
+      });
+      $(`#${elementId}`).find(".list-group.output").append(outputElement);
+    }
   },
   api: {
     addComponent: function (data, success_callback, error_callback) {

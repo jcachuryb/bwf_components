@@ -140,6 +140,12 @@
     </div>
   </div>
 </div>
+<div id="component-side-panel">
+    <header></header>
+    <section></section>
+    <footer></footer>
+  </div>
+  
 <script src="/static/pages/workflow/workflow.js"></script>
 <script src="/static/pages/workflow/inputs.js"></script>
 <script src="/static/pages/workflow/variables.js"></script>
@@ -165,7 +171,11 @@
       workflow_id,
       version_id,
       is_edition: isEditable === "True",
-      is_diagram: false
+      is_diagram: true,
+      sidePanel:  $('#component-side-panel').SlideOutPanel({
+        width:'760px'
+
+      }),
     };
     workflow_inputs.init(options, "inputs-node");
     workflow_variables.init(options, "variables-container");
