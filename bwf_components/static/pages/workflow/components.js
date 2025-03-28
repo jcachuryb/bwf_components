@@ -334,7 +334,7 @@ var workflow_components = {
   },
   addMenuDiagramNodeFunctionality: function (elementId, component) {
     $(`#${elementId}`)
-      .find(".btn-dropdown")
+      .find(".component-label")
       ?.on("click", component, function (event) {
         const _ = workflow_components;
         const { id } = event.data;
@@ -582,6 +582,7 @@ var workflow_components = {
               }
             }
             _.updateLines();
+            $(`#node_${data.id}`).find(".btn-dropdown").trigger("click");
             resolve(data);
           },
           error: function (error) {
