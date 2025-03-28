@@ -1,8 +1,9 @@
 import requests
 import json
-import logging
+
 from bwf_components.components.plugins.base_plugin import BasePlugin
-logger = logging.getLogger(__name__)
+from bwf_components.exceptions import ComponentExecutionException
+
 
 def execute(plugin:BasePlugin):
     # plugin = BasePlugin(component_instance, workflow_instance, context) # Wrapper
@@ -12,14 +13,13 @@ def execute(plugin:BasePlugin):
     method = component_input.get("method", "GET")
     headers = component_input.get("headers", {})
     body = component_input.get("body", {})
-    response = requests.request(method, url, headers=headers, data=body)
-    output = {
-        "status": response.status_code,
-        "body": {}
-    }
     try:
+        response = requests.request(method, url, headers=headers, data=body)
+        output = {
+            "status": response.status_code,
+            "body": {}
+        }
         output["body"] = json.loads(response.text)
         plugin.set_output(True, data=output)
     except Exception as e:
-        plugin.set_output(False, message=str(e), data=output)
-        logger.error(f"Error in HTTP Plugin: {str(e)}")
+        raise ComponentExecutionException(str(e), plugin.component.component_id)

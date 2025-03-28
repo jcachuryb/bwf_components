@@ -1,4 +1,5 @@
 
+from bwf_components import exceptions as bwf_exceptions
 import logging
 logger = logging.getLogger(__name__)
 
@@ -24,33 +25,36 @@ class ComponentDto:
 def eval_inputs(component_inputs, workflow_context={}):
     inputs_evaluated = {}
     for input in component_inputs:
-        new_input = {
-            "key": input['key'],
-            "value": None,
-        }
-        if not input['value']:
-            pass
-        elif input['json_value'].get('multi', False):
-            if isinstance(input['value'], list):
-                new_input["value"] = []
-                for fields in input['value']:
-                    fields_list = []
-                    for field in fields:
-                        fields_list.append(fields[field])
-                    new_input["value"].append(eval_inputs(fields_list, workflow_context))
-        elif input['value']['is_expression']:
-            expression = input['value'].get("value", "")
-            new_input["value"] = eval(expression, None, workflow_context)
-        elif input['value']['value_ref']:
-            value_ref = input['value']['value_ref']
-            # TODO: validate context value
-            id = value_ref.get('id', None)
-            key = value_ref.get('key', None)
-            param = id if id else key if key else None
-            if not param:
-                raise Exception("Invalid value reference")
-            new_input["value"] = workflow_context[value_ref['context']].get(param, None)
-        else:
-            new_input["value"] = input['value']['value']
-        inputs_evaluated[new_input['key']] = new_input['value']
+        try:
+            new_input = {
+                "key": input['key'],
+                "value": None,
+            }
+            if not input['value']:
+                pass
+            elif input['json_value'].get('multi', False):
+                if isinstance(input['value'], list):
+                    new_input["value"] = []
+                    for fields in input['value']:
+                        fields_list = []
+                        for field in fields:
+                            fields_list.append(fields[field])
+                        new_input["value"].append(eval_inputs(fields_list, workflow_context))
+            elif input['value']['is_expression']:
+                expression = input['value'].get("value", "")
+                new_input["value"] = eval(expression, None, workflow_context)
+            elif input['value']['value_ref']:
+                value_ref = input['value']['value_ref']
+                # TODO: validate context value
+                id = value_ref.get('id', None)
+                key = value_ref.get('key', None)
+                param = id if id else key if key else None
+                if not param:
+                    raise Exception("Invalid value reference")
+                new_input["value"] = workflow_context[value_ref['context']].get(param, None)
+            else:
+                new_input["value"] = input['value']['value']
+            inputs_evaluated[new_input['key']] = new_input['value']
+        except Exception as e:
+            raise bwf_exceptions.ComponentInputsEvaluationException(f"Error evaluating input {input['key']}: {str(e)}", input['key'])
     return inputs_evaluated

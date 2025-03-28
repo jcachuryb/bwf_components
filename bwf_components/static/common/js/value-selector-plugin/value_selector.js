@@ -459,15 +459,16 @@ class ValueSelector {
       isEdition,
       showInPopover: !!is_expression || _.initials.showEditor,
       onSelectValue: (selectedValue) => {
+        const { convert_context_to_python_dict } = utils;
         console.log("Selected value", selectedValue);
         if (!isEdition) return;
         if (_.initials.showEditor && _.editor) {
           const doc = _.editor.getDoc();
           const cursor = doc.getCursor();
-          doc.replaceRange(
-            `${selectedValue?.context}['${selectedValue?.key}']`,
-            cursor
+          const contextValue = convert_context_to_python_dict(
+            selectedValue?.context
           );
+          doc.replaceRange(`${contextValue}['${selectedValue?.key}']`, cursor);
         } else {
           _.saveValue({
             value: null,
@@ -514,7 +515,7 @@ class ValueSelector {
       container: "#component-side-panel > section",
       customClass: "popover-value-selector",
     };
-    
+
     if (_.isEdition) {
       _.popover = new bootstrap.Popover(_.$content, popoverOptions);
     }
@@ -523,6 +524,7 @@ class ValueSelector {
       const _ = event.data;
       const { input, component } = _;
       const { value, is_expression } = input.value ?? {};
+      const { convert_context_to_python_dict } = utils;
 
       $(`#context-menu-${component.id}-${input.key}`).contextMenu({
         input,
@@ -534,8 +536,11 @@ class ValueSelector {
           if (_.initials.showEditor && _.editor) {
             const doc = _.editor.getDoc();
             const cursor = doc.getCursor();
+            const contextValue = convert_context_to_python_dict(
+              selectedValue?.context
+            );
             doc.replaceRange(
-              `${selectedValue?.context}['${selectedValue?.key}']`,
+              `${contextValue}['${selectedValue?.key}']`,
               cursor
             );
           } else {

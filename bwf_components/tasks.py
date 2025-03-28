@@ -1,9 +1,10 @@
+from bwf_components.action_log import tasks as action_log_tasks
 from bwf_components.components.plugins.base_plugin import PluginWrapperFactory
-from bwf_components.workflow.models import Workflow, WorkflowVersion, WorkFlowInstance, WorkflowInstanceFactory, WorkflowComponentInstanceFactory, ComponentInstance, ActionLogRecord
 from bwf_components.components.models import WorkflowComponent, FailureHandleTypesEnum
 from bwf_components.components.dto.component_dto import ComponentDto
 from bwf_components.controller.controller import BWFPluginController
-
+from bwf_components.workflow.models import Workflow, WorkflowVersion, WorkFlowInstance, WorkflowInstanceFactory, WorkflowComponentInstanceFactory, ComponentInstance, ActionLogRecord
+from bwf_components import exceptions as bwf_exceptions
 import logging
 import time
 logger = logging.getLogger(__name__)
@@ -69,7 +70,7 @@ def start_pending_component(current_component: ComponentInstance, parent=None):
             err = f"Plugin {current_component.plugin_id} not found"
             current_component.set_status_error(err)
             workflow_instance.set_status_error(err)
-            raise Exception(err)
+            return
         
         # TODO: Get Global variables
         # get secrets and globals
@@ -78,6 +79,7 @@ def start_pending_component(current_component: ComponentInstance, parent=None):
         plugin_wrapper_instance = plugin_wrapper_class(current_component, workflow_instance, context={
                                                     "variables": current_component.workflow.variables.get("variables", {}),
                                                     "inputs": current_component.workflow.variables.get("inputs", {}),
+                                                    "incoming": current_component.input.get("incoming", {})
                                                 })
         try:
             # calls execute but should call any method that is defined in the plugin that receives a plugin_wrapper_instance
@@ -87,12 +89,10 @@ def start_pending_component(current_component: ComponentInstance, parent=None):
             logger.error(e)
             if plugin_wrapper_instance:
                 plugin_wrapper_instance.on_failure(e)
-
-
     except Exception as e:
         logger.error(f"Error while starting pending component {current_component.id}")
         logger.error(e)
-        initiate_fallback_component_action(current_component)
+        current_component.set_status_error(str(e))
 
 
 def initiate_fallback_component_action(current_component: ComponentInstance):

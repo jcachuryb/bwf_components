@@ -287,4 +287,18 @@ var utils = {
       .map((a) => a.replace(new RegExp(chars, "g"), ""))
       .join("_");
   },
+  convert_context_to_python_dict: function (context) {
+    if (!context) return '';
+    if (typeof context === "string") {
+      context = context.split(".");
+    }
+    if (!Array.isArray(context)) {
+      throw new Error("Invalid context format.");
+    }
+    const contextValue =  context.map((c, index) => {
+      if (index === 0) return c;
+      return `['${c}']`;
+    }).join('')
+    return contextValue;    
+  }
 };

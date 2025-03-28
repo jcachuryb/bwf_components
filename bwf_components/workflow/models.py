@@ -6,6 +6,8 @@ from django.db import models
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 
+from bwf_components import exceptions as bwf_exceptions
+
 from bwf_components.components.models import WorkflowComponent
 from bwf_components.components.dto.component_dto import ComponentDto
 
@@ -182,13 +184,18 @@ class WorkFlowInstance(models.Model):
     # Current task
     # start task
     def set_status_completed(self):
+        from bwf_components.action_log import tasks as action_log_tasks
         self.status = WorkflowStatusEnum.COMPLETED
         self.save()
+        action_log_tasks.record_workflow_success(self)
+
     
     def set_status_error(self, message=""):
+        from bwf_components.action_log import tasks as action_log_tasks
         self.status = WorkflowStatusEnum.ERROR
         self.error_message = message[:1000]
         self.save()
+        action_log_tasks.record_workflow_error(self, self.error_message)
 
 
 
@@ -209,23 +216,34 @@ class ComponentInstance(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=50, choices=WorkflowStatusEnum.choices, default=WorkflowStatusEnum.PENDING)
     error_message = models.CharField(max_length=1000, null=True, blank=True)
+    
+
 
     def set_status_completed(self):
+        from bwf_components.action_log import tasks as action_log_tasks
         self.status = WorkflowStatusEnum.COMPLETED
         self.save()
+        action_log_tasks.record_component_success(self)
 
     def set_status_running(self):
+        from bwf_components.action_log import tasks as action_log_tasks
         self.status = WorkflowStatusEnum.RUNNING
         self.save()
+        action_log_tasks.record_component_started(self)
+
     
     def set_status_awaiting_action(self):
+        from bwf_components.action_log import tasks as action_log_tasks
         self.status = WorkflowStatusEnum.AWAITING_ACTION
         self.save()
+        action_log_tasks.record_component_pending(self)
     
     def set_status_error(self, message=""):
+        from bwf_components.action_log import tasks as action_log_tasks
         self.status = WorkflowStatusEnum.ERROR
         self.error_message = message[:1000]
         self.save()
+        action_log_tasks.record_component_error(self, self.error_message)
 
     def get_input_values(self, inputs=[], context_values={}):
         values = {} 
@@ -323,13 +341,16 @@ class WorkflowComponentInstanceFactory:
                                      version_number=component['version_number'],
                                      config=component['config'],
                                      conditions=component['conditions'])
-
-        input_values = component_dto.get_inputs()
+            
+        input_values = {}
         instance = ComponentInstance.objects.create(workflow=workflow_instance, component_id=component['id'], 
                                                     plugin_id=component_dto.plugin_id, 
                                                     plugin_version=component_dto.version_number, 
                                                     input=input_values)
-        # collect variables
+        
+        input_values = component_dto.get_inputs()
+        instance.input = input_values
+        instance.save()
         return instance
 
     @staticmethod

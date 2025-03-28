@@ -1,6 +1,8 @@
 from django.contrib import admin
 from .models import Workflow, WorkflowVersion, WorkFlowInstance, ComponentInstance
 
+from bwf_components.action_log.models import ActionLog
+
 
 # inline workflowversion
 class WorkflowVersionInline(admin.TabularInline):
@@ -40,6 +42,12 @@ class ComponentInstanceInline(admin.TabularInline):
     ordering = ('-id',)
     readonly_fields = ('created_at','updated_at',)
 
+class ActionLogInline(admin.TabularInline):
+    model = ActionLog
+    extra = 0
+    fields = ('component_instance', 'status', 'error_message', 'created_at', 'updated_at')
+    ordering = ('-id',)
+    readonly_fields = ('created_at','updated_at',)
 
 @admin.register(WorkFlowInstance)
 class WorkFlowInstanceAdmin(admin.ModelAdmin):
@@ -49,4 +57,4 @@ class WorkFlowInstanceAdmin(admin.ModelAdmin):
         'created_at',
     ]
 
-    inlines = [ComponentInstanceInline]
+    inlines = [ComponentInstanceInline, ActionLogInline]

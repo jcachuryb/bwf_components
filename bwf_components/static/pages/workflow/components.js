@@ -150,7 +150,6 @@ var workflow_components = {
       const component = components[i];
       if (i === 0) {
         _.renderFirstLine(component);
-        $(`#node_${component.id}`).find(".btn-dropdown").trigger("click");
       }
       _.renderRouteLine(component);
     }
