@@ -130,7 +130,16 @@ class ContextVariableMenu {
               "data-context": "inputs",
               "data-value": el.id,
               "data-key": el.key,
-            }))
+            })).concat([
+              {
+                tag: "li",
+                content: "Add new",
+                class: "add-new",
+                "data-context": "inputs",
+                "data-value": "new",
+                "data-key": "new",
+              },
+            ])
           ),
         ],
       },

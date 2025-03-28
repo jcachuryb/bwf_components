@@ -26,6 +26,14 @@ class CreateComponentSerializer(serializers.Serializer):
     parent_node_path = serializers.CharField(max_length=500, required=False, allow_null=True)
     parent_id = serializers.CharField(max_length=500, required=False, allow_null=True)
 
+class UpdateComponentSerializer(serializers.Serializer):
+    workflow_id = serializers.IntegerField()
+    version_id = serializers.IntegerField()
+    plugin_id = serializers.CharField(max_length=500)
+    plugin_version = serializers.IntegerField(default=1)
+    index = serializers.IntegerField(default=1)
+    name = serializers.CharField(max_length=100, required=False, allow_null=True)
+
 
 class UpdateComponentInputSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()

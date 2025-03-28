@@ -150,6 +150,7 @@ var workflow_components = {
       const component = components[i];
       if (i === 0) {
         _.renderFirstLine(component);
+        $(`#node_${component.id}`).find(".btn-dropdown").trigger("click");
       }
       _.renderRouteLine(component);
     }
@@ -257,7 +258,7 @@ var workflow_components = {
       .find(".component-icon")
       .html(
         markup("i", "", {
-          class: component.ui?.class_name ?? "bi bi-gear-fill",
+          class: component.ui?.class_name ?? "bi bi-gear",
         })
       );
     $(`#${elementId}`).find(".component-label span").html(name);
@@ -352,6 +353,65 @@ var workflow_components = {
         $("#component-creation-modal").modal("show");
       });
   },
+  addComponentSettingsFunctionality: function (component) {
+    const _ = this;
+    $(`#component-settings-form`)
+      .find(".component-name")
+      ?.on("change", component, function (event) {
+        $(this).trigger("blur");
+      });
+    $(`#component-settings-form`).on("submit", component, function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const component = event.data;
+      const _ = workflow_components;
+      const name = $(`#component-settings-form .component-name`).val().trim();
+      if (!name || name == component.name) {
+        return;
+      }
+      $(`#component-settings-form button, #component-settings-form input`).prop(
+        "disabled",
+        true
+      );
+      const data = {
+        id: component.id,
+        plugin_id: component.plugin_id,
+        name: name,
+      };
+      _.api.updateComponent(
+        data,
+        function (data) {
+          const _component = _.var.components.find((c) =>
+            c.id === component.id ? data : c
+          );
+          _component.name = name;
+          $(`#node_${component.id}`).find(".component-label span").html(name);
+          $(`#node_panel_${component.id}`).find(".component-label").html(name);
+          $(
+            `#component-settings-form button, #component-settings-form input`
+          ).prop("disabled", false);
+          $(`#component-settings-form`).hide();
+          $(`#node_panel_${component.id}`).show();
+        },
+        function (error) {
+          $(
+            `#component-settings-form button, #component-settings-form input`
+          ).prop("disabled", false);
+        }
+      );
+    });
+
+    $(`#component-settings-form button.cancel-btn`).on(
+      "click",
+      component,
+      function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        $(`#component-settings-form`).hide();
+        $(`#node_panel_${component.id}`).show();
+      }
+    );
+  },
   addMenuButtonsFunctionality: function (elementId, component) {
     // Delete Component
     $(`#${elementId}`)
@@ -382,6 +442,21 @@ var workflow_components = {
           (component) => component.id === id
         );
         console.log({ component });
+      });
+    $(`#${elementId}`)
+      .find(".edit-component")
+      ?.on("click", component, function (event) {
+        const _ = workflow_components;
+        const { id } = event.data;
+        const component = _.var.components.find(
+          (component) => component.id === id
+        );
+        $(`#component-settings-form`)
+          .find(".component-name")
+          .val(component.name);
+        $(`#component-settings-form`).show();
+        $(`#node_panel_${component.id}`).hide();
+
       });
   },
   getComponentInputElement: function (input) {
@@ -488,12 +563,23 @@ var workflow_components = {
     const outputArray = outputs || [];
 
     const template = document.querySelector("#component-side-panel-template");
+    const templateSettings = document.querySelector(
+      "#component-setting-side-panel-template"
+    );
     const clone = template.content.cloneNode(true);
+    const cloneSettings = templateSettings.content.cloneNode(true);
     const elementId = `node_panel_${id}`;
     clone.querySelector(".component-side-node").setAttribute("id", elementId);
     clone
       .querySelector(".component-side-node")
       .setAttribute("data-component-id", id);
+
+    body.append(cloneSettings);
+    // Settings setup
+    $(`#component-settings-form`).find(".component-name").val(name);
+    // $(`#component-settings-form`).find("button").hide();
+    _.addComponentSettingsFunctionality(component);
+    // End Settings setup
 
     body.append(clone);
     body.append(
@@ -512,6 +598,7 @@ var workflow_components = {
     );
 
     $(`#${elementId}`).find(".component-label").html(name);
+    $(`#${elementId}`).find(".card-header i").first()?.attr("class", component.ui?.class_name ?? "bi bi-gear");
     for (let i = 0; i < inputArray.length; i++) {
       const input = inputArray[i];
       const divElementId = `${elementId}_${input.key}`;
@@ -594,7 +681,7 @@ var workflow_components = {
     updateComponent: function (data, success_callback, error_callback) {
       const _ = workflow_components;
       $.ajax({
-        url: _.var.base_url + data.id + "/",
+        url: _.var.base_url + data.id + "/update_component/",
         type: "PUT",
         headers: { "X-CSRFToken": $("#csrf_token").val() },
         contentType: "application/json",

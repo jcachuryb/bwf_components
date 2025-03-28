@@ -1,7 +1,7 @@
 /* 
 Definitions
 */
-label.list-group-item:hover {
+#component-creation-modal label.list-group-item:hover {
   border: 3px solid #0d6efd;
 }
 
@@ -90,7 +90,9 @@ border: 2px solid #0d6efd; */
   padding: 2px 5px;
   top: 3px;
   position: relative;
-  border: 1px solid #6cb0be;
+  /* border: 1px solid #6cb0be; */
+  font-weight: 600;
+  letter-spacing: 1px;
   border-radius: 6px;
   color: #6cb0be;
   justify-content: space-around;
@@ -163,11 +165,11 @@ border: 2px solid #0d6efd; */
   transition: ease-in 0.1s;
 }
 .component-out i:hover {
-  opacity: 1  !important;;
+  opacity: 1 !important;
   font-size: 1.5em;
 }
 .component-out:hover {
-  border-color: #067187;  
+  border-color: #067187;
 }
 .component-node .component-in {
 }
@@ -183,8 +185,6 @@ border: 2px solid #0d6efd; */
   position: relative;
   border-color: #6cb0be;
 }
-
-
 
 /* popover */
 .popover.show {

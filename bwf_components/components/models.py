@@ -46,41 +46,6 @@ class WorkflowComponent(models.Model):
         return f"{self.name} - {self.definition.name} - {self.version_number}"
 
 
-class ComponentInput(models.Model):
-    name = models.CharField(max_length=100)
-    key = models.CharField(max_length=100)
-    data_type = models.CharField(max_length=50, default=InputOutputTypesEnum.STRING, choices=InputOutputTypesEnum.choices)
-    expression = models.TextField(null=True, blank=True)
-    json_value = models.JSONField(default={}) # {key, label, type, value}
-    index = models.SmallIntegerField(default=0)
-    parent = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="input")
-    required = models.BooleanField(default=False)
-    is_custom = models.BooleanField(default=False) # In case you can add custom inputs to components
-
-    def get_value(self, context_inputs={}):
-        if self.expression:
-            return eval(self.expression, None, {"context": context_inputs})
-        if self.json_value:
-            expression = self.json_value.get("expression", None)
-            value = self.json_value.get("value", None)
-            if value:
-                return value
-            if expression:
-                return eval(expression, None, {"context": context_inputs})
-        return None
-            
-
-
-class ComponentOutput(models.Model):
-    name = models.CharField(max_length=100)
-    key = models.CharField(max_length=100)
-    data_type = models.CharField(max_length=50, default=InputOutputTypesEnum.STRING, choices=InputOutputTypesEnum.choices)
-    json_value = models.JSONField(default={}) # {key, label, type, value}  
-    many = models.BooleanField(default=False)
-    component = models.ForeignKey(to=WorkflowComponent, on_delete=models.CASCADE, related_name="output")
-    is_custom = models.BooleanField(default=False)
-
-
 class ComponentDefinition(models.Model):
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=1000, default="")

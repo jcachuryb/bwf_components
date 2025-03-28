@@ -1,13 +1,4 @@
-
-
 from rest_framework import serializers
-from bwf_components.components.models import WorkflowComponent, ComponentInput, ComponentOutput
-
-
-class ComponentOutputSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComponentOutput
-        fields = '__all__'
 
 class CreateComponentSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()
@@ -16,21 +7,6 @@ class CreateComponentSerializer(serializers.Serializer):
     description = serializers.CharField(max_length=1000, required=False)
     plugin_id = serializers.CharField(max_length=500)
     version_number = serializers.IntegerField(default=1)
-
-
-class ComponentInputSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ComponentInput
-        fields = '__all__'
-
-
-
-class WorkflowComponentSerializer(serializers.ModelSerializer):
-    input = ComponentInputSerializer(many=True)
-    output = ComponentOutputSerializer(many=True)
-    class Meta:
-        model = WorkflowComponent
-        fields = '__all__'
 
 
 class PluginDefinitionSerializer(serializers.Serializer):

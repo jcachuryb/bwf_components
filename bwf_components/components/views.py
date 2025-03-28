@@ -8,7 +8,6 @@ from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView
 from rest_framework.viewsets import ViewSet
 
-from .models import ComponentInput
 from .utils import process_base_input_definition, get_incoming_values, adjust_workflow_routing
 from bwf_components.workflow.serializers import component_serializers
 from bwf_components.workflow.models import Workflow, WorkflowVersion
@@ -70,6 +69,39 @@ class WorkflowComponentViewset(ViewSet):
         workflow.set_json_definition(workflow_definition)
         
         return Response(component_serializers.WorkflowComponentSerializer(instance).data)
+
+    @action(detail=True, methods=['PUT'])
+    def update_component(self, request, *args, **kwargs):
+        try:
+            serializer = component_serializers.UpdateComponentSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            component_id = kwargs.get("pk", None)
+            workflow_id = serializer.validated_data.get("workflow_id")
+            version_id = serializer.validated_data.get("version_id")
+            plugin_id = serializer.validated_data.get("plugin_id")
+            key = serializer.validated_data.get("key")
+            plugin_version = serializer.validated_data.get("plugin_version", None)
+            value = serializer.validated_data.get("value", {'value': None, 'is_expression': False, 'value_ref': None})
+
+            workflow = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
+
+            if not workflow.is_editable:
+                return Response({"error": "Workflow version cannot be edited"}, status=status.HTTP_400_BAD_REQUEST)
+        
+            workflow_definition = workflow.get_json_definition()
+            workflow_components = workflow_definition.get("workflow", {})
+            component = workflow_components.get(component_id, None)
+            if not component:
+                raise Exception("Component not found")
+            if component.get("plugin_id") != plugin_id:
+                raise Exception("Plugin ID does not match")
+            # TODO: Check plugin version
+            component['name'] = serializer.validated_data.get("name", component['name'])
+
+            workflow.set_json_definition(workflow_definition)
+            return JsonResponse(component_serializers.WorkflowComponentSerializer(component).data)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['PUT'])
     def update_input_value(self, request, *args, **kwargs):

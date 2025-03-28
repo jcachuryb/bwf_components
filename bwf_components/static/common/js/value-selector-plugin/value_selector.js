@@ -309,7 +309,7 @@ class ValueSelector {
     }
 
     if (!isEdition) {
-      _.$saveButton.hide();
+      _.$saveButton?.hide();
 
       if (_.editor) {
         _.editor.setOption("readOnly", true);
@@ -368,7 +368,7 @@ class ValueSelector {
         }
         return;
       }
-      if (!selector.popover) {
+      if (!selector.popover && _.isEdition) {
         selector.onContentEditionRendered();
       }
     });
@@ -514,7 +514,10 @@ class ValueSelector {
       container: "#component-side-panel > section",
       customClass: "popover-value-selector",
     };
-    _.popover = new bootstrap.Popover(_.$content, popoverOptions);
+    
+    if (_.isEdition) {
+      _.popover = new bootstrap.Popover(_.$content, popoverOptions);
+    }
 
     _.$content.on("shown.bs.popover", _, function (event) {
       const _ = event.data;
