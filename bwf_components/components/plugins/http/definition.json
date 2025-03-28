@@ -4,8 +4,8 @@
   "description": "Make an HTTP request",
   "author": "BWF Components",
   "editable": false,
-  "icon_class": "bi bi-box-arrow-in-up-right",
-  "icon_png": "icon.png",
+  "icon_class": "bi bi-globe",
+  "icon_image_src": "icon.png",
   "type":"node",
   "base_input": [
     {

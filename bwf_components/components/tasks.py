@@ -17,6 +17,7 @@ def create_component_definition_instance(plugin_id, name, route=None, version_nu
       
     base_input = definition.get("base_input", [])
     base_output = definition.get("base_output", [])
+    ui = definition.get("ui", {})
     inputs = []
     outputs = []
     if base_input:
@@ -42,6 +43,12 @@ def create_component_definition_instance(plugin_id, name, route=None, version_nu
         "plugin_id": plugin_id,
         "version_number": version_number,
         "node_type": definition.get("node_type", "node"),
+        "ui": {
+            "x": index * 200,
+            "y": index * 200,
+            "class_name": ui.get("icon_class", "bi bi-gear"),
+            "icon_image_src": ui.get("icon_image_src", None),
+        },
         "config": {
             "inputs": inputs,
             "outputs": outputs,
@@ -127,6 +134,7 @@ def list_workflow_nodes(workflow_components):
                 "plugin_id": component.get("plugin_id"),
                 "version_number": component.get("version_number", "1"),
                 "config": component.get("config", {}),
+                "ui": component.get("ui", {}),
                 "node_type": component.get("node_type", "node"),
                 "conditions": component.get("conditions", {}),
             }

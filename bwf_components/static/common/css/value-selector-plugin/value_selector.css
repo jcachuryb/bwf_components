@@ -1,3 +1,10 @@
+/* 
+Definitions
+*/
+label.list-group-item:hover {
+  border: 3px solid #0d6efd;
+}
+
 /*  */
 .workflow-center {
   justify-items: center;
@@ -40,7 +47,7 @@ border: 2px solid #0d6efd; */
   text-align: center;
 }
 #flow-start-node span {
-  font-size: 12px;
+  font-size: 16px;
   color: #6cb0be;
 }
 
@@ -58,6 +65,8 @@ border: 2px solid #0d6efd; */
 .diagram-node-parent {
   display: inline-block;
   justify-items: center;
+  margin-bottom: 5em;
+  width: 100%;
 }
 .diagram-node-parent > .diagram-node {
   width: 6em;
@@ -75,7 +84,7 @@ border: 2px solid #0d6efd; */
 }
 .diagram-node-parent .component-label {
   display: flex;
-  font-size: 10px;
+  font-size: 12px;
   text-align: center;
   background: #ffffff;
   padding: 0px 4px;
@@ -120,9 +129,12 @@ border: 2px solid #0d6efd; */
   align-self: center;
   margin-right: 8px;
 }
-.diagram-node .component-icon:hover {
-  transform: rotate(90deg);
-  transition: ease-in 1s;
+.diagram-node-parent > .diagram-node:hover {
+  border-color: #6cb0be;
+  transition: ease-in 0.2s;
+}
+.diagram-node-parent .component-label:hover {
+  border-width: 3px;
 }
 
 .component-superior,
@@ -133,18 +145,28 @@ border: 2px solid #0d6efd; */
 .component-in {
 }
 .component-out {
-  height: 10px;
-  width: 10px;
-  border-bottom-width: 7px;
-  border-bottom-style: solid;
+  border-width: 1px;
+  border-style: solid;
   border-radius: 10px;
   margin: auto;
   cursor: pointer;
   bottom: -6px;
   position: relative;
   border-color: #6cb0be;
+  font-size: 12px;
+  line-height: 0px;
 }
-
+.component-out i {
+  color: #067187;
+  transition: ease-in 0.1s;
+}
+.component-out i:hover {
+  opacity: 1  !important;;
+  font-size: 1.5em;
+}
+.component-out:hover {
+  border-color: #067187;  
+}
 .component-node .component-in {
 }
 .component-node .component-out {
@@ -160,9 +182,7 @@ border: 2px solid #0d6efd; */
   border-color: #6cb0be;
 }
 
-.component-out:hover {
-  border-color: #004ec4;
-}
+
 
 /* popover */
 .popover.show {
@@ -243,6 +263,7 @@ border: 2px solid #0d6efd; */
   margin: auto;
   font-weight: bold;
 }
+
 .value-selector input.form-control {
   background: #f7f7f7;
   font-size: 11px;
@@ -351,4 +372,8 @@ border: 2px solid #0d6efd; */
 #component-side-panel .btn.value-selector-reset i,
 #component-side-panel .btn.value-item-remove i {
   font-size: 13px;
+}
+
+#component-side-panel .value-selector input.form-control {
+  font-size: 14px;
 }

@@ -151,10 +151,6 @@ var workflow_components = {
       if (i === 0) {
         _.renderFirstLine(component);
       }
-      if (i === 2) {
-        $(`#node_${component.id}`)
-      .find(".btn-dropdown").trigger('click');
-      }
       _.renderRouteLine(component);
     }
     const container = $("body");
@@ -184,7 +180,7 @@ var workflow_components = {
     if (component.conditions.route) {
       const route = component.conditions.route;
       const start = $(`#node_${component.id} .component-route.component-out`);
-      const end = $(`#node_${route}`);
+      const end = $(`#node_${route} .diagram-node`);
       if (start.length > 0 && end.length > 0) {
         const components = _.var.components;
         const destination = components.find(
@@ -259,14 +255,19 @@ var workflow_components = {
 
     $(`#${elementId}`)
       .find(".component-icon")
-      .html(markup("i", "", { class: "bi bi-gear-fill" }));
+      .html(
+        markup("i", "", {
+          class: component.ui?.class_name ?? "bi bi-gear-fill",
+        })
+      );
     $(`#${elementId}`).find(".component-label span").html(name);
     if (!_.is_edition) {
       $(`#${elementId}`).find(".delete-component").remove();
       $(`#${elementId}`).find(".add-next-component").remove();
     }
-    _.addMenuButtonsFunctionality(elementId, component);
+    _.addMenuDiagramNodeFunctionality(elementId, component);
   },
+
   appendComponent: function (component, appendAfter) {
     const _ = workflow_components;
     if (_.is_diagram) {
@@ -315,7 +316,7 @@ var workflow_components = {
         input: input,
         component: component,
         isEdition: _.is_edition,
-        portal: $(body).find('.panel-value-edition')
+        portal: $(body).find(".panel-value-edition"),
       });
     }
     if (outputArray.length > 0) {
@@ -331,6 +332,26 @@ var workflow_components = {
     }
     _.addMenuButtonsFunctionality(elementId, component);
   },
+  addMenuDiagramNodeFunctionality: function (elementId, component) {
+    $(`#${elementId}`)
+      .find(".btn-dropdown")
+      ?.on("click", component, function (event) {
+        const _ = workflow_components;
+        const { id } = event.data;
+        const component = _.var.components.find(
+          (component) => component.id === id
+        );
+        if (!component) return;
+        _.renderComponentSidePanel(component);
+      });
+
+    $(`#${elementId}`)
+      .find(".add-next-component, .component-route.component-out")
+      ?.on("click", component, function (event) {
+        new_component_data.selectedComponent.data = event.data;
+        $("#component-creation-modal").modal("show");
+      });
+  },
   addMenuButtonsFunctionality: function (elementId, component) {
     // Delete Component
     $(`#${elementId}`)
@@ -344,38 +365,23 @@ var workflow_components = {
           version_id: _.version_id,
         };
         _.api.deleteComponent(data, function (data) {
+          $(`#node_${component.id}`).remove();
           $(`#${elementId}`).remove();
           workflow_components.removeComponent(id);
+          _.sidePanel?.close();
         });
       });
     // END: Delete Component
 
     $(`#${elementId}`)
       .find(".print-component")
-      .on("click", component, function (event) {
+      ?.on("click", component, function (event) {
         const _ = workflow_components;
         const { id } = event.data;
         const component = _.var.components.find(
           (component) => component.id === id
         );
         console.log({ component });
-      });
-    $(`#${elementId}`)
-      .find(".btn-dropdown")
-      .on("click", component, function (event) {
-        const _ = workflow_components;
-        const { id } = event.data;
-        const component = _.var.components.find(
-          (component) => component.id === id
-        );
-        if (!component) return;
-        _.renderComponentSidePanel(component);
-      });
-    $(`#${elementId}`)
-      .find(".add-next-component, .component-route.component-out")
-      ?.on("click", component, function (event) {
-        new_component_data.selectedComponent.data = event.data;
-        $("#component-creation-modal").modal("show");
       });
   },
   getComponentInputElement: function (input) {
@@ -473,7 +479,7 @@ var workflow_components = {
     const body = _.sidePanel.find("section");
     const header = _.sidePanel.find("header");
     const footer = _.sidePanel.find("footer");
-    header.html('Component edition')
+    header.html("Component edition");
     body.empty();
 
     const { id, name } = component;
@@ -488,10 +494,22 @@ var workflow_components = {
     clone
       .querySelector(".component-side-node")
       .setAttribute("data-component-id", id);
+
     body.append(clone);
-    body.append(markup('div', [
-      {tag:'textarea', class:'editor', name:'editor', style:'display: none'},
-    ], { class: 'panel-value-edition' }));
+    body.append(
+      markup(
+        "div",
+        [
+          {
+            tag: "textarea",
+            class: "editor",
+            name: "editor",
+            style: "display: none",
+          },
+        ],
+        { class: "panel-value-edition" }
+      )
+    );
 
     $(`#${elementId}`).find(".component-label").html(name);
     for (let i = 0; i < inputArray.length; i++) {
@@ -509,7 +527,7 @@ var workflow_components = {
         input: input,
         component: component,
         isEdition: _.is_edition,
-        portal: $(body).find('.panel-value-edition')
+        portal: $(body).find(".panel-value-edition"),
       });
     }
     if (outputArray.length > 0) {
@@ -523,6 +541,8 @@ var workflow_components = {
       });
       $(`#${elementId}`).find(".list-group.output").append(outputElement);
     }
+
+    _.addMenuButtonsFunctionality(elementId, component);
   },
   api: {
     addComponent: function (data, success_callback, error_callback) {

@@ -8,7 +8,8 @@ class WorkflowComponentSerializer(serializers.Serializer):
     id = serializers.CharField()
     name = serializers.CharField()
     plugin_id = serializers.CharField()
-    config = serializers.JSONField()
+    config = serializers.JSONField() 
+    ui = serializers.JSONField(required=False) 
     conditions = serializers.JSONField()
     # children = serializers.JSONField()
 

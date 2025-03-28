@@ -60,7 +60,9 @@
       </button>
     </div>
     <div style="height: 0px">
-      <div class="component-route component-out"></div>
+      <div class="component-route component-out">
+        <i class="bi bi-plus" style="opacity: 0;"></i>
+      </div>
     </div>
   </div>
 </template>
@@ -71,6 +73,21 @@
       <div>
         <i class="bi bi-gear"></i>
         <span class="component-label"></span>
+      </div>
+      <div class="dropdown">
+        <button
+          class="btn btn-sm"
+          type="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          <i class="bi bi-three-dots"></i>
+        </button>
+        <ul class="dropdown-menu">
+          <li class="dropdown-item btn print-component">Print</li>
+          <li><hr class="dropdown-divider" /></li>
+          <li class="dropdown-item danger delete-component">Delete</li>
+        </ul>
       </div>
     </div>
     <div class="card-body">

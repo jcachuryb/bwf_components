@@ -5,7 +5,7 @@
   "author": "BWF Components",
   "editable": false,
   "icon_class": "bi bi-chevron-double-right",
-  "icon_png": "icon.png",
+  "icon_image_src": "icon.png",
   "node_type": "branch",
   "base_input": [
     {

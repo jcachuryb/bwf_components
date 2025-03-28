@@ -64,6 +64,7 @@ class BWFPluginController:
                       'description': plugin_definition.get('description'),
                       'plugin_path': plugin_path,
                       'icon_class': plugin_definition.get('icon_class'),
+                      'icon_image_src': plugin_definition.get('icon_image_src'),
                     }
         # TODO: Validate it has all required fields
               
@@ -99,6 +100,10 @@ class BWFPluginController:
                 'version': plugin_definition.get('version'),
                 'name': plugin_definition.get('name'),
                 'description': plugin_definition.get('description'),
+                'ui': {
+                    'icon_class': plugin_definition.get('icon_class'),
+                    'icon_image_src': plugin_definition.get('icon_image_src'),
+                },
                 'node_type': plugin_definition.get('node_type', 'node'),
                 'base_input': base_inputs,
                 'base_output': base_outputs,

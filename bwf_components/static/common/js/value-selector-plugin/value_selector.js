@@ -330,15 +330,14 @@ class ValueSelector {
       _.$resetButton.show();
       _.$resetButton.on("click", _, function (event) {
         const selector = event.data;
-        // selector.saveValue({
-        //   value: null,
-        //   is_expression: false,
-        //   value_ref: null,
-        // });
-        debugger
+        selector.saveValue({
+          value: null,
+          is_expression: false,
+          value_ref: null,
+        });
       });
     } else {
-      _.$resetButton.off("click");
+      // _.$resetButton.off("click");
       _.$resetButton.hide();
     }
     _.$editButton.show();
@@ -390,7 +389,7 @@ class ValueSelector {
 
     const editorBlockContent = $('[data-name="editor-content"]').clone();
     _.$saveButton = editorBlockContent.find(".btn-save");
-    editorBlockContent.find("code.label").html(input.name)
+    editorBlockContent.find("code.label").html(input.name);
     editorBlockContent.attr("data-name", null);
     editorBlockContent.attr(
       "id",
@@ -725,13 +724,20 @@ class ValueSelector {
       _.$resetButton.hide();
       _.$editButton.hide();
       return;
-    } else if (
+    }
+
+    _.$editButton.show();
+    if (value.value === null || value.value === undefined) {
+      _.$resetButton.hide();
+    } else {
+      _.$resetButton.show();
+    }
+
+    if (
       ["string", "boolean", "number"].includes(type) &&
       !value.value_ref &&
       !value.is_expression
     ) {
-      _.$resetButton.show();
-      _.$editButton.show();
       _.$content.empty();
       const element = _.getInputElement(type, value);
       _.$content.append(element);
@@ -750,8 +756,7 @@ class ValueSelector {
         const key = event.key;
         console.log({ key });
         if (key === "Enter") {
-          
-        }else if (key === "Escape") {
+        } else if (key === "Escape") {
           _.updateHtml();
           _.popover?.hide();
         }
@@ -764,11 +769,19 @@ class ValueSelector {
       _.$content.html(markup("code", `${ref_key}`));
     } else {
       _.$content.empty();
-      _.$content.html(value.is_expression ? "Editor" : "");
+      _.$content.html(
+        value.is_expression
+          ? markup(
+              "div",
+              [{ tag: "i", class: "bi bi-braces" }, " Expression"],
+              { class: "text-center" }
+            )
+          : value.value || ""
+      );
     }
   }
 
-  getInputElement(type) {
+  getInputElement(type, value) {
     const _ = this;
     const { markup } = utils;
     const options = {};
@@ -776,27 +789,27 @@ class ValueSelector {
       return markup("input", "", {
         type: "checkbox",
         class: "form-check-input",
-        checked: _.value?.value ?? false,
+        checked: value?.value || false,
       });
     }
     if (type === "string") {
       return markup("input", "", {
         type: "text",
         class: "form-control",
-        value: _.value?.value ?? "",
+        value: value?.value || "",
       });
     }
     if (type === "number") {
       return markup("input", "", {
         type: "number",
         class: "form-control",
-        value: _.value?.value ?? "",
+        value: value?.value || "",
       });
     }
     return markup("input", "", {
       type: "text",
       class: "form-control",
-      value: _.value?.value ?? "",
+      value: value?.value || "",
     });
   }
 }
