@@ -34,6 +34,7 @@ class WorkflowVersionAdmin(admin.ModelAdmin):
         'version_number',
         'created_at',
     ]
+    list_filter = ["is_active"]
 
 class ComponentInstanceInline(admin.TabularInline):
     model = ComponentInstance
@@ -58,4 +59,5 @@ class WorkFlowInstanceAdmin(admin.ModelAdmin):
         'created_at',
     ]
     raw_id_fields = ('workflow_version',)
+    list_filter = ["status"]
     inlines = [ComponentInstanceInline, ActionLogInline]

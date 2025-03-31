@@ -34,16 +34,8 @@ class WorkflowComponent(models.Model):
             values[input.key] = {"key": input.key, "value": input.get_value(context_inputs), "label": input.name}
         return values
 
-    def get_component_class(self):
-        path_array = self.definition.path_to_execute.rsplit(".", 1)
-
-        module = importlib.import_module(path_array[0])
-        class_ = getattr(module, path_array[1])
-        # instance = class_()
-        return class_
-
     def __str__(self):
-        return f"{self.name} - {self.definition.name} - {self.version_number}"
+        return f"{self.name} - {self.plugin_id} - {self.version_number}"
 
 
 class ComponentDefinition(models.Model):
