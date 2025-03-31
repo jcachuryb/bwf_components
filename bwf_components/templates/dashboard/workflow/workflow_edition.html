@@ -143,7 +143,12 @@
 <div id="component-side-panel">
     <header></header>
     <section></section>
-    <footer></footer>
+    <footer>
+      <!-- Modals -->
+      {% include 'modals/inputs_modal.html' %}
+      {% include 'modals/variables_modal.html' %}
+      <!-- END: Modals -->
+    </footer>
   </div>
   
 <script src="/static/pages/workflow/workflow.js"></script>
@@ -156,8 +161,6 @@
 {% include 'fragments/value_popover.html' %}
 <!-- END: Fragments -->
 <!-- Modals -->
-{% include 'modals/inputs_modal.html' %}
-{% include 'modals/variables_modal.html' %}
 {% include 'modals/component_creation_modal.html' %}
 <!-- END: Modals -->
 
@@ -183,6 +186,7 @@
         workflow_components.init(options, "components-flow");
       }
     });
+    
 
     $("button.main-add-component").on("click", function () {
       if (isEditable) $("#component-creation-modal").modal("show");

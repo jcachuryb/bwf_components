@@ -35,6 +35,7 @@
             <label class="form-label">Insert after</label>
             <div id="components-list"></div>
           </div>
+          <hr class="my-2" />
           <div class="mb-3">
             <label for="component-name" class="form-label">Node Name</label>
             <input type="text" class="form-control" id="component-name" />
@@ -124,7 +125,7 @@
       const { markup } = utils;
       const hasComponents = _.var.components.length > 0;
       if (hasComponents) {
-        $("#component-route").show();
+        // $("#component-route").show();
         const selectComponents = markup(
           "select",
           [
@@ -237,6 +238,9 @@
     border-color: var(--bs-primary);
     font-weight: 600;
   }
+  #definitions .list-group-item-check:checked + .list-group-item span {
+    color: #e3e3e3 !important;
+}
   #definitions .list-group-item-check[disabled] + .list-group-item,
   #definitions .list-group-item-check:disabled + .list-group-item {
     pointer-events: none;

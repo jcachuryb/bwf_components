@@ -308,8 +308,8 @@ border: 2px solid #0d6efd; */
 }
 
 .context-menu.ui-menu
-  > li.ui-menu-item
-  > div.ui-menu-item-wrapper.ui-state-active {
+   li.ui-menu-item
+   div.ui-menu-item-wrapper.ui-state-active {
   background-color: #6cb0be;
   border: none;
   font-weight: bold;
@@ -320,7 +320,8 @@ border: 2px solid #0d6efd; */
   background-color: #fff;
   border: none;
   padding: 8px;
-  width: 150px;
+  min-width: 150px;
+
 }
 .context-menu.ui-menu > li.ui-menu-item ul li.ui-menu-item:hover {
   background-color: #6cb0be;
@@ -328,6 +329,18 @@ border: 2px solid #0d6efd; */
   font-weight: bold;
   border-radius: 10px;
   color: #fff;
+}
+.context-menu.ui-menu .add-input,
+.context-menu.ui-menu .add-variable {
+  background-color: #616161 !important;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 12px;
+  border-top: 1px solid #6cb0be !important;
+}
+.context-menu.ui-menu .add-input:hover,
+.context-menu.ui-menu .add-variable:hover {
+  background-color: #6cb0be !important;
 }
 
 .output-value .output-value {

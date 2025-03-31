@@ -74,7 +74,9 @@ class ValueSelector {
     const _ = this;
     const { markup } = utils;
     const $vars = workflow_variables;
-    const { input, component } = _;
+    const { input, component, isEdition } = _;
+
+    const isDisabled = !isEdition;
 
     const { type, options, value_rules, multi, structure } =
       _.input?.json_value ?? {};
@@ -103,6 +105,7 @@ class ValueSelector {
         {
           class: "form-select form-select-sm variables-select",
           value: value ?? "",
+          disabled: isDisabled,
         }
       );
       _.$content.append(selectElement);
@@ -146,6 +149,7 @@ class ValueSelector {
         {
           class: "form-select form-select-sm variables-select",
           value: value ?? "",
+          disabled: isDisabled,
         }
       );
       _.$content.append(selectElement);
@@ -368,7 +372,7 @@ class ValueSelector {
         }
         return;
       }
-      if (!selector.popover && _.isEdition) {
+      if (!selector.popover && _.initials.showEditor) {
         selector.onContentEditionRendered();
       }
     });
@@ -447,6 +451,7 @@ class ValueSelector {
     }
     if (!isEdition) {
       _.$saveButton.hide();
+      editorBlockContent.find(".btn-clear").hide();
 
       if (_.editor) {
         _.editor.setOption("readOnly", true);
@@ -458,6 +463,9 @@ class ValueSelector {
       component,
       isEdition,
       showInPopover: !!is_expression || _.initials.showEditor,
+      onCancel: () => {
+        _.popover?.hide();
+      },
       onSelectValue: (selectedValue) => {
         const { convert_context_to_python_dict } = utils;
         console.log("Selected value", selectedValue);
@@ -555,6 +563,9 @@ class ValueSelector {
             });
           }
         },
+        onCancel: () => {
+          _.popover?.hide();
+        }
       });
     });
     _.$content.on("show.bs.popover", _, function (event) {
@@ -792,12 +803,14 @@ class ValueSelector {
   getInputElement(type, value) {
     const _ = this;
     const { markup } = utils;
+    const isDisabled = !_.isEdition;
     const options = {};
     if (type === "boolean") {
       return markup("input", "", {
         type: "checkbox",
         class: "form-check-input",
         checked: value?.value || false,
+        disabled: isDisabled,
       });
     }
     if (type === "string") {
@@ -805,6 +818,7 @@ class ValueSelector {
         type: "text",
         class: "form-control",
         value: value?.value || "",
+        disabled: isDisabled,
       });
     }
     if (type === "number") {
@@ -812,12 +826,14 @@ class ValueSelector {
         type: "number",
         class: "form-control",
         value: value?.value || "",
+        disabled: isDisabled,
       });
     }
     return markup("input", "", {
       type: "text",
       class: "form-control",
       value: value?.value || "",
+      disabled: isDisabled,
     });
   }
 }

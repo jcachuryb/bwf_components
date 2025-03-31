@@ -154,22 +154,27 @@ class WorkflowComponentViewset(ViewSet):
         
             workflow_definition = workflow.get_json_definition()
             workflow_components = workflow_definition.get("workflow", {})
-
-            instance = workflow_components.pop(kwargs.get("pk", None), None)
+            component_id = kwargs.get("pk", None)
+            instance = workflow_components.pop(component_id, None)
             if not instance:
                 return Response("Component not found")
+            
+            node_prev = None
+            for key, component in workflow_components.items():
+                if component['conditions']['route'] == component_id:
+                    component['conditions']['route'] = None
+                    node_prev = component
+                    components_affected.append(component)
+                    break
+            
             route = instance['conditions']['route']
-
             if route:
                 node_next = workflow_components.get(route, None)
                 if node_next:
                     components_affected.append(node_next)
-                    for key, component in workflow_components.items():
-                        if component['conditions']['route'] == kwargs.get("pk", None):
-                            component['conditions']['route'] = route
-                            node_next['config']['incoming'] = get_incoming_values(component['config']['outputs'])
-                            components_affected.append(component)
-                            break
+                    node_prev['config']['incoming'] = get_incoming_values(component['config']['outputs'])
+            elif node_prev:
+                node_prev['conditions']['route'] = None
 
             workflow_definition['workflow'] = workflow_components
             workflow.set_json_definition(workflow_definition)

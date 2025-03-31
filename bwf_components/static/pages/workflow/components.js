@@ -1,7 +1,7 @@
 var workflow_components = {
   workflow_id: null,
   version_id: null,
-  is_edition: true,
+  isEdition: true,
   is_diagram: false,
   has_init: false,
   add_component_btn: null,
@@ -32,7 +32,7 @@ var workflow_components = {
     _.version_id = version_id;
     _.containerId = containerId;
 
-    _.is_edition = is_edition;
+    _.isEdition = is_edition;
     _.is_diagram = is_diagram;
 
     _.container = $(`#${containerId}`);
@@ -87,7 +87,7 @@ var workflow_components = {
       }
       if (nodeIds[component.id]) {
         _.appendComponent(component);
-        $(".component-node, .diagram-node-parent").draggable({});
+        // $(".component-node, .diagram-node-parent").draggable({});
         if (component.config.branch) {
           // draw branch
           const branch = component.config.branch;
@@ -261,7 +261,7 @@ var workflow_components = {
         })
       );
     $(`#${elementId}`).find(".component-label span").html(name);
-    if (!_.is_edition) {
+    if (!_.isEdition) {
       $(`#${elementId}`).find(".delete-component").remove();
       $(`#${elementId}`).find(".add-next-component").remove();
     }
@@ -295,7 +295,7 @@ var workflow_components = {
       _.container.append(clone);
     }
 
-    if (!_.is_edition) {
+    if (!_.isEdition) {
       $(`#${elementId}`).find(".delete-component").remove();
       $(`#${elementId}`).find(".add-next-component").remove();
     }
@@ -315,7 +315,7 @@ var workflow_components = {
       ).valueSelector({
         input: input,
         component: component,
-        isEdition: _.is_edition,
+        isEdition: _.isEdition,
         portal: $(body).find(".panel-value-edition"),
       });
     }
@@ -334,7 +334,7 @@ var workflow_components = {
   },
   addMenuDiagramNodeFunctionality: function (elementId, component) {
     $(`#${elementId}`)
-      .find(".component-label")
+      .find(".component-label, .diagram-node")
       ?.on("click", component, function (event) {
         const _ = workflow_components;
         const { id } = event.data;
@@ -455,7 +455,6 @@ var workflow_components = {
           .val(component.name);
         $(`#component-settings-form`).show();
         $(`#node_panel_${component.id}`).hide();
-
       });
   },
   getComponentInputElement: function (input) {
@@ -548,6 +547,7 @@ var workflow_components = {
   renderComponentSidePanel: function (component) {
     const { markup } = utils;
     const _ = workflow_components;
+    const { isEdition } = _;
     _.sidePanel.open();
 
     const body = _.sidePanel.find("section");
@@ -597,7 +597,10 @@ var workflow_components = {
     );
 
     $(`#${elementId}`).find(".component-label").html(name);
-    $(`#${elementId}`).find(".card-header i").first()?.attr("class", component.ui?.class_name ?? "bi bi-gear");
+    $(`#${elementId}`)
+      .find(".card-header i")
+      .first()
+      ?.attr("class", component.ui?.class_name ?? "bi bi-gear");
     for (let i = 0; i < inputArray.length; i++) {
       const input = inputArray[i];
       const divElementId = `${elementId}_${input.key}`;
@@ -612,7 +615,7 @@ var workflow_components = {
       ).valueSelector({
         input: input,
         component: component,
-        isEdition: _.is_edition,
+        isEdition: _.isEdition,
         portal: $(body).find(".panel-value-edition"),
       });
     }
@@ -626,6 +629,11 @@ var workflow_components = {
         ...output,
       });
       $(`#${elementId}`).find(".list-group.output").append(outputElement);
+    }
+
+    if (!isEdition) {
+      $(`#${elementId}`).find(".delete-component").remove();
+      $(`#${elementId}`).find(".edit-component").remove();
     }
 
     _.addMenuButtonsFunctionality(elementId, component);
@@ -653,7 +661,7 @@ var workflow_components = {
               ? $(`#node_${component_route}`)
               : null;
             _.appendComponent(data, after);
-            $(".component-node, .diagram-node-parent").draggable({});
+            // $(".component-node, .diagram-node-parent").draggable({});
             if (_.var.components.length === 1) {
               _.renderFirstLine(data);
             }

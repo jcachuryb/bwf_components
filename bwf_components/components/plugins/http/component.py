@@ -16,10 +16,12 @@ def execute(plugin:BasePlugin):
     try:
         response = requests.request(method, url, headers=headers, data=body)
         output = {
-            "status": response.status_code,
-            "body": {}
+            "response" :{
+                "status": response.status_code,
+                "body": {}
+            }
         }
-        output["body"] = json.loads(response.text)
+        output["response"]["body"] = json.loads(response.text)
         plugin.set_output(True, data=output)
     except Exception as e:
         raise ComponentExecutionException(str(e), plugin.component.component_id)

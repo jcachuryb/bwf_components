@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework.decorators import action, permission_classes, api_view
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -9,7 +10,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views import View
 
-from bwf_components.workflow.models import Workflow, WorkflowVersion, WorkFlowInstance
+from bwf_components.workflow.models import Workflow, WorkflowVersion, WorkFlowInstance, ComponentStepStatusEnum
 from bwf_components.workflow.serializers import workflow_api_serializers
 from bwf_components.tasks import start_workflow
 # Create your views here.
@@ -45,9 +46,12 @@ class WorkflowEditionView(View):
 
     def get(self, request, *args, **kwargs):
         workflow_id = kwargs.get('workflow_id')
-        version_id = kwargs.get('version_id')
+        version_id = kwargs.get('version_id', None)
         workflow = Workflow.objects.filter(pk=workflow_id).first()
-        wf_version = WorkflowVersion.objects.filter(pk=version_id, workflow__id=workflow_id).first()
+        if version_id is None:
+            wf_version = WorkflowVersion.objects.filter(workflow__id=workflow_id, is_active=True).first()
+        else:
+            wf_version = WorkflowVersion.objects.filter(pk=version_id, workflow__id=workflow_id).first()
         context = {
             "version": wf_version,
             "workflow": workflow,
@@ -79,5 +83,22 @@ class WorkflowAPIViewSet(ViewSet):
         instance = get_object_or_404(WorkFlowInstance, pk=pk)
         serializer = workflow_api_serializers.WorkflowInstanceSerializer(instance)
         return JsonResponse(serializer.data)
+
+    @action(detail=True, methods=['GET'])
+    def run_next_node(self, request, pk=None):
+        from .tasks import start_pending_component
+        
+        current_datetime = datetime.now().astimezone()
+
+        instance = get_object_or_404(WorkFlowInstance, pk=pk)
+    
+        component_instances = instance.child_actions.filter(status=ComponentStepStatusEnum.PENDING, created_at__lte=current_datetime).order_by('created_at')
+        for component_instance in component_instances:
+            try:
+                start_pending_component(component_instance)
+            except Exception as e:
+                print(str(e))
+        
+        return JsonResponse({"message": "OK"})
     
 

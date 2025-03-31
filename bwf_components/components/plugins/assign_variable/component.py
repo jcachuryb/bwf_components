@@ -2,8 +2,7 @@ from bwf_components.workflow.models import WorkFlowInstance, ComponentInstance
 from bwf_components.components.plugins.base_plugin import BasePlugin
 
 
-def execute(component_instance:ComponentInstance, workflow_instance: WorkFlowInstance, context={}):
-    plugin = BasePlugin(component_instance, workflow_instance, context) # Wrapper
+def execute(plugin:BasePlugin):
     context = plugin.collect_context_data()
     component_input = context['input']
     

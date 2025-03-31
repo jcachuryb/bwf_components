@@ -217,7 +217,8 @@ class ComponentInstance(models.Model):
     status = models.CharField(max_length=50, choices=WorkflowStatusEnum.choices, default=WorkflowStatusEnum.PENDING)
     error_message = models.CharField(max_length=1000, null=True, blank=True)
     
-
+    def __str__(self):
+        return f"ID: {self.component_id}, Plugin: {self.plugin_id} V:{self.plugin_version} "
 
     def set_status_completed(self):
         from bwf_components.action_log import tasks as action_log_tasks

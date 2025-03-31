@@ -10,7 +10,7 @@ def execute(component_instance:ComponentInstance, workflow_instance: WorkFlowIns
     inputs = plugin.collect_context_data()
     component_input = inputs['input']
     
-    from_email = component_input.get("from_email")
+    from_email = component_input.get("from")
     to = component_input.get("to")
     subject = component_input.get("subject")
     body = component_input.get("body")

@@ -10,8 +10,14 @@ class ContextVariableMenu {
       theme: "default",
     };
 
-    const { input, component, onSelectValue, showInPopover, isEdition } =
-      settings;
+    const {
+      input,
+      component,
+      onSelectValue,
+      onCancel,
+      showInPopover,
+      isEdition,
+    } = settings;
 
     if (!input || !component) {
       return;
@@ -36,7 +42,9 @@ class ContextVariableMenu {
       value_rules: value_rules,
       showInPopover: showInPopover === true,
       onSelectValue: onSelectValue ?? function (value) {},
+      onCancel: onCancel ?? function () {},
     };
+    _.popover = null;
 
     $.extend(_, _.initials);
     _.$element = $(element);
@@ -123,23 +131,29 @@ class ContextVariableMenu {
           markup("div", "Inputs"),
           markup(
             "ul",
-            workflow_inputs.var.inputs.map((el) => ({
-              tag: "li",
-              content: el.label,
-              class: "",
-              "data-context": "inputs",
-              "data-value": el.id,
-              "data-key": el.key,
-            })).concat([
-              {
+            workflow_inputs.var.inputs
+              .map((el) => ({
                 tag: "li",
-                content: "Add new",
-                class: "add-new",
+                content: el.label,
+                class: "value",
                 "data-context": "inputs",
-                "data-value": "new",
-                "data-key": "new",
-              },
-            ])
+                "data-value": el.id,
+                "data-key": el.key,
+              }))
+              .concat([
+                {
+                  tag: "li",
+                  content: {
+                    tag: "div",
+                    content: [
+                      { tag: "i", class: "bi bi-plus mr-2" },
+                      "Add input",
+                    ],
+                  },
+                  class: "add-input",
+                },
+              ]),
+            { class: "values-list" }
           ),
         ],
       },
@@ -150,30 +164,46 @@ class ContextVariableMenu {
           markup("div", "Variables"),
           markup(
             "ul",
-            workflow_variables.var.variables.map((el) => ({
-              tag: "li",
-              content: el.name,
-              class: "",
-              "data-context": "variables",
-              "data-id": el.id,
-              "data-key": el.key,
-            }))
+            workflow_variables.var.variables
+              .map((el) => ({
+                tag: "li",
+                content: el.name,
+                class: "value",
+                "data-context": "variables",
+                "data-id": el.id,
+                "data-key": el.key,
+              }))
+              .concat([
+                {
+                  tag: "li",
+                  content: {
+                    tag: "div",
+                    content: [
+                      { tag: "i", class: "bi bi-plus mr-2" },
+                      "Create variable",
+                    ],
+                  },
+
+                  class: "add-variable",
+                },
+              ]),
+            { class: "values-list" }
           ),
         ],
       },
     ]);
-    if (_.component.config?.incoming && _.component.config.incoming.length > 0) {
+    if (
+      _.component.config?.incoming &&
+      _.component.config.incoming.length > 0
+    ) {
       $(menuElements).append(
-        markup(
-          "li",
-          [
-            markup("div", "Incoming values"),
-            markup(
-              "ul",
-              _.getIncomingMenu(_.component.config.incoming, "incoming")
-            ),
-          ]
-        )
+        markup("li", [
+          markup("div", "Incoming values"),
+          markup(
+            "ul",
+            _.getIncomingMenu(_.component.config.incoming, "incoming")
+          ),
+        ])
       );
     }
 
@@ -185,7 +215,7 @@ class ContextVariableMenu {
     }
     container.menu();
     container.show();
-    container.find("li").on("click", _, function (event) {
+    container.find("li.value").on("click", _, function (event) {
       event.stopPropagation();
       const selector = event.data;
       const $this = $(this);
@@ -211,6 +241,20 @@ class ContextVariableMenu {
       });
       selector.popover?.hide();
     });
+    container.find(".values-list .add-input").on("click", _, function (event) {
+      const _ = event.data;
+      if (!_.isEdition) return;
+      $("#inputs-modal").modal("show");
+      _.initials.onCancel();
+    });
+    container
+      .find(".values-list .add-variable")
+      .on("click", _, function (event) {
+        const _ = event.data;
+        if (!_.isEdition) return;
+        $("#variables-modal").modal("show");
+        _.initials.onCancel();
+      });
   }
 
   getIncomingMenu(incoming, context, parentContextId) {
@@ -230,7 +274,7 @@ class ContextVariableMenu {
           { tag: "div", content: el.label },
           subItems.length > 0 ? { tag: "ul", content: subItems } : "",
         ],
-        class: "",
+        class: "value",
         id: parentId,
         "data-context": context,
         "data-parent-context": parentContextId ?? "",

@@ -17,12 +17,12 @@ class ComponentDto:
     
     def get_inputs(self):
         if not self.inputs:
-            self.inputs = eval_inputs(self.config['inputs'], self.workflow_context)
+            self.inputs = eval_inputs(self.config['inputs'], self.workflow_context, plugin_id=self.plugin_id)
         return self.inputs
 
 
 
-def eval_inputs(component_inputs, workflow_context={}):
+def eval_inputs(component_inputs, workflow_context={}, plugin_id=''):
     inputs_evaluated = {}
     for input in component_inputs:
         try:
@@ -56,5 +56,5 @@ def eval_inputs(component_inputs, workflow_context={}):
                 new_input["value"] = input['value']['value']
             inputs_evaluated[new_input['key']] = new_input['value']
         except Exception as e:
-            raise bwf_exceptions.ComponentInputsEvaluationException(f"Error evaluating input {input['key']}: {str(e)}", input['key'])
+            raise bwf_exceptions.ComponentInputsEvaluationException(f"Error evaluating input in plugin '{plugin_id}' value for '{input['key']}': {str(e)}", input['key'])
     return inputs_evaluated

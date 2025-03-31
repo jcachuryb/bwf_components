@@ -40,14 +40,15 @@ class ComponentInstanceInline(admin.TabularInline):
     extra = 0
     fields = ('component_id','created_at', 'updated_at', 'input', 'status',)
     ordering = ('-id',)
-    readonly_fields = ('created_at','updated_at',)
+    readonly_fields = ('component_id', 'created_at','updated_at',)
 
 class ActionLogInline(admin.TabularInline):
     model = ActionLog
     extra = 0
     fields = ('component_instance', 'status', 'error_message', 'created_at', 'updated_at')
     ordering = ('-id',)
-    readonly_fields = ('created_at','updated_at',)
+    raw_id_fields = ('component_instance',)
+    readonly_fields = ('component_instance', 'created_at','updated_at',)
 
 @admin.register(WorkFlowInstance)
 class WorkFlowInstanceAdmin(admin.ModelAdmin):
@@ -56,5 +57,5 @@ class WorkFlowInstanceAdmin(admin.ModelAdmin):
         'status',
         'created_at',
     ]
-
+    raw_id_fields = ('workflow_version',)
     inlines = [ComponentInstanceInline, ActionLogInline]
