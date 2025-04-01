@@ -17,6 +17,7 @@ from .models import upload_to_path, updaload_to_workflow_edition_path
 from .serializers import workflow_serializers
 from .utils import generate_workflow_definition, set_workflow_active_version
 from bwf_components.tasks import start_workflow
+from bwf_components.components.tasks import extract_workflow_mapping
 from bwf_components.controller.controller import BWFPluginController
 from django.core.files.base import ContentFile
 
@@ -133,6 +134,20 @@ class WorkflowVersionViewset(ModelViewSet):
         version = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
         try:
             set_workflow_active_version(version)
+        except Exception as e:
+            logger.error(f"Error setting active version: {str(e)}")
+            return JsonResponse({"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({"success": True, "message": "Active version changed"})
+
+    @action(detail=True, methods=['POST'])
+    def extract_workflow_mapping(self, request, *args, **kwargs):
+        version_id = kwargs.get("pk")
+        workflow_id = request.query_params.get("workflow_id", None)
+        version = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
+        try:
+            workflow_definition = version.get_json_definition()
+            extract_workflow_mapping(workflow_definition.get('workflow', {}), workflow_definition.get('mapping', {}))
+            version.set_json_definition(workflow_definition)
         except Exception as e:
             logger.error(f"Error setting active version: {str(e)}")
             return JsonResponse({"success": False, "message": str(e)}, status=status.HTTP_400_BAD_REQUEST)

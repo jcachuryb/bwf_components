@@ -1,5 +1,4 @@
 from bwf_components.workflow.models import WorkFlowInstance, ComponentInstance
-
 """ 
 component: WorkflowComponent
         
@@ -44,22 +43,35 @@ class BasePlugin:
         else:
             self.on_failure(message)
 
-    def call_next_node(self):
+    def call_next_node(self, override_route=None):
         from bwf_components.tasks import register_workflow_step
+        from bwf_components.components.tasks import find_component_in_tree
 
         workflow_definition = self.workflow_instance.get_json_definition()
-        current_definition = None
-        wf_components = workflow_definition.get("workflow", {})
-        for key, value in wf_components.items():
-            if key == self.component.component_id:
-                current_definition = value
-                break
+        current_definition = find_component_in_tree(workflow_definition, self.component.component_id)
         if not current_definition:
             raise Exception(f"Component {self.component.component_id} not found in workflow definition")
-        next_component_id = current_definition.get("conditions", {}).get("route", None)
+        next_component_id = override_route if override_route else current_definition.get("conditions", {}).get("route", None)
         if next_component_id:
-            register_workflow_step(self.workflow_instance, step=next_component_id, output_prev_component=self.component.output.get("data", {}))
+            register_workflow_step(self.workflow_instance,
+                                   step=next_component_id,
+                                   parent_node_instance=self.component.parent_node,
+                                   output_prev_component=self.component.output.get("data", {}))
         else:
+            # if there is no next component, we check if the parent node has a next node
+            if self.component.parent_node:
+                parent_id = self.component.parent_node.component_id
+                parent_definition = find_component_in_tree(workflow_definition, parent_id)
+                if parent_definition:
+                    parent_next_node = parent_definition.get("conditions", {}).get("route", None)
+                    if parent_next_node:
+                        register_workflow_step(self.workflow_instance, 
+                                               step=parent_next_node, 
+                                               parent_node_instance=self.component.parent_node.parent_node,
+                                               output_prev_component=self.component.output.get("data", {}))
+                else:
+                    raise Exception(f"Parent component {parent_id} not found in workflow definition")
+            
             self.workflow_instance.set_status_completed()
 
     def on_complete(self):
@@ -131,13 +143,43 @@ class BranchPlugin(BasePlugin):
     def __init__(self, component_instance:ComponentInstance, workflow_instance: WorkFlowInstance, context={}):
         super().__init__(component_instance, workflow_instance, context)
         self.type = "branch"
-        self.branches = self.component['config'].get("branch", {})
-        self.branch_index = 0
 
 
+    def set_output(self, success, message="", data={}):
+        self.component.output = {
+            "success": success,
+            "message": message,
+            "data": data
+        }
+        self.component.save()
+        if success:
+            self.on_complete()
+        else:
+            self.on_failure(message)
 
     def on_complete(self):
-        return super().on_complete()
+        output = self.component.output
+        self.component.set_status_completed()
+        self.call_next_node(output.get('data', {}).get('next_component_id', None))
+
+    def call_next_node(self, override_route=None):
+        from bwf_components.tasks import register_workflow_step
+        from bwf_components.components.tasks import find_component_in_tree
+
+        workflow_definition = self.workflow_instance.get_json_definition()
+        current_definition = find_component_in_tree(workflow_definition, self.component.component_id)
+        if not current_definition:
+            raise Exception(f"Component {self.component.component_id} not found in workflow definition")
+        next_component_id = override_route if override_route else current_definition.get("conditions", {}).get("route", None)
+        if next_component_id:
+            register_workflow_step(self.workflow_instance, 
+                                   step=next_component_id, 
+                                   parent_node_instance=self.component, 
+                                   output_prev_component=self.component.output.get("data", {}))
+        else:
+            self.workflow_instance.set_status_completed()
+
+
 class SwitchPlugin(BasePlugin):
     def __init__(self, component_instance, workflow_instance, context={}):
         super().__init__(component_instance, workflow_instance, context)

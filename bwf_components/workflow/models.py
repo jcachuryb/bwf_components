@@ -334,7 +334,7 @@ class WorkflowComponentInstanceFactory:
 
 
     @staticmethod
-    def create_component_instance(workflow_instance: WorkFlowInstance, component, input_params={}):
+    def create_component_instance(workflow_instance: WorkFlowInstance, component, parent_node_instance=None, input_params={}):
         component_dto = ComponentDto(workflow_context=input_params,
                                      id=component['id'], 
                                      name=component['name'],
@@ -342,13 +342,14 @@ class WorkflowComponentInstanceFactory:
                                      version_number=component['version_number'],
                                      config=component['config'],
                                      conditions=component['conditions'])
-            
+
         input_values = {}
         instance = ComponentInstance.objects.create(workflow=workflow_instance, component_id=component['id'], 
                                                     plugin_id=component_dto.plugin_id, 
                                                     plugin_version=component_dto.version_number, 
+                                                    parent_node=parent_node_instance,
                                                     input=input_values)
-        
+
         input_values = component_dto.get_inputs()
         instance.input = input_values
         instance.save()

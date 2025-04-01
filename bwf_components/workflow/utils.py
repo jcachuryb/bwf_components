@@ -25,6 +25,7 @@ def set_workflow_active_version(version: WorkflowVersion):
         current_definition  = version.get_json_definition()
         new_workflow_definition = generate_workflow_definition(workflow.name, workflow.description, version.version_number)
         new_workflow_definition['workflow'] = current_definition['workflow']
+        new_workflow_definition['mapping'] = current_definition['mapping']
         new_workflow_definition['inputs'] = current_definition['inputs']
         new_workflow_definition['variables'] = current_definition['variables']
         workflow.set_json_definition(new_workflow_definition)

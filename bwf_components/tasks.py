@@ -5,6 +5,7 @@ from bwf_components.components.dto.component_dto import ComponentDto
 from bwf_components.controller.controller import BWFPluginController
 from bwf_components.workflow.models import Workflow, WorkflowVersion, WorkFlowInstance, WorkflowInstanceFactory, WorkflowComponentInstanceFactory, ComponentInstance, ActionLogRecord
 from bwf_components import exceptions as bwf_exceptions
+from bwf_components.components.tasks import find_component_in_tree
 import logging
 import time
 logger = logging.getLogger(__name__)
@@ -18,7 +19,21 @@ def start_workflow(workflow_id, payload={}):
         if not workflow_version:
             raise Exception("Workflow doesn't have an active version")
         instance = WorkflowInstanceFactory.create_instance(workflow_version, payload)
-        register_workflow_step(instance)       
+        definition = instance.get_json_definition()
+        components = definition.get("workflow", {})
+        if not components:
+            raise Exception("Workflow doesn't have any components")
+        # get entry point
+        entry_point = None
+        for key, value in components.items():
+            if value.get("conditions", {}).get("is_entry", False):
+                entry_point = value
+                break
+        if entry_point is None:
+            err = "Workflow doesn't have an entry point"
+            instance.set_status_error(err)
+            raise Exception(err)
+        register_workflow_step(instance, entry_point['id'])
         return instance
     except Exception as e:
         if instance:
@@ -26,22 +41,10 @@ def start_workflow(workflow_id, payload={}):
         raise e
 
 
-def register_workflow_step(workflow_instance: WorkFlowInstance, step=None, output_prev_component={}):
+def register_workflow_step(workflow_instance: WorkFlowInstance, step:str, output_prev_component={}, parent_node_instance=None):
     try:
         definition = workflow_instance.get_json_definition()
-        components = definition.get("workflow", {})
-        step_component = None
-        if step:
-            step_component = components.get(step, None)
-        else:
-            for key, component in components.items():
-                if component['conditions'].get('is_entry', False):
-                    step_component = component
-                    break
-            if step_component is None:
-                err = "Workflow doesn't have an entry point"
-                workflow_instance.set_status_error(err)
-                raise Exception(err)
+        step_component = find_component_in_tree(definition, step)
             
         if step_component is None:
             workflow_instance.set_status_completed()
@@ -49,7 +52,7 @@ def register_workflow_step(workflow_instance: WorkFlowInstance, step=None, outpu
         
         input_params = workflow_instance.variables
         input_params['incoming'] = output_prev_component
-        component_instance = WorkflowComponentInstanceFactory.create_component_instance(workflow_instance, step_component, input_params)
+        component_instance = WorkflowComponentInstanceFactory.create_component_instance(workflow_instance, step_component, parent_node_instance, input_params)
         if component_instance is None:
             workflow_instance.set_status_error(f"Component instance could not be created. Step: {step} {step_component}" )
             raise Exception("Component instance could not be created")
@@ -75,7 +78,8 @@ def start_pending_component(current_component: ComponentInstance, parent=None):
         # TODO: Get Global variables
         # get secrets and globals
         # node | loop | branch | switch
-        plugin_wrapper_class = PluginWrapperFactory.wrapper("node")
+        current_component_definition = find_component_in_tree(workflow_instance.get_json_definition(), current_component.component_id)
+        plugin_wrapper_class = PluginWrapperFactory.wrapper(current_component_definition['node_type'])
         plugin_wrapper_instance = plugin_wrapper_class(current_component, workflow_instance, context={
                                                     "variables": current_component.workflow.variables.get("variables", {}),
                                                     "inputs": current_component.workflow.variables.get("inputs", {}),

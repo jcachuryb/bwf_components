@@ -9,6 +9,19 @@ from .utils import process_base_input_definition, get_incoming_values, adjust_wo
 
 logger = logging.getLogger(__name__)
 
+def extract_workflow_mapping(workflow_components, workflow_mapping={}):
+    for p_key, parent_component in workflow_components.items():
+        workflow_mapping[p_key] = {
+            'id': p_key,
+            'path': parent_component.get('config', {}).get('path', None),
+            'plugin_id': parent_component.get('plugin_id', None),
+            'version_number': parent_component.get('version_number', None),
+        }
+        node_type = parent_component.get('node_type', 'node')
+        if node_type != 'node':
+            for flow_key, flow in parent_component['config'][node_type].items():
+                extract_workflow_mapping(flow, workflow_mapping)
+
 def find_component_in_tree(workflow_definition, component_id):
     workflow_components = workflow_definition.get('workflow', {})
     mapping = workflow_definition['mapping'].get(component_id, None)
