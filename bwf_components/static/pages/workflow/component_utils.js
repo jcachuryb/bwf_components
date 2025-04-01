@@ -95,8 +95,6 @@ var component_utils = {
         selectedComponent.data = null;
         selectedComponent.path = $(this).data("path");
         selectedComponent.parentId = $(this).data("parent-id");
-        selectedComponent.parentNodeType = $(this).data("parent-node-type");
-        selectedComponent.parentNodePath = $(this).data("parent-node-path");
         selectedComponent.isEntry = true;
         console.log({selectedComponent})
 

@@ -27,6 +27,5 @@ def execute(plugin:BasePlugin):
         return
     plugin.set_output(True, data={
         'next_component_id': entry_point['id'],
-        'parent_node_path': component['config']['path']        
     })
     return True

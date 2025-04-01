@@ -69,14 +69,12 @@ class WorkflowComponentViewset(ViewSet):
         instance = create_component_definition_instance(plugin_id, name, route, version_number)
 
         parent_id = serializer.validated_data.get("parent_id", None)
-        parent_node_path = serializer.validated_data.get("parent_node_path", None)
         node_path = serializer.validated_data.get("path", None)
         
         insert_node_to_workflow(workflow_definition, instance, data={
             'route': route,
             'is_entry': is_entry,
             'node_path': node_path,
-            'parent_node_path': parent_node_path,
             'parent_id': parent_id,
         })
 
@@ -84,7 +82,6 @@ class WorkflowComponentViewset(ViewSet):
         workflow.set_json_definition(workflow_definition)
         parent_info = {
                 'parent_id': parent_id,
-                'parent_node_path': parent_node_path,
                 'node_path': node_path,
             }
         instance = to_ui_workflow_node(instance, parent_info=parent_info)

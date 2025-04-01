@@ -705,7 +705,7 @@ class ValueSelector {
         const { key, value, json_value } = data;
         selector.input = data;
         workflow_components.updateInputValue(
-          selector.component.id,
+          selector.component,
           key,
           value,
           json_value

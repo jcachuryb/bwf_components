@@ -24,7 +24,6 @@ class CreateComponentSerializer(serializers.Serializer):
     route = serializers.CharField(max_length=50, required=False, allow_null=True)
     # conditions = 
     path = serializers.CharField(max_length=500, required=False, allow_null=True)
-    parent_node_path = serializers.CharField(max_length=500, required=False, allow_null=True)
     parent_id = serializers.CharField(max_length=500, required=False, allow_null=True)
     is_entry = serializers.BooleanField(default=False)
 

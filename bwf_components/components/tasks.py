@@ -120,27 +120,18 @@ def create_component_definition_instance(plugin_id, name, route=None, version_nu
 
 def insert_node_to_workflow(workflow_definition, node, data={}):
     workflow_components = workflow_definition.get('workflow', {})
+    mapping = workflow_definition['mapping']
+    if not mapping:
+        raise Exception("Mapping not found in workflow definition")
     route = data.get('route', None)
     node_id = node.get('id', None)
     node_path = data.get('node_path', None)
-    parent_node_path = data.get('parent_node_path', None)
     parent_id = data.get('parent_id', None)
+    
     is_entry = data.get('is_entry', False)
     flow = workflow_components
-    if parent_id and parent_node_path:
-        parent_node_path_list = parent_node_path.split(".")
-        if len(parent_node_path_list) == 0:
-            raise Exception("Parent node path is empty")
-        
-        for i in range(0, len(parent_node_path_list)):
-            path = parent_node_path_list[i]
-            if i == 0:
-                parent_node = workflow_components.get(path, None)
-            else:
-                parent_node = parent_node.get(path, None)
-            if not parent_node:
-                raise Exception(f"Parent node {path} not found")
-
+    if parent_id:
+        parent_node = find_component_in_tree(workflow_definition, parent_id)
         parent_type = parent_node.get('node_type', 'node')
         if node_path not in parent_node['config'][parent_type]:
             parent_node['config'][parent_type][node_path] = {}
@@ -149,7 +140,7 @@ def insert_node_to_workflow(workflow_definition, node, data={}):
         is_entry = is_entry or len(parent_node['config'][parent_type][node_path].keys()) == 0
         node['conditions']['is_entry'] = is_entry
         parent_node['config'][parent_type][node_path][node_id] = node
-        node['config']['path'] = f"{parent_node_path}.config.{parent_type}.{node_path}.{node_id}"
+        node['config']['path'] = f"{parent_node['config']['path']}.config.{parent_type}.{node_path}.{node_id}"
         adjust_workflow_routing(parent_node['config'][parent_type][node_path], node_id, route)                    
     else:
         is_entry = is_entry or len(workflow_components.keys()) == 0
@@ -219,14 +210,12 @@ def to_ui_workflow_node(component, parent_info={}):
     node_type = component.get("node_type", "node")
     if node_type in ['branch','switch', 'loop']:
         flows = component['config'][node_type].keys()
-        path_info = {
-            'parent_id': component['id'],
-            'parent_node_path': component['config']['path'],
-            'node_path': '',
-        }
         for flow in flows:
-            path_info['node_path'] = flow
-            component['config'][node_type][flow] = list_workflow_nodes(component['config'][node_type][flow], path_info)
+            component['config'][node_type][flow] = list_workflow_nodes(component['config'][node_type][flow], 
+                                                                       parent_info={
+                                                                           'parent_id': component['id'],
+                                                                           'node_path': flow,
+                                                                        })
     
     return workflow_node
 

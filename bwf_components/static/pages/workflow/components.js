@@ -140,11 +140,16 @@ var workflow_components = {
     const _ = workflow_components;
     if (component.conditions.route) {
       const route = component.conditions.route;
-      const start = $(`#node_${component.id} .component-route.component-out:last`);
+      const start = $(
+        `#node_${component.id} .component-route.component-out:last`
+      );
       const end = $(`#node_${route} .diagram-node`);
       if (start.length > 0 && end.length > 0) {
         const components = _.var.components;
-        const destination = component_utils.findComponentInTree(route, component.config)
+        const destination = component_utils.findComponentInTree(
+          route,
+          component.config
+        );
         try {
           destination.diagram?.line_in?.remove();
         } catch (error) {}
@@ -226,7 +231,7 @@ var workflow_components = {
     _.addMenuDiagramNodeFunctionality(elementId, component);
 
     if (component.config.branch) {
-      component_utils.render.renderBranch(elementId, component)
+      component_utils.render.renderBranch(elementId, component);
     }
   },
 
@@ -239,12 +244,11 @@ var workflow_components = {
   },
   addMenuDiagramNodeFunctionality: function (elementId, component) {
     // get parent info if any
-    const {parent_id, parent_node_path, node_path} = component?.parent_info || {};
+    const { parent_id, node_path } = component?.parent_info || {};
     if (parent_id) {
       $(`#${elementId}`)
         .find(".component-route.component-out")
         .attr("data-parent-id", parent_id)
-        .attr("data-parent-node-path", parent_node_path)
         .attr("data-path", node_path);
     }
     $(`#${elementId}`)
@@ -261,11 +265,9 @@ var workflow_components = {
       ?.on("click", component, function (event) {
         const { selectedComponent } = new_component_data;
         selectedComponent.data = event.data;
-        selectedComponent.path = $(this).data("path");
-        selectedComponent.parentId = $(this).data("parent-id");
-        selectedComponent.parentNodeType = $(this).data("parent-node-type");
-        selectedComponent.parentNodePath = $(this).data("parent-node-path");
-        console.log({selectedComponent})
+        selectedComponent.path = event.data?.parent_info?.node_path;
+        selectedComponent.parentId = parent_id;
+        console.log({ selectedComponent });
 
         $("#component-creation-modal").modal("show");
       });
@@ -298,8 +300,10 @@ var workflow_components = {
       _.api.updateComponent(
         data,
         function (data) {
-          
-          const _component = component_utils.findComponentInTree(component.id, component.config)
+          const _component = component_utils.findComponentInTree(
+            component.id,
+            component.config
+          );
           _component.name = name;
           $(`#node_${component.id}`).find(".component-label span").html(name);
           $(`#node_panel_${component.id}`).find(".component-label").html(name);
@@ -354,7 +358,7 @@ var workflow_components = {
       ?.on("click", component, function (event) {
         const _ = workflow_components;
         const { id, config } = event.data;
-        const _component = component_utils.findComponentInTree(id, config)
+        const _component = component_utils.findComponentInTree(id, config);
 
         console.log({ _component });
       });
@@ -363,7 +367,7 @@ var workflow_components = {
       ?.on("click", component, function (event) {
         const _ = workflow_components;
         const { id, config } = event.data;
-        const component = component_utils.findComponentInTree(id, config)
+        const component = component_utils.findComponentInTree(id, config);
 
         $(`#component-settings-form`)
           .find(".component-name")
@@ -699,8 +703,17 @@ var workflow_components = {
     return promise;
   },
 
-  updateInputValue: function (componentId, key, value, json_value) {
+  updateInputValue: function (component_data, key, value, json_value) {
+    const { id, config } = component_data;
     const _ = workflow_components;
+    const component = component_utils.findComponentInTree(id, config);
+    if (component) {
+      const input = component.config.inputs.find((input) => input.key === key);
+      if (input) {
+        input.value = value;
+        input.json_value = json_value;
+      }
+    }
   },
   removeComponent: function (id) {
     const _ = workflow_components;
