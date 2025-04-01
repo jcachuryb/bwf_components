@@ -53,7 +53,7 @@ var workflow_components = {
         } else {
           $(".main-add-component").show();
         }
-        _.renderComponents();
+        _.renderComponents(_.container, _.var.components);
       },
       error: function (error) {
         console.error(error);
@@ -61,9 +61,8 @@ var workflow_components = {
     });
     _.has_init = true;
   },
-  renderComponents: function () {
+  renderComponents: function (container, components) {
     const _ = workflow_components;
-    const components = _.var.components;
     // entry point
     if (components.length === 0) {
       return;
@@ -86,46 +85,8 @@ var workflow_components = {
         break;
       }
       if (nodeIds[component.id]) {
-        _.appendComponent(component);
+        _.appendComponent(component, container);
         // $(".component-node, .diagram-node-parent").draggable({});
-        if (component.config.branch) {
-          // draw branch
-          const branch = component.config.branch;
-          const branchTrue = branch.True;
-          const branchFalse = branch.False;
-
-          const template = document.querySelector("#component-branch-template");
-          const clone = template.content.cloneNode(true);
-          const branchElemId = `branch_${component.id}`;
-          clone.querySelector("div").id = branchElemId;
-
-          // $(`#node_${component.id}`).find('.component-dot-add').remove();
-          $(`#node_${component.id}`).after(clone);
-
-          // $(`#node_${component.id}`).find(".branch-true").html(branchTrue);
-          const start = $(`#node_${component.id} .component-dot-add`);
-          const lines = [
-            {
-              start: start,
-              end: $(`#${branchElemId} .branch-true`),
-              color: "#0d6efd",
-              label: "True",
-            },
-            {
-              start: start,
-              end: $(`#${branchElemId} .branch-false`),
-              color: "#dc3545",
-              label: "False",
-            },
-          ];
-          lines.forEach((line) => {
-            const line_out = new LeaderLine(line.start[0], line.end[0], {
-              color: line.color,
-              size: 2,
-              middleLabel: line.label,
-            });
-          });
-        }
 
         delete nodeIds[component.id];
       }
@@ -153,12 +114,12 @@ var workflow_components = {
       }
       _.renderRouteLine(component);
     }
-    const container = $("body");
+    const _container = $("body");
 
     var scrollTo = $("#components-flow");
     var position =
-      scrollTo.offset().top - container.offset().top + container.scrollTop();
-    container.scrollTop(position);
+      scrollTo.offset().top - _container.offset().top + _container.scrollTop();
+    _container.scrollTop(position);
   },
   renderFirstLine: function (component) {
     const _ = workflow_components;
@@ -179,14 +140,11 @@ var workflow_components = {
     const _ = workflow_components;
     if (component.conditions.route) {
       const route = component.conditions.route;
-      const start = $(`#node_${component.id} .component-route.component-out`);
+      const start = $(`#node_${component.id} .component-route.component-out:last`);
       const end = $(`#node_${route} .diagram-node`);
       if (start.length > 0 && end.length > 0) {
         const components = _.var.components;
-        const destination = components.find(
-          (component) => component.id === route
-        );
-
+        const destination = component_utils.findComponentInTree(route, component.config)
         try {
           destination.diagram?.line_in?.remove();
         } catch (error) {}
@@ -232,7 +190,7 @@ var workflow_components = {
       } catch (e) {}
     }
   },
-  appendComponentToDiagram: function (component, appendAfter) {
+  appendComponentToDiagram: function (component, container, appendAfter) {
     const template = document.querySelector("#component-diagram-node-template");
     const { markup } = utils;
 
@@ -250,7 +208,7 @@ var workflow_components = {
     if (appendAfter) {
       appendAfter.after(clone);
     } else {
-      _.container.append(clone);
+      container.append(clone);
     }
 
     $(`#${elementId}`)
@@ -266,89 +224,49 @@ var workflow_components = {
       $(`#${elementId}`).find(".add-next-component").remove();
     }
     _.addMenuDiagramNodeFunctionality(elementId, component);
+
+    if (component.config.branch) {
+      component_utils.render.renderBranch(elementId, component)
+    }
   },
 
-  appendComponent: function (component, appendAfter) {
+  appendComponent: function (component, container, appendAfter) {
     const _ = workflow_components;
     if (_.is_diagram) {
-      _.appendComponentToDiagram(component, appendAfter);
+      _.appendComponentToDiagram(component, container, appendAfter);
       return;
     }
-    const template = document.querySelector("#component-node-template");
-    const { markup } = utils;
-
-    const { id, name } = component;
-    const { inputs, outputs } = component.config;
-    const inputArray = inputs || [];
-    const outputArray = outputs || [];
-    // Clone the new row and insert it into the table
-    const clone = template.content.cloneNode(true);
-    const elementId = `node_${id}`;
-    clone.querySelector(".component-node").setAttribute("id", elementId);
-    clone
-      .querySelector(".component-node")
-      .setAttribute("data-component-id", id);
-
-    if (appendAfter) {
-      appendAfter.after(clone);
-    } else {
-      _.container.append(clone);
-    }
-
-    if (!_.isEdition) {
-      $(`#${elementId}`).find(".delete-component").remove();
-      $(`#${elementId}`).find(".add-next-component").remove();
-    }
-
-    $(`#${elementId}`).find(".component-label").html(name);
-    for (let i = 0; i < inputArray.length; i++) {
-      const input = inputArray[i];
-      const divElementId = `${elementId}_${input.key}`;
-      const inputElement = _.getComponentInputElement({
-        ...input,
-        elementId: divElementId,
-      });
-      $(`#${elementId}`).find(".list-group.input").append(inputElement);
-
-      $(
-        `#${divElementId}.input-value, #${divElementId}_array .input-value`
-      ).valueSelector({
-        input: input,
-        component: component,
-        isEdition: _.isEdition,
-        portal: $(body).find(".panel-value-edition"),
-      });
-    }
-    if (outputArray.length > 0) {
-      $(`#${elementId}`).find(".list-group.output").show();
-    }
-    for (let i = 0; i < outputArray.length; i++) {
-      const output = outputArray[i];
-      const divElementId = `${elementId}_${output.key}`;
-      const outputElement = _.getComponentOutputElement({
-        ...output,
-      });
-      $(`#${elementId}`).find(".list-group.output").append(outputElement);
-    }
-    _.addMenuButtonsFunctionality(elementId, component);
   },
   addMenuDiagramNodeFunctionality: function (elementId, component) {
+    // get parent info if any
+    const {parent_id, parent_node_path, node_path} = component?.parent_info || {};
+    if (parent_id) {
+      $(`#${elementId}`)
+        .find(".component-route.component-out")
+        .attr("data-parent-id", parent_id)
+        .attr("data-parent-node-path", parent_node_path)
+        .attr("data-path", node_path);
+    }
     $(`#${elementId}`)
       .find(".component-label, .diagram-node")
       ?.on("click", component, function (event) {
         const _ = workflow_components;
-        const { id } = event.data;
-        const component = _.var.components.find(
-          (component) => component.id === id
-        );
-        if (!component) return;
-        _.renderComponentSidePanel(component);
+        const { id, config } = event.data;
+        const component = component_utils.findComponentInTree(id, config);
+        if (component) _.renderComponentSidePanel(component);
       });
 
     $(`#${elementId}`)
       .find(".add-next-component, .component-route.component-out")
       ?.on("click", component, function (event) {
-        new_component_data.selectedComponent.data = event.data;
+        const { selectedComponent } = new_component_data;
+        selectedComponent.data = event.data;
+        selectedComponent.path = $(this).data("path");
+        selectedComponent.parentId = $(this).data("parent-id");
+        selectedComponent.parentNodeType = $(this).data("parent-node-type");
+        selectedComponent.parentNodePath = $(this).data("parent-node-path");
+        console.log({selectedComponent})
+
         $("#component-creation-modal").modal("show");
       });
   },
@@ -380,9 +298,8 @@ var workflow_components = {
       _.api.updateComponent(
         data,
         function (data) {
-          const _component = _.var.components.find((c) =>
-            c.id === component.id ? data : c
-          );
+          
+          const _component = component_utils.findComponentInTree(component.id, component.config)
           _component.name = name;
           $(`#node_${component.id}`).find(".component-label span").html(name);
           $(`#node_panel_${component.id}`).find(".component-label").html(name);
@@ -436,20 +353,18 @@ var workflow_components = {
       .find(".print-component")
       ?.on("click", component, function (event) {
         const _ = workflow_components;
-        const { id } = event.data;
-        const component = _.var.components.find(
-          (component) => component.id === id
-        );
-        console.log({ component });
+        const { id, config } = event.data;
+        const _component = component_utils.findComponentInTree(id, config)
+
+        console.log({ _component });
       });
     $(`#${elementId}`)
       .find(".edit-component")
       ?.on("click", component, function (event) {
         const _ = workflow_components;
-        const { id } = event.data;
-        const component = _.var.components.find(
-          (component) => component.id === id
-        );
+        const { id, config } = event.data;
+        const component = component_utils.findComponentInTree(id, config)
+
         $(`#component-settings-form`)
           .find(".component-name")
           .val(component.name);
@@ -660,7 +575,7 @@ var workflow_components = {
             const after = component_route
               ? $(`#node_${component_route}`)
               : null;
-            _.appendComponent(data, after);
+            _.appendComponent(data, _.container, after);
             // $(".component-node, .diagram-node-parent").draggable({});
             if (_.var.components.length === 1) {
               _.renderFirstLine(data);
@@ -786,12 +701,6 @@ var workflow_components = {
 
   updateInputValue: function (componentId, key, value, json_value) {
     const _ = workflow_components;
-    const component = _.var.components.find(
-      (component) => component.id === componentId
-    );
-    // const input = component.config.inputs.find((input) => input.key === key);
-    // input.value = value;
-    // input.json_value = json_value;
   },
   removeComponent: function (id) {
     const _ = workflow_components;
@@ -851,7 +760,7 @@ var workflow_components = {
 
     if (components.length === 0) {
       $(".main-add-component").show();
-      _.firstLine.remove();
+      _.firstLine?.remove();
     }
   },
   updateLines: function () {

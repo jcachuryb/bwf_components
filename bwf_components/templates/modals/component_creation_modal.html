@@ -58,6 +58,11 @@
   new_component_data = {
     selectedComponent: {
       data: null,
+      path: null,
+      parentId: null,
+      parentNodePath: null,
+      parentNodeType: null,
+      isEntry: false,
     },
 
     validate: function (data) {
@@ -144,6 +149,10 @@
         );
         $(`#components-list`).append(selectComponents);
         if (new_component_data.selectedComponent.data) {
+          console.log(
+            "new_component_data.selectedComponent.data",
+            new_component_data.selectedComponent.data
+          );
           $(`#components-list select`).val(
             new_component_data.selectedComponent.data.id
           );
@@ -157,6 +166,11 @@
       $("#definitions input[type='radio']").prop("checked", false);
       $("#component-name").val("");
       new_component_data.selectedComponent.data = null;
+      new_component_data.selectedComponent.path = null;
+      new_component_data.selectedComponent.parentId = null;
+      new_component_data.selectedComponent.parentNodeType = null;
+      new_component_data.selectedComponent.parentNodePath = null;
+      new_component_data.selectedComponent.isEntry = false;
     });
 
     $("#component-creation-modal .close-button").on("click", function () {
@@ -173,7 +187,16 @@
     const _ = workflow_components;
     const value = $("#definitions input:checked").val();
     const hasComponents = _.var.components.length > 0;
-    if (hasComponents && !$("#components-list select").val()) {
+    const {
+        data: component,
+        path,
+        parentId,
+        parentNodeType,
+        parentNodePath,
+        isEntry,
+      } = new_component_data.selectedComponent;
+
+    if (hasComponents && !component && !isEntry) {
       alert("Please select a component to insert after.");
       return;
     }
@@ -186,7 +209,14 @@
         plugin_id: definition.id,
         index: 0,
         name: name,
-        route: hasComponents ? $("#components-list select").val() : null,
+        route: component?.id
+          ? component.id
+          : null,
+        parent_id: parentId,
+        parent_node_type: parentNodeType,
+        parent_node_path: parentNodePath,
+        path: path,
+        is_entry: isEntry,
       };
       _.api
         .addComponent(data)
@@ -240,7 +270,7 @@
   }
   #definitions .list-group-item-check:checked + .list-group-item span {
     color: #e3e3e3 !important;
-}
+  }
   #definitions .list-group-item-check[disabled] + .list-group-item,
   #definitions .list-group-item-check:disabled + .list-group-item {
     pointer-events: none;

@@ -13,7 +13,13 @@ from bwf_components.workflow.serializers import component_serializers
 from bwf_components.workflow.models import Workflow, WorkflowVersion
 from bwf_components.controller.controller import BWFPluginController
 from . import serializers
-from .tasks import create_component_definition_instance, insert_node_to_workflow, list_workflow_nodes
+from .tasks import (create_component_definition_instance,
+                    insert_node_to_workflow,
+                    to_ui_workflow_node,
+                    list_workflow_nodes,
+                    find_component_in_tree,
+                    get_encasing_flow)
+
 # Create your views here.
 
 class WorkflowComponentViewset(ViewSet):
@@ -23,11 +29,12 @@ class WorkflowComponentViewset(ViewSet):
         component_id = kwargs.get("pk", None)
         workflow = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
         workflow_definition = workflow.get_json_definition()
-        workflow_components = workflow_definition.get("workflow", {})
-        component = workflow_components.get(component_id, None)
+        component = find_component_in_tree(workflow_definition, component_id)
         if not component:
             raise Exception("Component not found")
-        return Response(component_serializers.WorkflowComponentSerializer(component).data)
+        instance = to_ui_workflow_node(component)
+        # TODO: Missing parent info
+        return Response(component_serializers.WorkflowComponentSerializer(instance).data)
         
     
     
@@ -58,15 +65,29 @@ class WorkflowComponentViewset(ViewSet):
         name = serializer.validated_data.get("name", "Node")
         route = serializer.validated_data.get("route", None)
         version_number = serializer.validated_data.get("version_number", "1")
+        is_entry = serializer.validated_data.get("is_entry", False)
         instance = create_component_definition_instance(plugin_id, name, route, version_number)
-        insert_node_to_workflow(workflow_components, instance, data={
+
+        parent_id = serializer.validated_data.get("parent_id", None)
+        parent_node_path = serializer.validated_data.get("parent_node_path", None)
+        node_path = serializer.validated_data.get("path", None)
+        
+        insert_node_to_workflow(workflow_definition, instance, data={
             'route': route,
-            'node_path': serializer.validated_data.get("path", None),
-            'parent_node_path': serializer.validated_data.get("parent_node_path", None),
-            'parent_id': serializer.validated_data.get("parent_id", None),
+            'is_entry': is_entry,
+            'node_path': node_path,
+            'parent_node_path': parent_node_path,
+            'parent_id': parent_id,
         })
+
         workflow_definition['workflow'] = workflow_components
         workflow.set_json_definition(workflow_definition)
+        parent_info = {
+                'parent_id': parent_id,
+                'parent_node_path': parent_node_path,
+                'node_path': node_path,
+            }
+        instance = to_ui_workflow_node(instance, parent_info=parent_info)
         
         return Response(component_serializers.WorkflowComponentSerializer(instance).data)
 
@@ -89,8 +110,7 @@ class WorkflowComponentViewset(ViewSet):
                 return Response({"error": "Workflow version cannot be edited"}, status=status.HTTP_400_BAD_REQUEST)
         
             workflow_definition = workflow.get_json_definition()
-            workflow_components = workflow_definition.get("workflow", {})
-            component = workflow_components.get(component_id, None)
+            component = find_component_in_tree(workflow_definition, component_id)
             if not component:
                 raise Exception("Component not found")
             if component.get("plugin_id") != plugin_id:
@@ -122,8 +142,7 @@ class WorkflowComponentViewset(ViewSet):
                 return Response({"error": "Workflow version cannot be edited"}, status=status.HTTP_400_BAD_REQUEST)
         
             workflow_definition = workflow.get_json_definition()
-            workflow_components = workflow_definition.get("workflow", {})
-            component = workflow_components.get(component_id, None)
+            component = find_component_in_tree(workflow_definition, component_id)
             if not component:
                 raise Exception("Component not found")
             if component.get("plugin_id") != plugin_id:
@@ -153,9 +172,10 @@ class WorkflowComponentViewset(ViewSet):
                 return Response({"error": "Workflow version cannot be edited"}, status=status.HTTP_400_BAD_REQUEST)
         
             workflow_definition = workflow.get_json_definition()
-            workflow_components = workflow_definition.get("workflow", {})
             component_id = kwargs.get("pk", None)
+            workflow_components = get_encasing_flow(workflow_definition, component_id)
             instance = workflow_components.pop(component_id, None)
+            workflow_definition['mapping'].pop(component_id, None)
             if not instance:
                 return Response("Component not found")
             

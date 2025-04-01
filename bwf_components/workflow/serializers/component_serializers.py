@@ -11,6 +11,7 @@ class WorkflowComponentSerializer(serializers.Serializer):
     config = serializers.JSONField() 
     ui = serializers.JSONField(required=False) 
     conditions = serializers.JSONField()
+    parent_info = serializers.JSONField(default={})
     # children = serializers.JSONField()
 
 class CreateComponentSerializer(serializers.Serializer):
@@ -25,6 +26,7 @@ class CreateComponentSerializer(serializers.Serializer):
     path = serializers.CharField(max_length=500, required=False, allow_null=True)
     parent_node_path = serializers.CharField(max_length=500, required=False, allow_null=True)
     parent_id = serializers.CharField(max_length=500, required=False, allow_null=True)
+    is_entry = serializers.BooleanField(default=False)
 
 class UpdateComponentSerializer(serializers.Serializer):
     workflow_id = serializers.IntegerField()

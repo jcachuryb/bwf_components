@@ -392,3 +392,15 @@ border: 2px solid #0d6efd; */
 #component-side-panel .value-selector input.form-control {
   font-size: 14px;
 }
+
+
+.component-route.component-out.entry-point {
+  width: 14px;
+}
+
+.branch-true .component-out:first-child{
+  background: blue !important;
+}
+.branch-false .component-out:first-child {
+  background: red !important;
+}

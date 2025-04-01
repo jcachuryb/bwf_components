@@ -11,6 +11,7 @@ def generate_workflow_definition(name, description="", version="0.0.1"):
         'created_at': datetime.now().isoformat(),
         'updated_at': datetime.now().isoformat(),
         'workflow': {},
+        'mapping': {},
         'inputs': {},
         'variables': {},
     }

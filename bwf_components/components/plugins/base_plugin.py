@@ -115,7 +115,7 @@ class LoopPlugin(BasePlugin):
     def __init__(self, component_instance:ComponentInstance, workflow_instance: WorkFlowInstance, context={}):
         super().__init__(component_instance, workflow_instance, context)
         self.type = "loop"
-        self.loop = self.component.config.get("loop", {})
+        self.loop = self.component['config'].get("loop", {})
         self.loop_variable = self.loop.get("variable")
         self.loop_range = self.loop.get("range")
         self.loop_step = self.loop.get("step")
@@ -131,14 +131,18 @@ class BranchPlugin(BasePlugin):
     def __init__(self, component_instance:ComponentInstance, workflow_instance: WorkFlowInstance, context={}):
         super().__init__(component_instance, workflow_instance, context)
         self.type = "branch"
-        self.branches = self.component.config.get("branches", [])
+        self.branches = self.component['config'].get("branch", {})
         self.branch_index = 0
 
+
+
+    def on_complete(self):
+        return super().on_complete()
 class SwitchPlugin(BasePlugin):
     def __init__(self, component_instance, workflow_instance, context={}):
         super().__init__(component_instance, workflow_instance, context)
         self.type = "switch"
-        self.switch = self.component.config.get("switch", {})
+        self.switch = self.component['config'].get("switch", {})
         self.switch_variable = self.switch.get("variable")
         self.switch_cases = self.switch.get("cases", {})
         self.switch_default = self.switch.get("default")

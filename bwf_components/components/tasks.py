@@ -9,6 +9,44 @@ from .utils import process_base_input_definition, get_incoming_values, adjust_wo
 
 logger = logging.getLogger(__name__)
 
+def find_component_in_tree(workflow_definition, component_id):
+    workflow_components = workflow_definition.get('workflow', {})
+    mapping = workflow_definition['mapping'].get(component_id, None)
+    if not mapping or not mapping.get('path', None):
+        raise Exception(f"Component {component_id} not found in mapping")
+    path = mapping.get('path', None)
+    path_list = path.split('.')
+    if len(path_list) == 0:
+        raise Exception(f"Component {component_id} not found in mapping")
+    component = None
+    path_length = len(path_list)
+    for i in range(0, path_length):
+        path = path_list[i]
+        component = workflow_components.get(path, None) if i == 0 else component.get(path, None)
+        if not component:
+            raise Exception(f"Component {component_id} not found in mapping")
+    return component
+
+def get_encasing_flow(workflow_definition, component_id):
+    workflow_components = workflow_definition.get('workflow', {})
+    mapping = workflow_definition['mapping'].get(component_id, None)
+    if not mapping or not mapping.get('path', None):
+        raise Exception(f"Component {component_id} not found in mapping")
+    path = mapping.get('path', None)
+    path_list = path.split('.')
+    if len(path_list) == 0:
+        raise Exception(f"Component {component_id} not found in mapping")
+    
+    encasing_flow = workflow_components
+    path_length = len(path_list) - 1
+    for i in range(0, path_length):
+        path = path_list[i]
+        encasing_flow = encasing_flow.get(path, None)
+        if not encasing_flow:
+            raise Exception(f"Component {component_id} not found in mapping")
+    return encasing_flow
+
+
 # Creation Tasks
 def create_component_definition_instance(plugin_id, name, route=None, version_number="1", index=0):
     definition: BWFPluginController = BWFPluginController.get_plugin_definition(plugin_id)
@@ -67,33 +105,60 @@ def create_component_definition_instance(plugin_id, name, route=None, version_nu
     return instance
 
 
-def insert_node_to_workflow(workflow_components, node, data={}):
+def insert_node_to_workflow(workflow_definition, node, data={}):
+    workflow_components = workflow_definition.get('workflow', {})
     route = data.get('route', None)
     node_id = node.get('id', None)
     node_path = data.get('node_path', None)
     parent_node_path = data.get('parent_node_path', None)
     parent_id = data.get('parent_id', None)
-    
+    is_entry = data.get('is_entry', False)
+    flow = workflow_components
     if parent_id and parent_node_path:
         parent_node_path_list = parent_node_path.split(".")
-        parent_node = None
-        for path in parent_node_path_list:
-            parent_node = workflow_components.get(path, None)
+        if len(parent_node_path_list) == 0:
+            raise Exception("Parent node path is empty")
+        
+        for i in range(0, len(parent_node_path_list)):
+            path = parent_node_path_list[i]
+            if i == 0:
+                parent_node = workflow_components.get(path, None)
+            else:
+                parent_node = parent_node.get(path, None)
             if not parent_node:
                 raise Exception(f"Parent node {path} not found")
 
-        parent_type = parent_node.get("config", {}).get('node_type', 'node')
+        parent_type = parent_node.get('node_type', 'node')
         if node_path not in parent_node['config'][parent_type]:
             parent_node['config'][parent_type][node_path] = {}
-        is_entry = len(parent_node['config'][parent_type][node_path].keys()) == 0
+
+        flow = parent_node['config'][parent_type][node_path]
+        is_entry = is_entry or len(parent_node['config'][parent_type][node_path].keys()) == 0
+        node['conditions']['is_entry'] = is_entry
         parent_node['config'][parent_type][node_path][node_id] = node
-        node['config']['path'] = f"{parent_node_path}.{node_path}"
-        adjust_workflow_routing(parent_node['config'][parent_type][node_path], node_id, route)
+        node['config']['path'] = f"{parent_node_path}.config.{parent_type}.{node_path}.{node_id}"
+        adjust_workflow_routing(parent_node['config'][parent_type][node_path], node_id, route)                    
     else:
-        node['conditions']['is_entry'] = len(workflow_components.keys()) == 0
+        is_entry = is_entry or len(workflow_components.keys()) == 0
+        node['conditions']['is_entry'] = is_entry
         workflow_components[node_id] = node
-        node['config']['path'] = f"{node_id}.{node['node_type']}"
+        node['config']['path'] = f"{node_id}"
         adjust_workflow_routing(workflow_components, node_id, route)
+    
+    if is_entry:
+        for key, value in flow.items():
+            if key != node_id:
+                value['conditions']['is_entry'] = False
+                adjust_workflow_routing(flow, key, node_id)
+
+    workflow_definition['mapping'][node['id']] = {
+        'id': node['id'],
+        'path': node['config']['path'] ,
+        'plugin_id': node['plugin_id'],
+        'version_number': node['version_number'],
+    }
+        
+    return node
 
 
 def node_type_definitions(node_type):
@@ -125,27 +190,36 @@ def node_type_definitions(node_type):
         }
 
 # END: Creation Tasks
-def list_workflow_nodes(workflow_components):
+def to_ui_workflow_node(component, parent_info={}):
+    
+    workflow_node = {
+            "id": component.get("id", None),
+            "name": component.get("name", "Node"),
+            "plugin_id": component.get("plugin_id"),
+            "version_number": component.get("version_number", "1"),
+            "config": component.get("config", {}),
+            "ui": component.get("ui", {}),
+            "node_type": component.get("node_type", "node"),
+            "conditions": component.get("conditions", {}),
+            "parent_info": parent_info,
+        }
+    node_type = component.get("node_type", "node")
+    if node_type in ['branch','switch', 'loop']:
+        flows = component['config'][node_type].keys()
+        path_info = {
+            'parent_id': component['id'],
+            'parent_node_path': component['config']['path'],
+            'node_path': '',
+        }
+        for flow in flows:
+            path_info['node_path'] = flow
+            component['config'][node_type][flow] = list_workflow_nodes(component['config'][node_type][flow], path_info)
+    
+    return workflow_node
+
+def list_workflow_nodes(workflow_components, parent_info={}):
     components_list = []
     for key, component in workflow_components.items():
-        list_item = {
-                "id": key,
-                "name": component.get("name", "Node"),
-                "plugin_id": component.get("plugin_id"),
-                "version_number": component.get("version_number", "1"),
-                "config": component.get("config", {}),
-                "ui": component.get("ui", {}),
-                "node_type": component.get("node_type", "node"),
-                "conditions": component.get("conditions", {}),
-            }
-        node_type = component.get("node_type", "node")
-        if node_type in ['branch','switch', 'loop']:
-            flows = component['config'][node_type].keys()
-            list_item['children'] = []
-            for flow in flows:
-                list_item['children'].append({
-                    'name': flow,
-                    'children': list_workflow_nodes(component['config'][node_type][flow])
-                })
+        list_item = to_ui_workflow_node(component, parent_info)
         components_list.append(list_item)
     return components_list
