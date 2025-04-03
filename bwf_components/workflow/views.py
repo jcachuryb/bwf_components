@@ -101,6 +101,7 @@ class WorkflowVersionViewset(ModelViewSet):
         version_definition = generate_workflow_definition(name, instance.description)
         version_definition['edition'] = True
         version_definition['workflow'] = workflow_definition['workflow']
+        version_definition['mapping'] = workflow_definition['mapping']
         version_definition['inputs'] = workflow_definition['inputs']
         version_definition['variables'] = workflow_definition['variables']
         
