@@ -40,6 +40,48 @@ def find_component_in_tree(workflow_definition, component_id):
             raise Exception(f"Component {component_id} not found in mapping")
     return component
 
+def is_workflow_node(node):
+    if not node:
+        return False
+    if not isinstance(node, dict):
+        return False
+    if not node.get('id', None):
+        return False
+    if not node.get('plugin_id', None):
+        return False
+    if not node.get('version_number', None):
+        return False
+    if not node.get('node_type', None):
+        return False
+    if not node.get('config', None):
+        return False
+    if not node.get('conditions', None):
+        return False
+    return True
+
+def get_parent_node(workflow_definition, component_id):
+    workflow_components = workflow_definition.get('workflow', {})
+    mapping = workflow_definition['mapping'].get(component_id, None)
+    if not mapping or not mapping.get('path', None):
+        raise Exception(f"Component {component_id} not found in mapping")
+    path = mapping.get('path', None)
+    path_list = path.split('.')
+    if len(path_list) == 0:
+        raise Exception(f"Component {component_id} not found in mapping")
+    
+    parent_node = None
+    workflow_level = workflow_components
+    path_length = len(path_list) - 1
+    
+    for i in range(0, path_length):
+        path = path_list[i]
+        workflow_level = workflow_level.get(path, None)
+        if not workflow_level:
+            raise Exception(f"Component {component_id} not found in mapping")
+        if is_workflow_node(workflow_level):
+            parent_node = workflow_level
+    return parent_node
+
 def get_encasing_flow(workflow_definition, component_id):
     workflow_components = workflow_definition.get('workflow', {})
     mapping = workflow_definition['mapping'].get(component_id, None)

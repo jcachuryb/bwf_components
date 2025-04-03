@@ -12,6 +12,7 @@ class WorkflowComponentSerializer(serializers.Serializer):
     ui = serializers.JSONField(required=False) 
     conditions = serializers.JSONField()
     parent_info = serializers.JSONField(default={})
+    node_type = serializers.CharField(default="node")
     # children = serializers.JSONField()
 
 class CreateComponentSerializer(serializers.Serializer):

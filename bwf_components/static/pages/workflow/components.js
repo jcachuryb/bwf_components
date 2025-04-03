@@ -145,7 +145,6 @@ var workflow_components = {
       );
       const end = $(`#node_${route} .diagram-node`);
       if (start.length > 0 && end.length > 0) {
-        const components = _.var.components;
         const destination = component_utils.findComponentInTree(
           route,
           component.config
@@ -176,14 +175,15 @@ var workflow_components = {
         );
       }
     }
+    if (component.config.branch) {
+      component_utils.render.renderOuterBranchLines(component);
+    }
   },
   handleLineDrag: function (event, ui) {
-    const components = workflow_components.var.components;
     const isSource = event.data.isSource;
     const componentId = event.data.id;
-    const component = components.find(
-      (component) => component.id === componentId
-    );
+    const component = (source_component =
+      component_utils.findSingleComponentInTree(componentId));
 
     if (isSource) {
       try {
@@ -207,6 +207,7 @@ var workflow_components = {
     const clone = template.content.cloneNode(true);
     const _ = workflow_components;
     const elementId = `node_${id}`;
+    component.diagram = { elementId: elementId };
     clone.querySelector(".diagram-node-parent").setAttribute("id", elementId);
     clone.querySelector(".diagram-node").setAttribute("data-component-id", id);
 
@@ -239,6 +240,7 @@ var workflow_components = {
     const _ = workflow_components;
     if (_.is_diagram) {
       _.appendComponentToDiagram(component, container, appendAfter);
+      _.updateLines();
       return;
     }
   },
@@ -574,7 +576,27 @@ var workflow_components = {
             version_id: _.version_id,
           }),
           success: function (data) {
-            _.var.components.push(data);
+            let component_list_affected = _.var.components;
+            let parentNode = null;
+            if (data.parent_info && data.parent_info.parent_id) {
+              parentNode = component_utils.findSingleComponentInTree(
+                data.parent_info.parent_id
+              );
+              if (
+                parentNode.config[parentNode.node_type] &&
+                parentNode.config[parentNode.node_type][
+                  data.parent_info.node_path
+                ]
+              ) {
+                component_list_affected =
+                  parentNode.config[parentNode.node_type][
+                    data.parent_info.node_path
+                  ];
+              }
+            }
+
+            component_list_affected.push(data);
+
             $(".main-add-component").hide();
             const after = component_route
               ? $(`#node_${component_route}`)
@@ -584,11 +606,15 @@ var workflow_components = {
             if (_.var.components.length === 1) {
               _.renderFirstLine(data);
             }
+            if (parentNode) {
+              if (parentNode.config.branch) {
+                component_utils.render.renderOuterBranchLines(parentNode);
+              }
+            }
             _.renderRouteLine(data);
             if (component_route) {
-              const source_component = _.var.components.find(
-                (component) => component.id === component_route
-              );
+              const source_component =
+                component_utils.findSingleComponentInTree(component_route);
               if (source_component) {
                 source_component.conditions.route = data.id;
                 _.renderRouteLine(source_component);
@@ -717,29 +743,31 @@ var workflow_components = {
   },
   removeComponent: function (id) {
     const _ = workflow_components;
-    const components = _.var.components;
-    const index = _.var.components.findIndex(
-      (component) => component.id === id
-    );
-    if (index === -1) {
+    const component = component_utils.findSingleComponentInTree(id);
+    if (!component) {
+      console.error("Component not found", id);
       return;
     }
-    const component = components[index];
     if (component && component.diagram) {
-      component.diagram.line_out?.remove();
-      component.diagram.line_in?.remove();
+      try {
+        component.diagram.line_out?.remove();
+        component.diagram.line_out = null;
+        component.diagram.line_in = null;
+      } catch (error) {}
+      if (component.config.branch) {
+        component_utils.render.removeBranchLines(component);
+      }
     }
     $(`#node_${component.id}`).off("drag.line_out");
     $(`#node_${component.id}`).off("drag.line_in");
-    const nextComponent = components.find(
-      (c) => c.id === component.conditions.route
+    const nextComponent = component_utils.findSingleComponentInTree(
+      component.conditions.route
     );
-    const prevComponent = components.find(
-      (c) => c.conditions.route === component.id
-    );
+    const prevComponent = component_utils.findPreviousNode(component.id);
     if (prevComponent) {
       prevComponent.conditions.route = nextComponent ? nextComponent.id : null;
       if (prevComponent.diagram?.line_out) {
+        prevComponent.diagram.line_out?.remove();
         prevComponent.diagram.line_out = null;
         $(`#node_${prevComponent.id}`).off("drag.line_out");
         if (prevComponent.diagram.line_in) {
@@ -768,23 +796,45 @@ var workflow_components = {
       }
     }
 
-    components.splice(index, 1);
+    component_utils.removeNodeFromTree(id);
     _.updateLines();
 
-    if (components.length === 0) {
+    if (_.var.components.length === 0) {
       $(".main-add-component").show();
       _.firstLine?.remove();
     }
   },
-  updateLines: function () {
+  updateLines: function (tree) {
     const _ = workflow_components;
-    _.var.components.forEach((component) => {
+    if (!tree) tree = _.var.components;
+
+    for (let i = 0; i < tree.length; i++) {
+      const component = tree[i];
+      const { node_type } = component;
+      if (!node_type) return;
+      if (node_type !== "node") {
+        const paths = Object.values(component["config"][node_type]);
+        for (let path in paths) {
+          _.updateLines(paths[path]);
+        }
+      }
       if (component.diagram?.line_in) {
-        component.diagram.line_in.position();
+        try {
+          component.diagram.line_in.position();
+        } catch (error) {
+          component.diagram.line_in = null;
+        }
       }
       if (component.diagram?.line_out) {
-        component.diagram.line_out.position();
+        try {
+          component.diagram.line_out.position();
+        } catch (error) {
+          component.diagram.line_out = null;
+        }
       }
-    });
+      if (component.config.branch) {
+        component.diagram?.position && component.diagram.position(component);
+      }
+    }
   },
 };

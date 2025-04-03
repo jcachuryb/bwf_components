@@ -18,7 +18,8 @@ from .tasks import (create_component_definition_instance,
                     to_ui_workflow_node,
                     list_workflow_nodes,
                     find_component_in_tree,
-                    get_encasing_flow)
+                    get_encasing_flow,
+                    get_parent_node)
 
 # Create your views here.
 
@@ -164,15 +165,17 @@ class WorkflowComponentViewset(ViewSet):
         components_affected = []
         try:
             workflow = get_object_or_404(WorkflowVersion, id=version_id, workflow__id=workflow_id)
-
             if not workflow.is_editable:
                 return Response({"error": "Workflow version cannot be edited"}, status=status.HTTP_400_BAD_REQUEST)
         
             workflow_definition = workflow.get_json_definition()
             component_id = kwargs.get("pk", None)
+            parent_node = get_parent_node(workflow_definition, component_id)
             workflow_components = get_encasing_flow(workflow_definition, component_id)
+
             instance = workflow_components.pop(component_id, None)
             workflow_definition['mapping'].pop(component_id, None)
+
             if not instance:
                 return Response("Component not found")
             
@@ -189,13 +192,24 @@ class WorkflowComponentViewset(ViewSet):
                 node_next = workflow_components.get(route, None)
                 if node_next:
                     components_affected.append(node_next)
-                    node_prev['config']['incoming'] = get_incoming_values(component['config']['outputs'])
+                    node_next['conditions']['is_entry'] = instance['conditions']['is_entry']
+                    if node_prev:
+                        node_prev['conditions']['route'] = node_next['id']
+                        node_next['config']['incoming'] = get_incoming_values(node_prev['config']['outputs'])
             elif node_prev:
                 node_prev['conditions']['route'] = None
 
-            workflow_definition['workflow'] = workflow_components
+            # workflow_definition['workflow'] = workflow_components
             workflow.set_json_definition(workflow_definition)
-            return Response(component_serializers.WorkflowComponentSerializer(components_affected, many=True).data)
+            components_affected_to_ui = []
+            parent_info = {
+                    'parent_id': parent_node['id'],
+                    'node_path': parent_node['config']['path'],
+                } if parent_node else None
+            for component in components_affected:
+                component_ui = to_ui_workflow_node(component, parent_info=parent_info)
+                components_affected_to_ui.append(component_ui)
+            return Response(component_serializers.WorkflowComponentSerializer(components_affected_to_ui, many=True).data)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
