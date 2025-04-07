@@ -302,7 +302,7 @@ class ValueSelector {
 
   onPopoverOpen() {
     const _ = this;
-    console.log({ settings: _.initials });
+    // console.log({ settings: _.initials });
     const { input, component, isEdition } = _;
     const { value, value_ref, is_expression } = input.value ?? {};
     const { type, options, value_rules } = _.input?.json_value ?? {};
@@ -385,7 +385,6 @@ class ValueSelector {
     const _ = this;
     const { input, component, isEdition } = _;
     const { value, value_ref, is_expression } = input.value ?? {};
-
     _.parentComponentElement.hide();
     _.parentComponentElement.addClass("in-edition");
     $(".value-in-edition").removeClass("value-in-edition");
@@ -394,6 +393,7 @@ class ValueSelector {
     const editorBlockContent = $('[data-name="editor-content"]').clone();
     _.$saveButton = editorBlockContent.find(".btn-save");
     editorBlockContent.find("code.label").html(input.name);
+    editorBlockContent.find("code.data-type").html(input.value_type);
     editorBlockContent.attr("data-name", null);
     editorBlockContent.attr(
       "id",
@@ -468,7 +468,7 @@ class ValueSelector {
       },
       onSelectValue: (selectedValue) => {
         const { convert_context_to_python_dict } = utils;
-        console.log("Selected value", selectedValue);
+
         if (!isEdition) return;
         if (_.initials.showEditor && _.editor) {
           const doc = _.editor.getDoc();
@@ -565,7 +565,7 @@ class ValueSelector {
         },
         onCancel: () => {
           _.popover?.hide();
-        }
+        },
       });
     });
     _.$content.on("show.bs.popover", _, function (event) {
@@ -713,7 +713,6 @@ class ValueSelector {
         selector.hideContentEdition();
         selector.updateHtml();
         if (popover) popover.hide();
-        console.log("updated", data);
         return data;
       })
       .catch((error) => {
@@ -763,7 +762,6 @@ class ValueSelector {
       $(element).on("change", _, function (event) {
         const selector = event.data;
         const selectedValue = event.target.value;
-        console.log({ selectedValue });
         _.saveValue({
           value: selectedValue,
           is_expression: false,
@@ -773,7 +771,6 @@ class ValueSelector {
       $(element).on("keyup", _, function (event) {
         const selector = event.data;
         const key = event.key;
-        console.log({ key });
         if (key === "Enter") {
         } else if (key === "Escape") {
           _.updateHtml();

@@ -221,7 +221,7 @@ var workflow_components = {
       .find(".component-icon")
       .html(
         markup("i", "", {
-          class: component.ui?.class_name ?? "bi bi-gear",
+          class: component.ui?.icon_class ?? "bi bi-gear",
         })
       );
     $(`#${elementId}`).find(".component-label span").html(name);
@@ -521,7 +521,7 @@ var workflow_components = {
     $(`#${elementId}`)
       .find(".card-header i")
       .first()
-      ?.attr("class", component.ui?.class_name ?? "bi bi-gear");
+      ?.attr("class", component.ui?.icon_class ?? "bi bi-gear");
     for (let i = 0; i < inputArray.length; i++) {
       const input = inputArray[i];
       const divElementId = `${elementId}_${input.key}`;

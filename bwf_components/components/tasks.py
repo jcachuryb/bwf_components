@@ -139,8 +139,6 @@ def create_component_definition_instance(plugin_id, name, route=None, version_nu
         "ui": {
             "x": index * 200,
             "y": index * 200,
-            "class_name": ui.get("icon_class", "bi bi-gear"),
-            "icon_image_src": ui.get("icon_image_src", None),
         },
         "config": {
             "inputs": inputs,
@@ -237,6 +235,7 @@ def node_type_definitions(node_type):
 
 # END: Creation Tasks
 def to_ui_workflow_node(component, parent_info={}):
+    ui_definition = BWFPluginController().get_instance().get_plugin_ui_definition(component.get("plugin_id"))
     
     workflow_node = {
             "id": component.get("id", None),
@@ -244,7 +243,7 @@ def to_ui_workflow_node(component, parent_info={}):
             "plugin_id": component.get("plugin_id"),
             "version_number": component.get("version_number", "1"),
             "config": component.get("config", {}),
-            "ui": component.get("ui", {}),
+            "ui": ui_definition,
             "node_type": component.get("node_type", "node"),
             "conditions": component.get("conditions", {}),
             "parent_info": parent_info,

@@ -3,7 +3,7 @@ import json
 from bwf_components import settings_bwf as settings
 from bwf_components.workflow.models import ComponentInstance, ComponentStepStatusEnum
 from importlib.machinery import SourceFileLoader
-
+from django.core.cache import cache
 
 BASE_PLUGIN_ROUTE = os.path.join(settings.BASE_DIR, 'bwf_components', 'components', 'plugins')
 FLOW_NODES_ROUTE = os.path.join(settings.BASE_DIR, 'bwf_components', 'components', 'flow_nodes')
@@ -57,7 +57,12 @@ class BWFPluginController:
 
         # if not hasattr(definition_module, function_to_call):
         #     raise Exception(f"Plugin {plugin_path} does not have a '{function_to_call}' function in the definition.py file")
-           
+        
+        plugin_ui_definition = {
+            'icon_class': plugin_definition.get('icon_class'),
+            'icon_image_src': plugin_definition.get('icon_image_src'),
+        }
+
         new_plugin = {'id': plugin_definition.get('id'),
                       'name': plugin_definition.get('name'),
                       'version': plugin_definition.get('version'),
@@ -66,6 +71,7 @@ class BWFPluginController:
                       'icon_class': plugin_definition.get('icon_class'),
                       'icon_image_src': plugin_definition.get('icon_image_src'),
                     }
+        cache.set(f'plugin.ui.{new_plugin.get("id")}', value=plugin_ui_definition, timeout=60*60*24)
         # TODO: Validate it has all required fields
               
         return new_plugin
@@ -100,10 +106,7 @@ class BWFPluginController:
                 'version': plugin_definition.get('version'),
                 'name': plugin_definition.get('name'),
                 'description': plugin_definition.get('description'),
-                'ui': {
-                    'icon_class': plugin_definition.get('icon_class'),
-                    'icon_image_src': plugin_definition.get('icon_image_src'),
-                },
+                'ui': {},
                 'node_type': plugin_definition.get('node_type', 'node'),
                 'base_input': base_inputs,
                 'base_output': base_outputs,
@@ -119,6 +122,27 @@ class BWFPluginController:
             return component_module
         return None
     
+    def get_plugin_ui_definition(self, plugin_id):
+        plugin = self.plugins.get(plugin_id, None)
+        if plugin:
+            ui_definition = cache.get(f'plugin.ui.{plugin_id}')
+            if ui_definition:
+                return ui_definition
+            
+            plugin_path = plugin.get('plugin_path')
+            definition_json = os.path.join(plugin_path, 'definition.json')
+            plugin_definition = None
+            with open(definition_json) as json_file:
+                plugin_definition = json.load(json_file)
+
+            ui_definition = {
+                    'icon_class': plugin_definition.get('icon_class'),
+                    'icon_image_src': plugin_definition.get('icon_image_src'),
+            }
+            
+            cache.set(f'plugin.ui.{plugin_id}', value=ui_definition, timeout=60*60*24)
+            return ui_definition
+            
 
 
 class WorkflowController:
