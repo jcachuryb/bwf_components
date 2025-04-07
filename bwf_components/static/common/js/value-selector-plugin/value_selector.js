@@ -393,7 +393,7 @@ class ValueSelector {
     const editorBlockContent = $('[data-name="editor-content"]').clone();
     _.$saveButton = editorBlockContent.find(".btn-save");
     editorBlockContent.find("code.label").html(input.name);
-    editorBlockContent.find("code.data-type").html(input.value_type);
+    editorBlockContent.find("code.data-type").html(`[${input.data_type}]`);
     editorBlockContent.attr("data-name", null);
     editorBlockContent.attr(
       "id",
@@ -593,7 +593,6 @@ class ValueSelector {
       doc: "Start document",
       value: "",
       mode: "python",
-      placeholder: "Enter a value",
       theme: "default",
       lineNumbers: true,
       styleActiveLine: true,
