@@ -9,6 +9,21 @@ var component_utils = {
       }
     }
   },
+  closePopovers: function (value_selector) {
+    $(".popover.show").each(function () {
+      if (!value_selector) {
+        $(this).popover("hide");
+        return;
+      }
+      if (
+        !$(this).is(value_selector.$content) &&
+        $(this).has(value_selector.$content).length === 0 &&
+        $(".popover").has(value_selector.$content).length === 0
+      ) {
+        $(this).popover("hide");
+      }
+    });
+  },
   findPreviousNode: function (id, tree) {
     const _ = workflow_components;
     if (!tree) {

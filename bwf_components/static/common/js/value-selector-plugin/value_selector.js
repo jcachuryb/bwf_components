@@ -569,15 +569,7 @@ class ValueSelector {
       });
     });
     _.$content.on("show.bs.popover", _, function (event) {
-      $(".popover.show").each(function () {
-        if (
-          !$(this).is(_.$content) &&
-          $(this).has(_.$content).length === 0 &&
-          $(".popover").has(_.$content).length === 0
-        ) {
-          $(this).popover("hide");
-        }
-      });
+      component_utils.closePopovers(_);
       const selector = event.data;
       selector.onPopoverOpen();
     });
@@ -592,13 +584,18 @@ class ValueSelector {
     _.editor = CodeMirror.fromTextArea(element, {
       doc: "Start document",
       value: "",
-      mode: "python",
+      mode: {name: "python",
+        version: 3,
+        singleLineStringErrors: false},
       theme: "default",
       lineNumbers: true,
+      indentUnit: 4,
       styleActiveLine: true,
       matchBrackets: true,
       autoCloseBrackets: true,
       lineWrapping: true,
+      lint: true,
+      gutters: ["CodeMirror-lint-markers"],
     });
     if (value) _.editor.setValue(value);
     if (!value && value_ref) {
@@ -671,6 +668,7 @@ class ValueSelector {
           for (let i = 0; i < parentValue.length; i++) {
             for (const key in parentValue[i]) {
               if (parentValue[i][key].id === input.id) {
+                this.input.value = value;
                 parentValue[i][key].value = value;
                 parentValue[i][key].is_expression = value.is_expression;
                 parentValue[i][key].value_ref = value.value_ref;
@@ -737,6 +735,14 @@ class ValueSelector {
       return;
     }
 
+    const isInvalid = input.required && (value === "" || value === null);
+    const invalidClassName = "is-invalid";
+    if (isInvalid) {
+      _.$content.addClass(invalidClassName);
+    } else {
+      _.$content.removeClass(invalidClassName);
+    }
+
     if ((value_rules && value_rules.variable_only) || options) {
       _.$resetButton.hide();
       _.$editButton.hide();
@@ -758,9 +764,15 @@ class ValueSelector {
       _.$content.empty();
       const element = _.getInputElement(type, value);
       _.$content.append(element);
+      if (type === "boolean") {
+        _.$content.addClass("boolean-value");
+      }
       $(element).on("change", _, function (event) {
         const selector = event.data;
-        const selectedValue = event.target.value;
+        const selectedValue =
+          event.target.type === "checkbox"
+            ? event.target.checked
+            : event.target.value;
         _.saveValue({
           value: selectedValue,
           is_expression: false,
@@ -802,12 +814,21 @@ class ValueSelector {
     const isDisabled = !_.isEdition;
     const options = {};
     if (type === "boolean") {
-      return markup("input", "", {
-        type: "checkbox",
-        class: "form-check-input",
-        checked: value?.value || false,
-        disabled: isDisabled,
-      });
+      return markup('div', [
+        markup("input", "", {
+          type: "checkbox",
+          class: "btn-check",
+          id: `${_.component.id}-${_.input.key}`,
+          autocomplete: "off",
+          checked: value?.value || false,
+          disabled: isDisabled,
+        }),
+        markup("label", value?.value ? "True" : "False", {
+          class: "btn btn-outline-primary btn-sm",
+          for: `${_.component.id}-${_.input.key}`,
+        }),
+        markup("br"),
+      ]);
     }
     if (type === "string") {
       return markup("input", "", {

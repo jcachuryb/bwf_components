@@ -12,8 +12,7 @@
       "key": "condition",
       "label": "Condition",
       "type": "boolean",
-      "value": "",
-      "required": true
+      "value": ""
     }
   ],
   "base_output": null

@@ -375,6 +375,7 @@ var workflow_components = {
         const { id, config } = event.data;
         const _component = component_utils.findComponentInTree(id, config);
         component_on_fail.addOnFail(_component);
+        $(`#${elementId}`).find(".add-on-fail").hide();
       });
     $(`#${elementId}`)
       .find(".print-component")
@@ -538,6 +539,10 @@ var workflow_components = {
       )
     );
 
+    $(_.sidePanel).on("click", function (event) {
+      if ($(event.target).hasClass("slide-out-panel")) component_utils.closePopovers();
+    });
+  
     $(`#${elementId}`).find(".component-label").html(name);
     $(`#${elementId}`)
       .find(".card-header i")

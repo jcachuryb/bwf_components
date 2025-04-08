@@ -258,6 +258,16 @@ border: 2px solid #0d6efd; */
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.value-selector.boolean-value {
+  background: white;
+  border: none;
+  padding: 5px !important;
+}
+
+.value-selector.is-invalid,
+.value-selector-content.is-invalid select {
+  border: 2px solid #fa8181;
+}
 
 .value-selector code {
   color: #292a2b;
