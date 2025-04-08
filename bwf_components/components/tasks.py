@@ -147,6 +147,7 @@ def create_component_definition_instance(plugin_id, name, route=None, version_nu
         "conditions": {
             "is_entry": False,
             "route": None,
+            "on_fail": {}
         },
     }
 
@@ -161,7 +162,7 @@ def create_component_definition_instance(plugin_id, name, route=None, version_nu
 def insert_node_to_workflow(workflow_definition, node, data={}):
     workflow_components = workflow_definition.get('workflow', {})
     mapping = workflow_definition['mapping']
-    if not mapping:
+    if mapping is None:
         raise Exception("Mapping not found in workflow definition")
     route = data.get('route', None)
     node_id = node.get('id', None)
@@ -181,7 +182,7 @@ def insert_node_to_workflow(workflow_definition, node, data={}):
         node['conditions']['is_entry'] = is_entry
         parent_node['config'][parent_type][node_path][node_id] = node
         node['config']['path'] = f"{parent_node['config']['path']}.config.{parent_type}.{node_path}.{node_id}"
-        adjust_workflow_routing(parent_node['config'][parent_type][node_path], node_id, route)                    
+        adjust_workflow_routing(flow, node_id, route)                    
     else:
         is_entry = is_entry or len(workflow_components.keys()) == 0
         node['conditions']['is_entry'] = is_entry
@@ -191,9 +192,12 @@ def insert_node_to_workflow(workflow_definition, node, data={}):
     
     if is_entry:
         for key, value in flow.items():
-            if key != node_id:
-                value['conditions']['is_entry'] = False
-                adjust_workflow_routing(flow, key, node_id)
+            if value['conditions']['is_entry'] and key != node_id:
+                next_node = value
+                node['conditions']['route'] = key
+                next_node['conditions']['is_entry'] = False
+                next_node['config']['incoming'] = get_incoming_values(node['config']['outputs'])
+                break
 
     workflow_definition['mapping'][node['id']] = {
         'id': node['id'],

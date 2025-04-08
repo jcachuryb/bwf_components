@@ -9,6 +9,7 @@ class ActionLogStatusEnum(models.TextChoices):
     STARTED = "STARTED", "started"
     STOPPED = "STOPPED", "stopped"
     RESTARTED = "RESTARTED", "restarted"
+    TERMINATED = "TERMINATED", "terminated"
     
 
 class ActionLog(models.Model):

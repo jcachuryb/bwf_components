@@ -1,4 +1,14 @@
 var component_utils = {
+  getComponentPrependSelector: function (parentComponent, path) {
+    if (parentComponent.node_type === "branch") {
+      if (path === "True") {
+        return `#node_${parentComponent.id} .branch-true .workflow`;
+      }
+      if (path === "False") {
+        return `#node_${parentComponent.id} .branch-false .workflow`;
+      }
+    }
+  },
   findPreviousNode: function (id, tree) {
     const _ = workflow_components;
     if (!tree) {
@@ -152,6 +162,8 @@ var component_utils = {
         "click",
         component,
         function (event) {
+          if (!workflow_components.isEdition) return;
+
           const { selectedComponent } = new_component_data;
           selectedComponent.data = null;
           selectedComponent.path = $(this).data("path");

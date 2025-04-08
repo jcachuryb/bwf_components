@@ -54,7 +54,7 @@ class ActionLogInline(admin.TabularInline):
 @admin.register(WorkFlowInstance)
 class WorkFlowInstanceAdmin(admin.ModelAdmin):
     list_display = [
-        'workflow_version',
+        '__str__',
         'status',
         'created_at',
     ]

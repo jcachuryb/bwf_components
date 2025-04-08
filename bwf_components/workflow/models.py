@@ -19,6 +19,7 @@ class WorkflowStatusEnum(models.TextChoices):
     COMPLETED = "COMPLETED", "completed"
     AWAITING_ACTION = "AWAITING_ACTION", "awaiting_action"
     ERROR = "ERROR",  "error"
+    TERMINATED = "TERMINATED", "terminated"
 
 
 class ComponentStepStatusEnum(models.TextChoices):
@@ -176,7 +177,7 @@ class WorkFlowInstance(models.Model):
     error_message = models.CharField(max_length=1000, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.workflow_version} - {self.id}"
+        return f"{self.pk} - {self.workflow_version} - {self.id}"
 
     def get_json_definition(self):
         return self.workflow_version.get_json_definition()
@@ -196,7 +197,12 @@ class WorkFlowInstance(models.Model):
         self.error_message = message[:1000]
         self.save()
         action_log_tasks.record_workflow_error(self, self.error_message)
-
+    
+    def set_status_terminated(self):
+        from bwf_components.action_log import tasks as action_log_tasks
+        self.status = WorkflowStatusEnum.TERMINATED
+        self.save()
+        action_log_tasks.record_workflow_terminated(self)
 
 
 class ComponentInstance(models.Model):

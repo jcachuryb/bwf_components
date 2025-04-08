@@ -66,6 +66,7 @@ def register_workflow_step(workflow_instance: WorkFlowInstance, step:str, output
 def start_pending_component(current_component: ComponentInstance, parent=None):
     workflow_instance = current_component.workflow
     try:
+        logger.info(f"Starting pending component {current_component.component_id} - Plugin {current_component.plugin_id}")
         current_component.set_status_running()
         controller = BWFPluginController.get_instance()
         plugin_module = controller.get_plugin_module(current_component.plugin_id, current_component.plugin_version)
@@ -89,13 +90,11 @@ def start_pending_component(current_component: ComponentInstance, parent=None):
             # calls execute but should call any method that is defined in the plugin that receives a plugin_wrapper_instance
             plugin_module.execute(plugin_wrapper_instance)
         except Exception as e:
-            logger.error(f"Error while executing component {current_component.id}")
-            logger.error(e)
+            logger.error(f"Error while executing component {current_component.id} error: {str(e)}")
             if plugin_wrapper_instance:
-                plugin_wrapper_instance.on_failure(e)
+                plugin_wrapper_instance.on_failure(str(e))
     except Exception as e:
-        logger.error(f"Error while starting pending component {current_component.id}")
-        logger.error(e)
+        logger.error(f"Error while starting pending component {current_component.id} error: {str(e)}")
         current_component.set_status_error(str(e))
 
 

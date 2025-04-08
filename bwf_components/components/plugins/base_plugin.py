@@ -1,16 +1,8 @@
+from time import sleep
 from bwf_components.workflow.models import WorkFlowInstance, ComponentInstance
-""" 
-component: WorkflowComponent
-        
+import logging
 
-
-context: Dict 
-        - global
-        - local
-        - output
-
- """
-
+logger = logging.getLogger(__name__)
 
 class BasePlugin:
     
@@ -69,17 +61,62 @@ class BasePlugin:
                                                step=parent_next_node, 
                                                parent_node_instance=self.component.parent_node.parent_node,
                                                output_prev_component=self.component.output.get("data", {}))
+                    else:
+                        self.workflow_instance.set_status_completed()
                 else:
                     raise Exception(f"Parent component {parent_id} not found in workflow definition")
-            
-            self.workflow_instance.set_status_completed()
+            else:
+                self.workflow_instance.set_status_completed()
 
     def on_complete(self):
         self.component.set_status_completed()
         self.call_next_node()
     
-    def on_failure(self, error={}):
-        # TODO: Call process on Failure
+    def on_failure(self, error=""):
+        from bwf_components.tasks import register_workflow_step
+        from bwf_components.components.tasks import find_component_in_tree
+
+        workflow_definition = self.workflow_instance.get_json_definition()
+        current_definition = find_component_in_tree(workflow_definition, self.component.component_id)
+        on_fail = current_definition.get("conditions", {}).get("on_fail", {})
+        if not on_fail:
+            pass
+        if on_fail.get("action", None) == "terminate":
+            logger.info(f"Component {self.component.component_id} terminated due to error: {error}")
+            self.workflow_instance.set_status_error(error)
+            return
+        elif on_fail.get("action", None) == "ignore":
+            logger.info(f"Component {self.component.component_id} ignored error: {error}")
+            self.component.set_status_completed()
+            self.call_next_node()
+            return
+        elif on_fail.get("action", None) == "retry":
+            logger.info(f"Component {self.component.component_id} retrying due to error: {error}")
+            options = self.component.options if self.component.options else {}
+            
+            max_retries = on_fail.get("max_retries", 0)
+            retry_interval = on_fail.get("retry_interval", 100)
+            current_retries = options.get("retries", 0)
+            current_retries += 1
+            if current_retries <= max_retries:
+                options = {
+                    "retries": current_retries,
+                }
+                self.component.options = options
+                self.component.save()
+
+                self.component.set_status_pending()
+                self.workflow_instance.set_status_running()
+                sleep(retry_interval / 1000)  # Convert milliseconds to seconds
+                self.execute()
+                return
+            else:
+                self.component.set_status_error(error)
+                self.workflow_instance.set_status_error(f"Max retries reached for component {self.component.component_id}")
+                return
+        elif on_fail.get("action", None) == "custom":
+            # TODO: Implement custom action
+            pass
         self.component.set_status_error(error)
         self.workflow_instance.set_status_error(error)
 

@@ -36,6 +36,9 @@ def record_component_success(component_instance):
 def record_workflow_error(workflow_instance, error_message=None):
     record_log(workflow_instance=workflow_instance, status=enum.ERROR, error_message=error_message)
 
+def record_workflow_terminated(workflow_instance, error_message=None):
+    record_log(workflow_instance=workflow_instance, status=enum.TERMINATED, error_message=error_message)
+
 def record_workflow_pending(workflow_instance):
     record_log(workflow_instance=workflow_instance, status=enum.PENDING)
 

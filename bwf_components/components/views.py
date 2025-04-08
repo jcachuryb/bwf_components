@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView
 from rest_framework.viewsets import ViewSet
 
-from .utils import process_base_input_definition, get_incoming_values, adjust_workflow_routing
+from .utils import get_incoming_values
 from bwf_components.workflow.serializers import component_serializers
 from bwf_components.workflow.models import Workflow, WorkflowVersion
 from bwf_components.controller.controller import BWFPluginController
@@ -115,9 +115,13 @@ class WorkflowComponentViewset(ViewSet):
                 raise Exception("Plugin ID does not match")
             # TODO: Check plugin version
             component['name'] = serializer.validated_data.get("name", component['name'])
+            if serializer.validated_data.pop("is_remove_config", False):
+                component['conditions']['on_fail'] = {}
+            else:
+                component['conditions']['on_fail'] = serializer.validated_data.get("on_fail", component['conditions'].get("on_fail", {})) 
 
             workflow.set_json_definition(workflow_definition)
-            return JsonResponse(component_serializers.WorkflowComponentSerializer(component).data)
+            return JsonResponse(component_serializers.WorkflowComponentSerializer(to_ui_workflow_node(component)).data)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

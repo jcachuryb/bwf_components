@@ -29,7 +29,8 @@ class BWFPluginController:
         for route in PLUGIN_ROUTES:
             for plugin in os.listdir(route):
                 plugin_path = os.path.join(route, plugin)
-                if os.path.isdir(plugin_path) and not plugin_path in IGNORE_DIRS:
+                dir_name = plugin_path.split(os.sep)[-1]
+                if os.path.isdir(plugin_path) and not dir_name in IGNORE_DIRS:
                     try:
                         new_plugin = self.__load_bwf_plugin(plugin_path)
                         if not new_plugin:

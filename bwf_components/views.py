@@ -100,5 +100,25 @@ class WorkflowAPIViewSet(ViewSet):
                 print(str(e))
         
         return JsonResponse({"message": "OK"})
+
+    @action(detail=False, methods=['GET'])
+    def run_last_node(self, request, pk=None):
+        from .tasks import start_pending_component
+        
+        current_datetime = datetime.now().astimezone()
+
+        instance = WorkFlowInstance.objects.filter(status=ComponentStepStatusEnum.PENDING).last()
+        if instance is None:
+            return JsonResponse({"message": "No pending instances found"}, status=404)
+    
+        component_instances = instance.child_actions.filter(status=ComponentStepStatusEnum.PENDING, created_at__lte=current_datetime).order_by('created_at')
+        for component_instance in component_instances:
+            try:
+                start_pending_component(component_instance)
+                return JsonResponse({"message": "OK"})
+            except Exception as e:
+                print(str(e))
+                return JsonResponse({"message": "error"})
+        return JsonResponse({"message": "No pending instances found"}, status=404)
     
 

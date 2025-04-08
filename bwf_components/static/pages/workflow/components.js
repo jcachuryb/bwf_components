@@ -195,7 +195,7 @@ var workflow_components = {
       } catch (e) {}
     }
   },
-  appendComponentToDiagram: function (component, container, appendAfter) {
+  appendComponentToDiagram: function (component, container, appendPosition) {
     const template = document.querySelector("#component-diagram-node-template");
     const { markup } = utils;
 
@@ -211,8 +211,15 @@ var workflow_components = {
     clone.querySelector(".diagram-node-parent").setAttribute("id", elementId);
     clone.querySelector(".diagram-node").setAttribute("data-component-id", id);
 
-    if (appendAfter) {
-      appendAfter.after(clone);
+    if (appendPosition && appendPosition.container) {
+      const { position, container: appendContainer } = appendPosition;
+      if (position === "before") {
+        appendContainer.prepend(clone);
+      } else if (position === "after") {
+        appendContainer.after(clone);
+      } else if (position === "append") {
+        appendContainer.after(clone);
+      }
     } else {
       container.append(clone);
     }
@@ -236,10 +243,10 @@ var workflow_components = {
     }
   },
 
-  appendComponent: function (component, container, appendAfter) {
+  appendComponent: function (component, container, appendPosition) {
     const _ = workflow_components;
     if (_.is_diagram) {
-      _.appendComponentToDiagram(component, container, appendAfter);
+      _.appendComponentToDiagram(component, container, appendPosition);
       _.updateLines();
       return;
     }
@@ -265,6 +272,7 @@ var workflow_components = {
     $(`#${elementId}`)
       .find(".add-next-component, .component-route.component-out")
       ?.on("click", component, function (event) {
+        if (!workflow_components.isEdition) return;
         const { selectedComponent } = new_component_data;
         selectedComponent.data = event.data;
         selectedComponent.path = event.data?.parent_info?.node_path;
@@ -354,7 +362,20 @@ var workflow_components = {
         });
       });
     // END: Delete Component
-
+    if (
+      component.node_type !== "node" ||
+      component.conditions?.on_fail?.action
+    ) {
+      $(`#${elementId}`).find(".add-on-fail").hide();
+    }
+    $(`#${elementId}`)
+      .find(".add-on-fail")
+      ?.on("click", component, function (event) {
+        const _ = workflow_components;
+        const { id, config } = event.data;
+        const _component = component_utils.findComponentInTree(id, config);
+        component_on_fail.addOnFail(_component);
+      });
     $(`#${elementId}`)
       .find(".print-component")
       ?.on("click", component, function (event) {
@@ -558,6 +579,7 @@ var workflow_components = {
     }
 
     _.addMenuButtonsFunctionality(elementId, component);
+    component_on_fail.showOnFailConfig(component);
   },
   api: {
     addComponent: function (data, success_callback, error_callback) {
@@ -598,10 +620,23 @@ var workflow_components = {
             component_list_affected.push(data);
 
             $(".main-add-component").hide();
-            const after = component_route
-              ? $(`#node_${component_route}`)
-              : null;
-            _.appendComponent(data, _.container, after);
+
+            const appendPosition = { position: "after", container: null };
+            if (component_route) {
+              appendPosition.container = $(`#node_${component_route}`);
+            }
+
+            if (data.conditions.is_entry && parentNode) {
+              appendPosition.position = "before";
+              appendPosition.container = $(
+                component_utils.getComponentPrependSelector(
+                  parentNode,
+                  data.parent_info.node_path
+                )
+              );
+            }
+
+            _.appendComponent(data, _.container, appendPosition);
             // $(".component-node, .diagram-node-parent").draggable({});
             if (_.var.components.length === 1) {
               _.renderFirstLine(data);
