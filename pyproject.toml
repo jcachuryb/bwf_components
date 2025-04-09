@@ -6,12 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "bwf_components"
 version = "0.1"
 dependencies = [
-    "django>=5.1",
     "decouple>=0.0.7",
-    "dj-database-url",
-    "djangorestframework"
 ]
-description = "A Django app to create flexible, reusable Business Workflows."
+description = "A client to the BWF CORE project. It will host all the available plugins."
 readme = "README.rst"
 requires-python = ">= 3.10"
 authors = [
