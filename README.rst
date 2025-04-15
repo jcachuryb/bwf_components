@@ -17,10 +17,10 @@ Quick start
         "bwf_components",
     ]
 
-2. Include the polls URLconf in your project urls.py like this::
 
-    path("bwf_components/", include("bwf_components.urls")),
-
-3. Run ``python manage.py migrate`` to create the models.
-
-4. Start the development server and visit the admin to create a workflow.
+Adding a new Plugin
+-------------------
+1. Create a folder inside the ``plugins`` folder.
+2. Create a ``__init__.py`` file inside the folder.
+3. Create a ``definition.json`` file inside the folder.
+4. Create a ``component.py`` file inside the folder.
