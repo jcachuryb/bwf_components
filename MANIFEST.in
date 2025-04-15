@@ -1,1 +1,4 @@
 include LICENSE
+include README.rst
+recursive-include bwf_components/plugins *
+recursive-include bwf_components/plugin_utils *
