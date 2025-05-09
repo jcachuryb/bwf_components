@@ -1,0 +1,54 @@
+{
+  "id": "approval_step",
+  "name": "Approval Step",
+  "description": "Component to require for approval before proceeding with the workflow.",
+  "version": "1.0.0",
+  "category": "node",
+  "author": "BWF Components",
+  "editable": false,
+  "icon_class": "bi bi-check-circle",
+  "icon_image_src": "icon.png",
+  "node_type": "node",
+  "base_input": [
+    {
+      "key": "roles",
+      "label": "Roles",
+      "type": "array",
+      "value": "",
+      "required": true,
+      "value_rules": {
+        "dynamic": true,
+        "structure": {
+          "role_id": {
+            "key": "role_id",
+            "label": "Role",
+            "type": "object",
+            "url": "/models/roles/bwf_roles/",
+            "value": "",
+            "required": true,
+            "value_rules": {
+              "is_model": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "key": "task_id",
+      "label": "Task",
+      "type": "string",
+      "value": "",
+      "required": false,
+      "placeholder": "Resource to be approved"
+    },
+    {
+      "key": "approval_timeout",
+      "label": "Approval Timeout (minutes)",
+      "type": "number",
+      "value": 30,
+      "required": false,
+      "placeholder": 30
+    }
+  ],
+  "base_output": null
+}
