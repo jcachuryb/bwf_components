@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django import conf
-from bwf_components.plugins.plugin_approval import views as model_views
+from bwf_components.plugins.approval import views as model_views
 
 admin.site.site_header = conf.settings.PROJECT_TITLE
 admin.site.index_title = conf.settings.PROJECT_TITLE

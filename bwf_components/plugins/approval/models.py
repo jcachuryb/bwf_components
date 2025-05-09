@@ -29,4 +29,13 @@ class BWF_Role(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["system_name", "name"], name="approval_unique_name_system"),
         ]
-    
+
+
+class Approval(models.Model):
+    user = models.ForeignKey(ApprovalUser, on_delete=models.CASCADE)
+    role = models.ForeignKey(BWF_Role, on_delete=models.CASCADE)
+    approved = models.BooleanField(default=False)
+    date_approved = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.role} - {self.approved}"

@@ -23,11 +23,35 @@
             "key": "role_id",
             "label": "Role",
             "type": "object",
-            "url": "/models/roles/bwf_roles/",
             "value": "",
             "required": true,
             "value_rules": {
-              "is_model": true
+              "is_model": true,
+              "ajax": {
+                "url": "/models/roles/bwf_roles/",
+                "structure": {
+                  "id": {
+                    "key": "id",
+                    "label": "ID",
+                    "type": "string"
+                  },
+                  "name": {
+                    "key": "name",
+                    "label": "Name",
+                    "type": "string"
+                  },
+                  "description": {
+                    "key": "description",
+                    "label": "Description",
+                    "type": "string"
+                  },
+                  "system_name": {
+                    "key": "system_name",
+                    "label": "System Name",
+                    "type": "string"
+                  }
+                }
+              }
             }
           }
         }
