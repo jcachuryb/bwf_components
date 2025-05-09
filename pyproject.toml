@@ -6,6 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "bwf_components"
 version = "0.1"
 dependencies = [
+    "django>=5.1",    
+    "djangorestframework"
 ]
 description = "A client to the BWF CORE project. It will host all the available plugins."
 readme = "README.rst"

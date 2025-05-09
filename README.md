@@ -2,7 +2,10 @@
 bwf_components is a python module that will serve as the library of plugins available to the main componetisation module: bwf_core.
 
 ### A plugin
-A plugin, or component, is the basic working unit of the BWF_CORE app. It must have a blueprint file called **definition.json** and an implementation file called  **component.py**, where an execution function is declared. 
+A plugin, or component, is the basic working unit of the BWF_CORE app. It is a self contained unit that needs a blueprint file called **definition.json** and an implementation file called  **component .py**, where an execution function is declared. 
+Some plugins can be more complex and may include their own ``models.py, views.py and serializers``
+Note: If you add a views .py file, make sure you register them accordingly in the main ``urls.py`` file.
+
 
 ## Adding a plugin
 
@@ -97,7 +100,7 @@ This json file defines the structure of the plugin. You will define here the plu
 ```
 ---
 
-#### The component.py file
+#### The component .py file
 This file must declare a function execute which receives an object with special functions to manage the current plugin state.
 ```
 from  bwf_components.types  import  AbstractPluginHandler
