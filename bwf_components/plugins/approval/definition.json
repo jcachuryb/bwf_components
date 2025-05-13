@@ -28,7 +28,7 @@
             "value_rules": {
               "is_model": true,
               "ajax": {
-                "url": "/models/roles/bwf_roles/",
+                "url": "/approvals/roles/",
                 "structure": {
                   "id": {
                     "key": "id",

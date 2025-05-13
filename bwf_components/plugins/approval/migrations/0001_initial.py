@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'verbose_name': 'User',
-                'constraints': [models.UniqueConstraint(django.db.models.functions.text.Lower('email'), name='unique_email')],
+                'constraints': [models.UniqueConstraint(django.db.models.functions.text.Lower('email'), name='approvals_unique_email')],
             },
         ),
         migrations.CreateModel(
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'verbose_name': 'BWF Role',
-                'constraints': [models.UniqueConstraint(fields=('system_name', 'name'), name='approval_unique_name_system')],
+                'constraints': [models.UniqueConstraint(fields=('system_name', 'name'), name='approvals_unique_name_system')],
             },
         ),
     ]

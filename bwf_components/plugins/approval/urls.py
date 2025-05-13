@@ -15,14 +15,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path
 from django import conf
-
-admin.site.site_header = "BWF Components Admin here"
-admin.site.index_title = conf.settings.PROJECT_TITLE
-admin.site.site_title = conf.settings.PROJECT_TITLE
-
+from bwf_components.plugins.approval import views as model_views
 
 urlpatterns = [
-    path('approvals/', include("bwf_components.plugins.approval.urls")),
+    path('admin/components', admin.site.urls),
+    path('roles/', model_views.BWF_RoleListView.as_view()),
+
 ]

@@ -14,7 +14,7 @@ class ApprovalUser(models.Model):
     class Meta:
         verbose_name = "User"
         constraints = [
-            models.UniqueConstraint(Lower('email'), name='unique_email'),
+            models.UniqueConstraint(Lower('email'), name='approvals_unique_email'),
         ]
 
 class BWF_Role(models.Model):
@@ -27,7 +27,7 @@ class BWF_Role(models.Model):
     class Meta:
         verbose_name = "BWF Role"
         constraints = [
-            models.UniqueConstraint(fields=["system_name", "name"], name="approval_unique_name_system"),
+            models.UniqueConstraint(fields=["system_name", "name"], name="approvals_unique_name_system"),
         ]
 
 
