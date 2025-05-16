@@ -2,9 +2,11 @@
 bwf_components is a python module that will serve as the library of plugins available to the main componetisation module: bwf_core.
 
 ### A plugin
-A plugin, or component, is the basic working unit of the BWF_CORE app. It is a self contained unit that needs a blueprint file called **definition.json** and an implementation file called  **component .py**, where an execution function is declared. 
-Some plugins can be more complex and may include their own ``models.py, views.py and serializers``
-Note: If you add a views .py file, make sure you register them accordingly in the main ``urls.py`` file.
+A plugin, or component, is the basic working unit of the BWF_CORE app. It is a self contained unit that needs a blueprint file called **definition.json** and an implementation file called  ``component.py``, where an execution function is declared. 
+
+Some plugins can be more complex and may include their own ``models, views and serializers``. Since they are Django apps, they will also have an ``apps.py`` file and a migrations folder.
+
+**Note:** If you add a views .py file, make sure you register them accordingly in the main ``urls.py`` file.
 
 
 ## Adding a plugin
@@ -17,7 +19,7 @@ Note: If you add a views .py file, make sure you register them accordingly in th
 
 4. Create a ``component.py`` file inside the folder.
 ---
-#### The definition.json file
+#### The ``definition.json`` file
 This json file defines the structure of the plugin. You will define here the plugin id (a string), its version, input parameters and output fields. An example: 
 ```{
   "id": "http_request",
@@ -100,7 +102,7 @@ This json file defines the structure of the plugin. You will define here the plu
 ```
 ---
 
-#### The component .py file
+#### The ``component.py`` file
 This file must declare a function execute which receives an object with special functions to manage the current plugin state.
 ```
 from  bwf_components.types  import  AbstractPluginHandler
@@ -135,3 +137,26 @@ Inside ther execution of a plugin these methods can be used.
         """
         pass
 ```
+## Models & Views
+When you add a model, the BWF_CORE module will pick it up automatically and register the app inside the host `INSTALLED_APPS` list. However, there are important things to remember inside the plugin settings for it to work properly:
+1. There needs to be an `apps.py` file that tells Django about this plugin working as a django app module. For instance:
+```  
+class BwfApprovalConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'bwf_components.plugins.approval'
+    label = 'bwf_approvals'
+    verbose_name = "BWF Approval Plugin"
+```
+Please note that specifying the app using the label property is also important to avoid duplicate names. 
+	
+
+2. Any ``urls.py `` you wish to add to access the views of each plugin should be registered separately in each module and then in the main ``urls.py`` module. For instance:
+```
+urlpatterns = [
+    path('approvals/', include("bwf_components.plugins.approval.urls")),
+]
+```
+
+The final route will depend on the host prefix to these routes but it should be:
+``<host_url>/bwf_components/<bwf_component plugins urls>``
+
