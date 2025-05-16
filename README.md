@@ -1,162 +1,70 @@
-# bwf_components
-bwf_components is a python module that will serve as the library of plugins available to the main componetisation module: bwf_core.
+# BWF_CORE
 
-### A plugin
-A plugin, or component, is the basic working unit of the BWF_CORE app. It is a self contained unit that needs a blueprint file called **definition.json** and an implementation file called  ``component.py``, where an execution function is declared. 
+A Django app to build flexible, reusable workflows from a highlevel, that can be integrated with any other Django App.
+ 
 
-Some plugins can be more complex and may include their own ``models, views and serializers``. Since they are Django apps, they will also have an ``apps.py`` file and a migrations folder.
+## Quick start
+There are a couple of configurations to be set in the host app:  
 
-**Note:** If you add a views .py file, make sure you register them accordingly in the main ``urls.py`` file.
+1. Add "bwf_core" to your ``INSTALLED_APPS`` settings. It should be before the ``bwf_components`` app import.
 
-
-## Adding a plugin
-
-1. Create a folder inside the ``plugins`` folder.
-
-2. Create a ``__init__.py`` file inside the folder.
-
-3. Create a ``definition.json`` file inside the folder.
-
-4. Create a ``component.py`` file inside the folder.
----
-#### The ``definition.json`` file
-This json file defines the structure of the plugin. You will define here the plugin id (a string), its version, input parameters and output fields. An example: 
-```{
-  "id": "http_request",
-  "name": "HTTP Request",
-  "description": "Make an HTTP request",
-  "version": "1.0.0",
-  "author": "BWF Components",
-  "editable": false,
-  "icon_class": "bi bi-globe",
-  "icon_image_src": "icon.png",
-  "node_type":"node",
-  "base_input": [
-    {
-      "key": "url",
-      "label": "URL",
-      "type": "string",
-      "value": "",
-      "required": true
-    },
-    {
-      "key": "method",
-      "label": "Method",
-      "type": "string",
-      "options": [
-        {
-          "label": "GET",
-          "value": "GET"
-        },
-        {
-          "label": "POST",
-          "value": "POST"
-        },
-        {
-          "label": "PUT",
-          "value": "PUT"
-        },
-        {
-          "label": "DELETE",
-          "value": "DELETE"
-        }
-      ],
-      "value": "GET",
-      "required": true
-    },
-    {
-      "key": "headers",
-      "label": "Headers",
-      "type": "object",
-      "value": {},
-      "required": false
-    },
-    {
-      "key": "body",
-      "label": "Body",
-      "type": "object",
-      "value": {},
-      "required": false
-    }
-  ],
-  "base_output": [
-    {
-      "key": "response",
-      "label": "Response",
-      "type": "object",
-      "data": {
-          "status": {
-            "label": "Status",
-            "key": "status",
-            "type": "number"
-          },
-          "body": {
-            "key": "body",
-            "label": "Body",
-            "type": "object"
-          }
-      }
-    }
-  ]
-}
 ```
----
-
-#### The ``component.py`` file
-This file must declare a function execute which receives an object with special functions to manage the current plugin state.
-```
-from  bwf_components.types  import  AbstractPluginHandler
-def  execute(plugin:AbstractPluginHandler):
-	...
-	plugin.set_output({"success": True, data: {}, message: ""})
-```
----
-
-#### AbstractPluginHandler abstract class
-This class acts like a facade to the object passed from ``bwf_core`` during the execution of a plugin.
-Inside ther execution of a plugin these methods can be used. 
-**set_output(...)** should always be called to mark the completion of an execution.
- ```
-	@abstractmethod
-	def collect_context_data(self) -> dict:
-        """
-        Collect context data for the plugin.
-        """
-        pass
-	@abstractmethod
-	def set_output(self, success: bool, data: dict=None, message: str = None):
-        """
-        Set the output for the plugin.
-        """
-        pass
-
-	@abstractmethod
-	def update_workflow_variable(self, id:str, value):
-        """
-        Update the workflow variable with the given id and value.
-        """
-        pass
-```
-## Models & Views
-When you add a model, the BWF_CORE module will pick it up automatically and register the app inside the host `INSTALLED_APPS` list. However, there are important things to remember inside the plugin settings for it to work properly:
-1. There needs to be an `apps.py` file that tells Django about this plugin working as a django app module. For instance:
-```  
-class BwfApprovalConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'bwf_components.plugins.approval'
-    label = 'bwf_approvals'
-    verbose_name = "BWF Approval Plugin"
-```
-Please note that specifying the app using the label property is also important to avoid duplicate names. 
-	
-
-2. Any ``urls.py `` you wish to add to access the views of each plugin should be registered separately in each module and then in the main ``urls.py`` module. For instance:
-```
-urlpatterns = [
-    path('approvals/', include("bwf_components.plugins.approval.urls")),
+INSTALLED_APPS = [
+	...,
+	"bwf_components",
+	"bwf_core"
 ]
 ```
 
-The final route will depend on the host prefix to these routes but it should be:
-``<host_url>/bwf_components/<bwf_component plugins urls>``
+2. Add the templates directory to the TEMPLATE config
 
+```
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            BASE_DIR / "<host_app>/templates",
+            BASE_DIR / "bwf_core/templates",
+        ],
+        ...
+    },
+]
+```
+
+  
+
+3. Include the bwf_core URLconf in your project urls.py like this::
+At the top of the host app ``urls.py`` config, import the ``bwf_core`` settings file
+``from  bwf_core  import  settings_bwf``
+Down below, import the list of urls 
+``path("bwf/", include("bwf_core.urls")),``
+
+  
+
+4. Run the django migration commands to create and/or update all the models from bwf_core and the plugins.
+
+5. Start the development server and visit the admin to create a workflow.
+
+---
+
+### Routes
+
+**Home:** Displays workflows and versions
+
+> /bwf/dashboard
+
+  
+
+**Workflow Detail:**
+
+>/bwf/workflow/<int:workflow_id>/  
+
+**Workflow Edition:**
+
+>/bwf/workflow/<int:workflow_id>/edit/<int:version_id>
+
+---
+
+### Core Plugins and more
+
+``bwf_core`` will include inside its folder ``core_plugins`` the definition and execution of base plugins such as branches, loops, etc. However, the rest of plugins are expected to exist inside a sibling project, [bwf_components](https://github.com/dbca-wa/bwf_components)
