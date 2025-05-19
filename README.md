@@ -6,6 +6,10 @@ A Django app to build flexible, reusable workflows from a highlevel, that can be
 ## Quick start
 There are a couple of configurations to be set in the host app:  
 
+0. Add module to ``requiremens.txt`` 
+```
+git+https://github.com/dbca-wa/bwf_components.git#egg=bwf_components
+```
 1. Add "bwf_core" to your ``INSTALLED_APPS`` settings. It should be before the ``bwf_components`` app import.
 
 ```
