@@ -9,7 +9,7 @@ module.exports = {
     source: sourcePath,
 
     /* Path to built files directory */
-    output: path.resolve(__dirname, '../../../../static/form_builder/'),
+    output: path.resolve(__dirname, '../dist/'),
   },
   server: {
     host: 'localhost',

@@ -8,7 +8,6 @@ import ViewerLayoutController from './viewer-layout';
 /* eslint-disable no-plusplus */
 class FormBuilder {
   constructor(element, settings, $) {
-
     console.log('FormBuilder initialized', {
       element,
       settings,
@@ -24,6 +23,7 @@ class FormBuilder {
     _.initials = {
       present: true,
       formData: settings.formData || [],
+      submissionURL: settings.url || '',
     };
     $.extend(_, _.initials);
 
@@ -48,12 +48,13 @@ class FormBuilder {
     _.$builder.find('#btn-load-form').trigger('click');
   }
 
-  render(options={}) {
+  render(options = {}) {
+    const { submission } = options;
     this.viewer = new ViewerLayoutController(this);
     const formData = options.formData || this.initials.formData || [];
-    const submitData = options.submitData || {};
-    const onSubmit = options.onSubmit || undefined;
-    this.viewer.renderForm(formData, { initialValue: this.initialValue });
+    const onSubmit = options.onSubmit || this.initials.onSubmit || undefined;
+    const initialValue = options.initialValue || this.initialValue || {};
+    this.viewer.renderForm(formData, { initialValue: initialValue });
 
     const form = this.viewer.form;
     form.on('submit', { viewer: this.viewer, fb: this }, (e) => {
@@ -61,10 +62,10 @@ class FormBuilder {
       const formData = viewer.getFormData();
 
       console.log({ formData: formData });
-      if (fb.onSubmit) {
-        fb.onSubmit(formData);
-      } else if (submitData) {
-        const { url, method, data: inputData, headers } = submitData;
+      if (onSubmit) {
+        onSubmit(formData);
+      } else if (submission) {
+        const { url, method, data: inputData, headers } = submission;
         /* fetch(url, {
           method: method ?? 'POST',
           headers: {

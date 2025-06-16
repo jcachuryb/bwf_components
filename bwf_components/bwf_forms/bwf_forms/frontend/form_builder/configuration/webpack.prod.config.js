@@ -9,6 +9,9 @@ const webpackConfiguration = require('../webpack.config');
 
 console.log(`Running in production mode`);
 
+environment.paths.output = path.resolve(__dirname, '../../../../static/form_builder/');
+environment.entry.app = path.resolve(environment.paths.source, 'js', 'fb.js');
+
 module.exports = merge(webpackConfiguration, {
   mode: 'production',
 
@@ -24,9 +27,6 @@ module.exports = merge(webpackConfiguration, {
     '@popperjs/core': 'Popper.js',
   },
 
-  entry: {
-    app: path.resolve(environment.paths.source, 'js', 'form-builder.js'),
-  },
 
   /* Manage source maps generation process. Refer to https://webpack.js.org/configuration/devtool/#production */
   devtool: false,

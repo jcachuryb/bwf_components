@@ -14,8 +14,12 @@ const storedForm = window.localStorage.getItem('storedForm');
 
 $('#app').formBuilder({
   formData: storedForm ? JSON.parse(storedForm) : [],
+  // submission: {
+  //   urL: 'http://'
+  // },
   API_KEY: 'AXAKSDHASKJDHAKSJHDLAKSHDASDFHASDHFJKL',
   initialValue: {
+    firstName: 'Roberto',
     emailField: 'robe@extremoduro.com',
     people: [
       {
