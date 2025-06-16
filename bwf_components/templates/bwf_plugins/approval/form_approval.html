@@ -1,0 +1,77 @@
+{% extends "bwf_govapp/base.html" %} {% block extra_css %}
+<!-- <link rel="stylesheet" href="/static/form_builder/css/app.css" /> -->
+<!-- <link rel="stylesheet" href="http://localhost:8075/css/app.css" /> -->
+{% endblock %} 
+{% block extra_js %}
+{% endblock %} 
+{% block content %}
+<input type="hidden" id="form_approval_id" value="{{ form_approval_id }}" />
+<input
+  type="hidden"
+  id="workflow_instance_id"
+  value="{{ workflow_instance_id }}"
+/>
+<input
+  type="hidden"
+  id="component_instance_id"
+  value="{{ component_instance_id }}"
+/>
+
+<div class="container">
+  <h2>Form Approval Details</h2>
+  <p>Form Approval ID: {{ form_approval_id }}</p>
+  <p>Workflow Instance ID: {{ workflow_instance_id }}</p>
+  <p>Component Instance ID: {{ component_instance_id }}</p>
+  <h3>Form Definition</h3>
+
+  <div id="example"></div>
+  <div class="container" style="margin-top: 50px">
+    <div id="app"></div>
+  </div>
+
+  <!-- <script src="/static/form_builder/css/app.js" ></script> -->
+<script src="/static/form_builder/js/form-builder.js"></script>
+  <!-- <script src="http://localhost:8075/js/app.js"></script> -->
+
+  <script>
+    (function () {
+      const form_approval_id =
+        document.getElementById("form_approval_id").value;
+        // check form builder is loaded
+      if (typeof $.fn.formBuilder === "undefined") {
+        console.error("Form Builder is not loaded. Please check the script source.");
+        return;
+      }
+
+      $.ajax({
+        url: `/bwf_components/approvals/form/${form_approval_id}/definition/`,
+        type: "GET",
+        dataType: "json",
+        success: function (data) {
+          // Initialize the form builder with the fetched data
+          const {form_definition} = data;
+          console.log("Form Definition:", form_definition);
+          $("#app").formBuilder({
+            formData: form_definition || [],
+            //   onSubmit
+            submitData: {
+              url: "/form-submission",
+              method: "POST",
+              headers: {
+                "X-Api-Key": "12345",
+              },
+              data: {},
+            },
+          });
+
+          // $('#app').formBuilder('build');
+          $('#app').formBuilder('render');
+        },
+        error: function (error) {
+          console.error("Error fetching form approval data:", error);
+        },
+      });
+    })();
+  </script>
+</div>
+{% endblock %}
