@@ -40,3 +40,10 @@ class AbstractPluginHandler(ABC):
         Update the workflow variable with the given id and value.
         """
         pass
+
+    @abstractmethod
+    def set_on_awaiting_action(self):
+        """
+        Set the component instance to awaiting action state.
+        """
+        pass

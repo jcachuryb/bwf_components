@@ -107,5 +107,11 @@
       "placeholder": 30
     }
   ],
-  "base_output": null
+  "base_output": [
+    {
+      "key": "is_approved",
+      "label": "Is Approved",
+      "type": "boolean"
+    }
+  ]
 }

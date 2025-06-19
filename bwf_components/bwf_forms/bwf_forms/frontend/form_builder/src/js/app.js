@@ -37,8 +37,23 @@ $('#app').formBuilder({
       },
     ],
   },
+  submissionData: {
+    url: `http://localhost:9196/api/test_request/`,
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': $('#csrf_token').val(),
+    },
+    data: {},
+  },
+  onSuccess: (data) => {
+    console.log('Form submitted successfully:', data);
+  },
+  onError: (error) => {
+    alert('Error submitting form. Please try again.');
+    console.error('Form submission error:', error);
+  }
 });
-$('#app').formBuilder('render');
+$('#app').formBuilder('build');
 
 // $('#app').formBuilder('render', {
 //   formData: storedForm ? JSON.parse(storedForm) : [],

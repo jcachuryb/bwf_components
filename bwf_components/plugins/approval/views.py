@@ -15,7 +15,6 @@ from bwf_components.plugins.approval.serializers import (
 )
 from bwf_components.bwf_forms.models import (
     BwfForm,
-    
 )
 
 
@@ -34,21 +33,10 @@ class ApprovalFormVisualizerView(View):
             "form_approval_id": form_approval_id,
             "workflow_instance_id": approval_obj.workflow_instance_id,
             "component_instance_id": approval_obj.component_instance_id,
+            "status": approval_obj.status,
         }
         # Assuming you have a method to render the form visualizer
         return render(request, self.template_name, context)
-
-    def post(self, request, *args, **kwargs):
-        form_approval_id = kwargs.get("form_approval_id")
-        workflow_instance_id = kwargs.get("workflow_instance_id")
-        component_instance_id = kwargs.get("component_instance_id")
-        # Handle form submission logic here
-        # For example, you might want to save the form data or process it
-        # You can access the submitted data via request.POST or request.FILES
-
-        # Return a response indicating success or failure
-        return HttpResponse(status=status.HTTP_200_OK)
-
 
 @api_view(["GET"])
 def form_definition(request, form_approval_id):

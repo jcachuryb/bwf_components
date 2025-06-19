@@ -23,7 +23,9 @@ class FormBuilder {
     _.initials = {
       present: true,
       formData: settings.formData || [],
-      submissionURL: settings.url || '',
+      submissionData: settings.submissionData || {},
+      onSuccess: settings.onSuccess || undefined,
+      onError: settings.onError || undefined,
     };
     $.extend(_, _.initials);
 
@@ -49,37 +51,45 @@ class FormBuilder {
   }
 
   render(options = {}) {
-    const { submission } = options;
-    this.viewer = new ViewerLayoutController(this);
-    const formData = options.formData || this.initials.formData || [];
-    const onSubmit = options.onSubmit || this.initials.onSubmit || undefined;
-    const initialValue = options.initialValue || this.initialValue || {};
-    this.viewer.renderForm(formData, { initialValue: initialValue });
+    const fb = this;
+    this.viewer = new ViewerLayoutController(fb);
 
-    const form = this.viewer.form;
-    form.on('submit', { viewer: this.viewer, fb: this }, (e) => {
-      const { viewer, fb } = e.data;
+    const mergedOptions = $.extend({}, fb.initials, options);
+    const formData = mergedOptions.formData || [];
+    const { onSuccess, onError, onSubmit, submissionData, initialValue } = mergedOptions;
+
+    fb.viewer.renderForm(formData, { initialValue: initialValue || {} });
+
+    const form = fb.viewer.form;
+    form.on('submit', { viewer: fb.viewer, fb: fb }, (e) => {
+      const { viewer } = e.data;
       const formData = viewer.getFormData();
-
-      console.log({ formData: formData });
       if (onSubmit) {
         onSubmit(formData);
-      } else if (submission) {
-        const { url, method, data: inputData, headers } = submission;
-        /* fetch(url, {
+      } else if (submissionData) {
+        viewer.form.find("button[type='submit']").attr('disabled', 'disabled');
+        const { url, method, data: preData, headers } = submissionData || {};
+        fetch(url, {
           method: method ?? 'POST',
           headers: {
-            // 'Content-Type': 'application/json',
+            'Content-Type': 'application/json',
             ...headers,
           },
-          body: formData,
-        }); */
-        console.log({
-          method: method ?? 'POST',
-          url,
-          data: { ...inputData, ...formData },
-          headers,
-        });
+          body: JSON.stringify({ form_data: {...Object.fromEntries(formData)}, ...preData }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log('Success:', data);
+            viewer.form.find("button[type='submit']").removeAttr('disabled');
+            onSuccess && onSuccess(data);
+            viewer.buildArea.clearAreaContainer();
+            viewer.buildArea.viewForm(form);
+          })
+          .catch((error) => {
+            viewer.form.find("button[type='submit']").removeAttr('disabled');
+            onError && onError(error);
+            console.error('Error:', error);
+          });
       }
     });
   }

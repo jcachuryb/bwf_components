@@ -1,5 +1,5 @@
 {% extends "bwf_govapp/base.html" %} {% block extra_css %}
-<link rel="stylesheet" href="/static/form_builder/css/app.css" />
+<!-- <link rel="stylesheet" href="/static/form_builder/css/app.css" /> -->
 <!-- <link rel="stylesheet" href="http://localhost:8075/css/app.css" /> -->
 {% endblock %} {% block extra_js %} {% endblock %} {% block content %}
 <input type="hidden" id="form_approval_id" value="{{ form_approval_id }}" />
@@ -15,24 +15,18 @@
   id="component_instance_id"
   value="{{ component_instance_id }}"
 />
+<input type="hidden" id="status" value="{{ status }}" />
 
 <div class="container">
   <h2>Form Approval Details</h2>
   <p>Form Approval ID: {{ form_approval_id }}</p>
   <p>Workflow Instance ID: {{ workflow_instance_id }}</p>
   <p>Component Instance ID: {{ component_instance_id }}</p>
-  <h3>Form Definition</h3>
+  <p>Status: {{ status }}</p>
+  <div id="form_approval"></div>
 
-  <div id="app"></div>
-
-  {% if FORM_BUILDER_STATIC %}
-    <link rel="stylesheet" href="/static/form_builder/css/form-builder.css" />
-    <script src="/static/form_builder/js/form-builder.js"></script>
-  {% else %}
-    <script src="{{FORM_BUILDER_STATIC_URL}}/js/fb.js"></script>
-    <link rel="stylesheet" href="{{FORM_BUILDER_STATIC_URL}}/css/form-builder.css" />
-  {% endif %}
-
+  <link rel="stylesheet" href="/static/form_builder/css/form-builder.css" />
+  <script src="/static/form_builder/js/form-builder.js"></script>
 
   <!-- <script src="/static/form_builder/css/app.js" ></script> -->
 
@@ -40,6 +34,7 @@
     (function () {
       const form_approval_id =
         document.getElementById("form_approval_id").value;
+      const status = document.getElementById("status").value;
       // check form builder is loaded
       if (typeof $.fn.formBuilder === "undefined") {
         console.error(
@@ -48,42 +43,66 @@
         return;
       }
 
-      $.ajax({
-        url: `/bwf_components/approvals/form/${form_approval_id}/definition/`,
-        type: "GET",
-        dataType: "json",
-        success: function (data) {
-          const { form_definition, initial_value } = data;
-          console.log("Form Definition:", form_definition);
-          $("#app").formBuilder({
-            formData: form_definition || [],
-            initialValue: {
-              ...(initial_value ?? {
-                firstName: "Pepe Botika",
-              }),
-            },
-            submitData: {
-              url: "/form-submission",
-              method: "POST",
-              headers: {
-                "X-Api-Key": "12345",
-                "X-CSRFToken": $("#csrf_token").val(),
-              },
-              data: {
-                form_approval_id: form_approval_id,
-                workflow_instance_id: $("#workflow_instance_id").val(),
-                component_instance_id: $("#component_instance_id").val(),
-              },
-            },
-          });
+      if (status === "pending") {
+        const workflow_instance_id = document.getElementById(
+          "workflow_instance_id"
+        ).value;
 
-          // $('#app').formBuilder('build');
-          $("#app").formBuilder("render");
-        },
-        error: function (error) {
-          console.error("Error fetching form approval data:", error);
-        },
-      });
+        $.ajax({
+          url: `/bwf_components/approvals/form/${form_approval_id}/definition/`,
+          type: "GET",
+          dataType: "json",
+          success: function (data) {
+            const { form_definition, initial_value } = data;
+            console.log("Form Definition:", form_definition);
+            $("#form_approval").formBuilder({
+              formData: form_definition || [],
+              initialValue: {
+                ...(initial_value ?? {
+                  firstName: "Pepe Botika",
+                }),
+              },
+              submissionData: {
+                url: `/bwf/api/workflow-live/${workflow_instance_id}/form_submission/`,
+                method: "POST",
+                headers: {
+                  "X-CSRFToken": $("#csrf_token").val(),
+                },
+                data: {
+                  plugin_object_id: form_approval_id,
+                  workflow_instance_id: workflow_instance_id,
+                  component_instance_id: $("#component_instance_id").val(),
+                },
+              },
+              onSuccess: (data) => {
+                console.log("Form submitted successfully:", data);
+              },
+              onError: (error) => {
+                alert("Error submitting form. Please try again.");
+                console.error("Form submission error:", error);
+              },
+            });
+
+            // $('#app').formBuilder('build');
+            $("#form_approval").formBuilder("render");
+          },
+          error: function (error) {
+            console.error("Error fetching form approval data:", error);
+          },
+        });
+      } else {
+        // If the status is not pending, we can display a message or handle it accordingly
+        $("#form_approval").html(
+          `
+          <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading">Form not available</h4>
+            <p>The resource requested is not pending for approval.</p>
+            <hr>
+            <p class="mb-0">Please check the status of the form approval.</p>
+          </div>
+          `
+        );
+      }
     })();
   </script>
 </div>

@@ -1,7 +1,7 @@
-from bwf_components.plugins.approval.models import FormApproval, ApprovalRecord
+from bwf_components.plugins.approval.models import ApprovalStatusEnum, FormApproval, ApprovalRecord, ApprovalActionTypesEnum, approval_record_factory
 from bwf_components.types import AbstractPluginHandler
 from bwf_components.bwf_forms.models import (
-    BwfFormVersion,
+    BwfForm
 )
 
 def execute(plugin: AbstractPluginHandler):
@@ -25,7 +25,12 @@ def execute(plugin: AbstractPluginHandler):
         ids.append(id)
 
     try:
-        form_version = BwfFormVersion.objects.get(id=form.get("id", None))
+        selected_form  = BwfForm.objects.get(id=form.get("id", None))
+        form_version = selected_form.active_version
+
+        if not form_version:
+            plugin.set_output(False, message="Form version not found")
+            return
 
         approval = FormApproval.objects.create(
             form_version=form_version,
@@ -36,11 +41,58 @@ def execute(plugin: AbstractPluginHandler):
         print(
             f"http://localhost:9196/bwf_components/approvals/form/{approval.approval_id}/view/"
         )
-    except BwfFormVersion.DoesNotExist:
-        plugin.set_output(False, message="Form or form version not found")
+        plugin.set_on_awaiting_action()
+    except BwfForm.DoesNotExist:
+        plugin.set_output(False, message="Form not found")
         return
 
 
-def callback(plugin: AbstractPluginHandler, data={}):
+def callback(plugin: AbstractPluginHandler, object_id=None, data={}, user=None):
 
-    pass
+    approval = FormApproval.objects.filter(approval_id=object_id).first()
+    if not approval:
+        plugin.set_output(False, message="Approval not found")
+        return
+    if approval.status != ApprovalStatusEnum.PENDING:
+        return
+    # validate_roles
+
+    # process the approval response
+
+    first_name = data.get("firstName", "")
+    user_email = data.get("email", "")
+    action  =  data.get("action", None)
+
+    output_data = {
+        "is_approved": False,
+    }
+
+    if action == ApprovalActionTypesEnum.APPROVE:
+        approval.approve()
+        # approval_record_factory(approval, user_email, first_name, action)
+        output_data["is_approved"] = True
+        plugin.set_output(True, message="Approval granted", data=output_data)
+    elif action == ApprovalActionTypesEnum.REJECT:
+        approval.reject()
+        # approval_record_factory(approval, user_email, first_name, action)
+        output_data["is_approved"] = False
+        plugin.set_output(True, message="Approval rejected", data=output_data)
+    else:
+        approval.cancel()
+        plugin.set_output(False, message="Unknown action type")
+
+
+def validate_object(object_id):
+    """
+    Validate the object ID for the approval.
+    """
+    return FormApproval.objects.filter(approval_id=object_id).exists()
+
+def can_be_processed(object_id):
+    """
+    Check if the approval can be processed.
+    """
+    approval = FormApproval.objects.filter(id=object_id).first()
+    if not approval:
+        return False
+    return approval.status == ApprovalStatusEnum.PENDING
