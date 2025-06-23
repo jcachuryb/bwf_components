@@ -13,13 +13,13 @@ from bwf_components.plugins.approval.serializers import (
     bwf_forms_serializers,
     roles_serializers,
 )
-from bwf_components.bwf_forms.models import (
+from bwf_forms.models import (
     BwfForm,
 )
 
 
 class ApprovalFormVisualizerView(View):
-    template_name = "bwf_plugins/approval/form_approval.html"
+    template_name = "approvals/form_approval.html"
 
     def get(self, request, *args, **kwargs):
         form_approval_id = kwargs.get("form_approval_id")

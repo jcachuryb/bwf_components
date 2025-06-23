@@ -7,7 +7,8 @@ name = "bwf_components"
 version = "0.1"
 dependencies = [
     "django>=5.1",    
-    "djangorestframework"
+    "djangorestframework",
+    "git+https://github.com/jcachuryb/bwf_forms.git#egg=bwf_forms",
 ]
 description = "A client to the BWF CORE project. It will host all the available plugins."
 readme = "README.rst"

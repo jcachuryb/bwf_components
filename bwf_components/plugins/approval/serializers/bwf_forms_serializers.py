@@ -1,4 +1,4 @@
-from bwf_components.bwf_forms.models import (
+from bwf_forms.models import (
     BwfForm,
     BwfFormVersion,
 )

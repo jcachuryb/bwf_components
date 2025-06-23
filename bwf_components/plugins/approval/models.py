@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.db.models.functions import Lower
-from bwf_components.bwf_forms.models import (
+from bwf_forms.models import (
     BwfFormVersion,
 )
 

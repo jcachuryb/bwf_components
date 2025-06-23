@@ -1,6 +1,6 @@
 from bwf_components.plugins.approval.models import ApprovalStatusEnum, FormApproval, ApprovalRecord, ApprovalActionTypesEnum, approval_record_factory
 from bwf_components.types import AbstractPluginHandler
-from bwf_components.bwf_forms.models import (
+from bwf_forms.models import (
     BwfForm
 )
 
