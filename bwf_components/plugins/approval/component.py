@@ -26,7 +26,7 @@ def execute(plugin: AbstractPluginHandler):
 
     try:
         selected_form  = BwfForm.objects.get(id=form.get("id", None))
-        form_version = selected_form.active_version
+        form_version = selected_form.get_active_version()
 
         if not form_version:
             plugin.set_output(False, message="Form version not found")

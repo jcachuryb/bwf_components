@@ -1,7 +1,14 @@
 {% extends "bwf_govapp/base.html" %} {% block extra_css %}
-<!-- <link rel="stylesheet" href="/static/form_builder/css/app.css" /> -->
-<!-- <link rel="stylesheet" href="http://localhost:8075/css/app.css" /> -->
 {% endblock %} {% block extra_js %} {% endblock %} {% block content %}
+
+{% if not BWF_FORMS_USE_DEV %}
+<link rel="stylesheet" href="{{BWF_FORMS_DEV_URL}}/css/app.css" />
+<script src="{{BWF_FORMS_DEV_URL}}/js/app.js"></script>
+{% else%}
+<link rel="stylesheet" href="/static/form_builder/css/app.css" />
+<script src="/static/form_builder/js/form-builder.js"></script>
+{% endif %}
+
 <input type="hidden" id="form_approval_id" value="{{ form_approval_id }}" />
 <input type="hidden" id="csrf_token" value="{{ csrf_token }}" />
 
@@ -17,7 +24,7 @@
 />
 <input type="hidden" id="status" value="{{ status }}" />
 
-<div class="container">
+<div class="container approval">
   <h2>Form Approval Details</h2>
   <p>Form Approval ID: {{ form_approval_id }}</p>
   <p>Workflow Instance ID: {{ workflow_instance_id }}</p>
@@ -25,10 +32,6 @@
   <p>Status: {{ status }}</p>
   <div id="form_approval"></div>
 
-  <link rel="stylesheet" href="/static/form_builder/css/form-builder.css" />
-  <script src="/static/form_builder/js/form-builder.js"></script>
-
-  <!-- <script src="/static/form_builder/css/app.js" ></script> -->
 
   <script>
     (function () {

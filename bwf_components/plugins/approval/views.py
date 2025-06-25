@@ -14,7 +14,7 @@ from bwf_components.plugins.approval.serializers import (
     roles_serializers,
 )
 from bwf_forms.models import (
-    BwfForm,
+    BwfForm, BwfFormVersion
 )
 
 
@@ -47,7 +47,7 @@ def form_definition(request, form_approval_id):
         approval_obj = FormApproval.objects.get(approval_id=form_approval_id)
         form_version = approval_obj.form_version
         serializer = bwf_forms_serializers.FormDefinitionSerializer(
-            {"form_definition": form_version.definition}
+            {"form_definition": form_version.get_json_form_structure()}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
     except FormApproval.DoesNotExist:
@@ -65,6 +65,6 @@ class BWF_RoleListView(ListAPIView):
 
 class BWF_ApprovalFormListView(ListAPIView):
     def get(self, request, *args, **kwargs):
-        queryset = BwfForm.objects.all()
+        queryset = BwfForm.objects.filter(is_active=True, version_id__isnull=False)
         serializer = bwf_forms_serializers.BWFFormsSerializer(queryset, many=True)
         return Response(serializer.data)

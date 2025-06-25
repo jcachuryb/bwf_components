@@ -22,7 +22,6 @@ admin.site.site_header = "BWF Components Admin here"
 admin.site.index_title = conf.settings.PROJECT_TITLE
 admin.site.site_title = conf.settings.PROJECT_TITLE
 
-
 urlpatterns = [
     path('approvals/', include("bwf_components.plugins.approval.urls")),
 ]

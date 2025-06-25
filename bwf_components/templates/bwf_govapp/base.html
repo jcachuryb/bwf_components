@@ -24,18 +24,6 @@
 {% block menu_items_left_brand %}
 {%endblock %}
 
-{% block menu_dropdown %}
-    {% if request.user.is_superuser or is_django_admin %}
-        {% include 'webtemplate_dbca/includes/staff_menu.html' %}
-    {% endif %}
-    {% block menu_extra_dropdown_staff_top %}
-        {% if request.user.is_superuser or is_admin %}
-            {% include 'webtemplate_dbca/includes/staff_menu_extras.html' %}
-        {% endif %}
-    {% endblock %}
-
-    <li><a class="dropdown-item" href="{% url 'logout' %}?next=/">Logout</a></li>
-{% endblock %}
 
 
 {% block menu_spacer %}
@@ -51,6 +39,14 @@
 {% endblock %}
 
 {% block page_content %}
+{% if not BWF_FORMS_USE_DEV %}
+<link rel="stylesheet" href="{{BWF_FORMS_DEV_URL}}/css/app.css" />
+<script src="{{BWF_FORMS_DEV_URL}}/js/app.js"></script>
+{% else%}
+<link rel="stylesheet" href="/static/form_builder/css/app.css" />
+<script src="/static/form_builder/js/form-builder.js"></script>
+<script src="/static/form_builder/js/form-busdsdilder.js"></script>
+{% endif %}
 <div class="container-fluid">
     <!-- Messages  -->
     {% if messages %}
@@ -65,7 +61,7 @@
     </div>
     {% endif %}
 
-    <div class="row">
+    <div class="row casas">
         <div class="col">
             {% block page_content_inner %}{% endblock %}
         </div>
@@ -82,6 +78,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col">
+
                 <small class="float-right">&copy; Department of Biodiversity, Conservation and Attractions</small>
             </div>
         </div>
