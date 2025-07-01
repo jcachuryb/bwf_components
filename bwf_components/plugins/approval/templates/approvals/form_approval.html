@@ -1,13 +1,7 @@
 {% extends "bwf_govapp/base.html" %} {% block extra_css %}
 {% endblock %} {% block extra_js %} {% endblock %} {% block content %}
 
-{% if not BWF_FORMS_USE_DEV %}
-<link rel="stylesheet" href="{{BWF_FORMS_DEV_URL}}/css/app.css" />
-<script src="{{BWF_FORMS_DEV_URL}}/js/app.js"></script>
-{% else%}
-<link rel="stylesheet" href="/static/form_builder/css/app.css" />
-<script src="/static/form_builder/js/form-builder.js"></script>
-{% endif %}
+{% include "bwf_govapp/form_render_block.html" %}
 
 <input type="hidden" id="form_approval_id" value="{{ form_approval_id }}" />
 <input type="hidden" id="csrf_token" value="{{ csrf_token }}" />
@@ -25,11 +19,6 @@
 <input type="hidden" id="status" value="{{ status }}" />
 
 <div class="container approval">
-  <h2>Form Approval Details</h2>
-  <p>Form Approval ID: {{ form_approval_id }}</p>
-  <p>Workflow Instance ID: {{ workflow_instance_id }}</p>
-  <p>Component Instance ID: {{ component_instance_id }}</p>
-  <p>Status: {{ status }}</p>
   <div id="form_approval"></div>
 
 
@@ -57,7 +46,7 @@
           dataType: "json",
           success: function (data) {
             const { form_definition, initial_value } = data;
-            console.log("Form Definition:", form_definition);
+            
             $("#form_approval").formBuilder({
               formData: form_definition || [],
               initialValue: {
@@ -99,9 +88,9 @@
           `
           <div class="alert alert-warning" role="alert">
             <h4 class="alert-heading">Form not available</h4>
-            <p>The resource requested is not pending for approval.</p>
+            <p>The resource requested is not pending for submission.</p>
             <hr>
-            <p class="mb-0">Please check the status of the form approval.</p>
+            <p class="mb-0">This request may have already been processed.</p>
           </div>
           `
         );
