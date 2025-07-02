@@ -9,6 +9,7 @@
   "icon_class": "bi bi-check-circle",
   "icon_image_src": "icon.png",
   "node_type": "node",
+  "workflow_type": "long_lived",
   "base_input": [
     {
       "key": "roles",
