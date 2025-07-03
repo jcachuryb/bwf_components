@@ -20,7 +20,9 @@ from django import conf
 from bwf_components.plugins.approval import views as model_views
 
 urlpatterns = [
-    path('admin/components', admin.site.urls),
     path('roles/', model_views.BWF_RoleListView.as_view()),
-
+    path('approval-forms/', model_views.BWF_ApprovalFormListView.as_view()),
+    path('form/<str:form_approval_id>/view/', model_views.ApprovalFormVisualizerView.as_view(), name='approval_form_view'),
+    path('form/<str:form_approval_id>/definition/', model_views.form_definition, name='form_definition'),
+    
 ]

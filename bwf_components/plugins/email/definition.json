@@ -1,4 +1,3 @@
-
 {
   "id": "send_static_email",
   "name": "Send Static Email",
@@ -9,7 +8,7 @@
   "editable": false,
   "icon_class": "bi bi-envelope-at",
   "icon_image_src": "icon.png",
-  "node_type":"node",
+  "node_type": "node",
   "base_input": [
     {
       "key": "from",
@@ -40,5 +39,14 @@
       "required": true
     }
   ],
-  "base_output": null
+  "base_output": null,
+  "workflow_inputs": [
+    {
+      "key": "email_body",
+      "label": "Body",
+      "data_type": "string",
+      "default_value": "<html><body><h1>Hello World</h1></body></html>",
+      "required": true
+    }
+  ]
 }

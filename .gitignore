@@ -4,5 +4,6 @@ venv
 pending_imports/
 data_storage/
 logs/
-
+dist/
 venv/
+bwf_components/bwf_forms/bwf_forms/frontend/form_builder/node_modules/

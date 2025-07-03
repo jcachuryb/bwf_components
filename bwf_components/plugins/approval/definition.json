@@ -9,6 +9,7 @@
   "icon_class": "bi bi-check-circle",
   "icon_image_src": "icon.png",
   "node_type": "node",
+  "workflow_type": "long_lived",
   "base_input": [
     {
       "key": "roles",
@@ -57,13 +58,46 @@
         }
       }
     },
+    
     {
-      "key": "task_id",
-      "label": "Task",
-      "type": "string",
+      "key": "form",
+      "label": "Related form",
+      "type": "object",
       "value": "",
-      "required": false,
-      "placeholder": "Resource to be approved"
+      "required": true,
+      "value_rules": {
+        "is_model": true,
+        "ajax": {
+          "url": "/approvals/approval-forms/",
+          "structure": {
+            "form_id": {
+              "key": "form_id",
+              "label": "ID",
+              "type": "string"
+            },
+            "name": {
+              "key": "name",
+              "label": "Name",
+              "type": "string"
+            },
+            "description": {
+              "key": "description",
+              "label": "Description",
+              "type": "string"
+            },
+            "active_version": {
+              "key": "active_version",
+              "label": "Active Version",
+              "type": "number"
+            },
+            "fields": {
+              "key": "fields",
+              "label": "Fields",
+              "type": "object"
+            }
+          }
+        }
+      }
     },
     {
       "key": "approval_timeout",
@@ -74,5 +108,11 @@
       "placeholder": 30
     }
   ],
-  "base_output": null
+  "base_output": [
+    {
+      "key": "is_approved",
+      "label": "Is Approved",
+      "type": "boolean"
+    }
+  ]
 }
